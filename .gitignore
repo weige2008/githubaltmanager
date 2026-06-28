@@ -1,0 +1,30 @@
+# Go
+backend/bin/
+backend/data/
+backend/*.db
+backend/*.db-journal
+backend/*.db-wal
+backend/*.db-shm
+backend/.env
+backend/vendor/
+
+# 前端
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/src/auto-imports.d.ts
+frontend/src/components.d.ts
+frontend/tsconfig.node.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 临时
+*.log
+*.tmp

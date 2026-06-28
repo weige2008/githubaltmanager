@@ -1,0 +1,22 @@
+# GitHub Alt Manager - Docker Compose
+# 一键启动：docker compose up -d
+# 首次启动会自动生成 JWT 密钥与盐，可手动覆盖
+
+services:
+  gam:
+    build: .
+    image: githubaltmanager:latest
+    container_name: githubaltmanager
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - gam-data:/app/data
+      - ./backend/.env:/app/.env:ro
+    environment:
+      GAM_JWT_SECRET: ${GAM_JWT_SECRET:-please-change-me-64-chars-hex-aaaaaaaaaaaaaaaaaaa}
+      GAM_MASTER_SALT: ${GAM_MASTER_SALT:-please-change-me-32-chars-hex-bbbbbbbbbbbbbb}
+      GAM_ENV: prod
+
+volumes:
+  gam-data:
