@@ -31,7 +31,7 @@
 ### Linux / macOS（一键脚本）
 
 ```bash
-curl -fsSL https://github.com/weige2008/githubaltmanager/releases/latest/download/deploy.sh -o deploy.sh
+curl -fsSL https://raw.githubusercontent.com/weige2008/githubaltmanager/main/deploy.sh -o deploy.sh
 bash deploy.sh
 ```
 
@@ -46,7 +46,7 @@ bash deploy.sh
 
 ```powershell
 # PowerShell
-Invoke-WebRequest https://github.com/weige2008/githubaltmanager/releases/latest/download/deploy.ps1 -OutFile deploy.ps1
+Invoke-WebRequest https://raw.githubusercontent.com/weige2008/githubaltmanager/main/deploy.ps1 -OutFile deploy.ps1
 powershell -ExecutionPolicy Bypass -File deploy.ps1
 ```
 
