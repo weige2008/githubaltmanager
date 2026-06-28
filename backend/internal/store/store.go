@@ -8,18 +8,20 @@ import (
 	"githubaltmanager/internal/config"
 	"githubaltmanager/internal/model"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-// Open 打开 SQLite 数据库并自动迁移
+// Open 打开 SQLite 数据库并自动迁移。
+// 使用纯 Go SQLite 驱动（github.com/glebarez/sqlite，基于 modernc.org/sqlite），
+// 无需 CGO，支持交叉编译到任意平台。
 func Open(cfg *config.Config) (*gorm.DB, error) {
 	gormLogLevel := logger.Warn
 	if !cfg.IsProd() {
 		gormLogLevel = logger.Info
 	}
-	db, err := gorm.Open(sqlite.Open(cfg.Database.Path+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=on"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(cfg.Database.Path+"?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(on)"), &gorm.Config{
 		Logger:      logger.Default.LogMode(gormLogLevel),
 		PrepareStmt: true,
 	})

@@ -18,6 +18,10 @@ frontend/tsconfig.node.tsbuildinfo
 frontend/vite.config.d.ts
 frontend/vite.config.js
 
+# 后端 web embed（构建时由 frontend/dist 复制填充，本地保留占位文件）
+backend/internal/web/dist/*
+!backend/internal/web/dist/.gitkeep
+
 # IDE
 .vscode/
 .idea/

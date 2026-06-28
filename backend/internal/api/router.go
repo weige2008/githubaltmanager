@@ -2,8 +2,7 @@ package api
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -11,10 +10,9 @@ import (
 	"githubaltmanager/internal/api/handlers"
 	"githubaltmanager/internal/config"
 	"githubaltmanager/internal/service"
+	"githubaltmanager/internal/web"
 )
 
-// NewRouter 构造 Gin 引擎并注册所有路由。
-// staticDir 非空时（生产部署），同时托管前端 SPA 静态文件。
 func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.Engine {
 	if cfg.IsProd() {
 		gin.SetMode(gin.ReleaseMode)
@@ -33,13 +31,11 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	}
 	r.Use(cors.New(corsConfig))
 
-	// 健康检查（无需鉴权）
 	r.GET("/healthz", healthz)
 	r.GET("/api/health", healthz)
 
 	api := r.Group("/api")
 
-	// ---- 鉴权组（无需 token，无需解锁）----
 	authH := handlers.NewAuthHandler(c)
 	authGrp := api.Group("/auth")
 	{
@@ -48,13 +44,11 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 		authGrp.POST("/login", authH.Login)
 	}
 
-	// ---- 受保护接口（需 JWT + 解锁）----
 	protected := api.Group("")
 	protected.Use(handlers.AuthMiddleware(cfg.Security.JWTSecret))
 	protected.Use(handlers.UnlockGuard())
 	{
-		authGrp2 := protected.Group("/auth")
-		authGrp2.POST("/change-password", authH.ChangePassword)
+		protected.POST("/auth/change-password", authH.ChangePassword)
 	}
 
 	handlers.RegisterAccountRoutes(protected, c)
@@ -63,36 +57,88 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	handlers.RegisterBatchRoutes(protected, c)
 	handlers.RegisterStatsRoutes(protected, c)
 
-	// 前端 SPA 静态托管（生产部署用单端口）
-	if staticDir != "" {
-		if _, err := os.Stat(staticDir); err == nil {
-			r.Use(spaStatic(staticDir))
-		}
-	}
+	registerSPA(r, staticDir)
 
 	return r
 }
 
-// spaStatic 托管前端 SPA：先尝试静态文件，找不到则回退到 index.html
-func spaStatic(root string) gin.HandlerFunc {
-	fs := http.FileServer(http.Dir(root))
-	indexFile := filepath.Join(root, "index.html")
-	return func(c *gin.Context) {
-		// API 路径不走静态
-		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
-			c.Next()
-			return
-		}
-		full := filepath.Join(root, c.Request.URL.Path)
-		if _, err := os.Stat(full); err == nil {
-			fs.ServeHTTP(c.Writer, c.Request)
-			c.Abort()
-			return
-		}
-		// SPA fallback
-		http.ServeFile(c.Writer, c.Request, indexFile)
-		c.Abort()
+// registerSPA 注册前端 SPA 处理器。优先用 go:embed 内嵌资源，其次外部目录。
+func registerSPA(r *gin.Engine, staticDir string) {
+	embedded := hasEmbeddedIndex()
+
+	if embedded {
+		r.NoRoute(func(c *gin.Context) {
+			p := strings.TrimPrefix(c.Request.URL.Path, "/")
+			if p == "" {
+				serveEmbeddedIndex(c)
+				return
+			}
+			if data, err := web.Dist.ReadFile("dist/" + p); err == nil {
+				c.Data(http.StatusOK, mimeByExt(p), data)
+				return
+			}
+			serveEmbeddedIndex(c)
+		})
+		return
 	}
+
+	if staticDir != "" {
+		fs := http.FileServer(http.Dir(staticDir))
+		r.NoRoute(func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/api") {
+				c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+				return
+			}
+			http.StripPrefix("/", fs).ServeHTTP(c.Writer, c.Request)
+		})
+	} else {
+		r.NoRoute(func(c *gin.Context) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found", "path": c.Request.URL.Path})
+		})
+	}
+}
+
+func hasEmbeddedIndex() bool {
+	f, err := web.Dist.Open("dist/index.html")
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
+
+func serveEmbeddedIndex(c *gin.Context) {
+	data, err := web.Dist.ReadFile("dist/index.html")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "index.html not embedded"})
+		return
+	}
+	c.Header("Cache-Control", "no-cache")
+	c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+}
+
+func mimeByExt(p string) string {
+	switch {
+	case strings.HasSuffix(p, ".html"):
+		return "text/html; charset=utf-8"
+	case strings.HasSuffix(p, ".css"):
+		return "text/css; charset=utf-8"
+	case strings.HasSuffix(p, ".js"):
+		return "application/javascript; charset=utf-8"
+	case strings.HasSuffix(p, ".svg"):
+		return "image/svg+xml"
+	case strings.HasSuffix(p, ".png"):
+		return "image/png"
+	case strings.HasSuffix(p, ".jpg"), strings.HasSuffix(p, ".jpeg"):
+		return "image/jpeg"
+	case strings.HasSuffix(p, ".json"):
+		return "application/json; charset=utf-8"
+	case strings.HasSuffix(p, ".ico"):
+		return "image/x-icon"
+	case strings.HasSuffix(p, ".woff"), strings.HasSuffix(p, ".woff2"):
+		return "font/woff2"
+	}
+	return "application/octet-stream"
 }
 
 func healthz(c *gin.Context) {

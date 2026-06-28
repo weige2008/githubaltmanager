@@ -126,9 +126,9 @@ onMounted(load)
         </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="toggle(row)">{{ row.enabled ? '禁用' : '启用' }}</el-button>
-            <el-button size="small" type="primary" plain @click="runNow(row)">立即运行</el-button>
-            <el-button size="small" type="danger" plain @click="remove(row)">删除</el-button>
+            <el-button size="small" @click="toggle(row as ScheduledTask)">{{ row.enabled ? '禁用' : '启用' }}</el-button>
+            <el-button size="small" type="primary" plain @click="runNow(row as ScheduledTask)">立即运行</el-button>
+            <el-button size="small" type="danger" plain @click="remove(row as ScheduledTask)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
