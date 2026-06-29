@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Repo GitHub 仓库
@@ -71,7 +72,7 @@ type ContentEntry struct {
 	SHA  string `json:"sha"`
 }
 
-// ListContents 列出目录
+// ListContents 列出目录。空仓库返回 404 + "This repository is empty."，此时返回空数组而非错误。
 func (c *Client) ListContents(owner, repo, path, ref string) ([]ContentEntry, int, error) {
 	q := url.Values{}
 	if ref != "" {
@@ -84,7 +85,17 @@ func (c *Client) ListContents(owner, repo, path, ref string) ([]ContentEntry, in
 	p := fmt.Sprintf("/repos/%s/%s/contents/%s%s", owner, repo, path, qstr)
 	var entries []ContentEntry
 	code, err := c.Get(p, &entries)
-	return entries, code, err
+	if err != nil {
+		// 检查是否是空仓库的 404
+		if apiErr, ok := err.(*APIError); ok && apiErr.Status == 404 {
+			body := apiErr.Body
+			if strings.Contains(body, "empty") || strings.Contains(body, "Not Found") {
+				return []ContentEntry{}, 404, nil
+			}
+		}
+		return nil, code, err
+	}
+	return entries, code, nil
 }
 
 // FileContent 单个文件
