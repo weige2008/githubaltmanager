@@ -24,14 +24,14 @@ func (h *AuthHandler) Status(c *gin.Context) {
 	var cfg model.AppConfig
 	err := h.c.DB.First(&cfg, 1).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		resp.OK(c, gin.H{"is_initialized": false})
+		resp.OK(c, gin.H{"isInitialized": false})
 		return
 	}
 	if err != nil {
 		resp.Internal(c, "查询配置失败", err)
 		return
 	}
-	resp.OK(c, gin.H{"is_initialized": cfg.IsInitialized})
+	resp.OK(c, gin.H{"isInitialized": cfg.IsInitialized})
 }
 
 type SetupPayload struct {
