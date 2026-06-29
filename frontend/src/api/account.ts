@@ -38,6 +38,8 @@ export const accountApi = {
   remove: (id: number) => http.delete<unknown, { ok: boolean }>(`/accounts/${id}`),
   checkStatus: (id: number) =>
     http.post<unknown, Account>(`/accounts/${id}/check`),
+  getSecrets: (id: number) =>
+    http.get<unknown, { token: string; password: string; email: string }>(`/accounts/${id}/secrets`),
   batchCheckStatus: (ids: number[]) =>
     http.post<unknown, { results: any[] }>('/accounts/batch-check', { ids })
 }

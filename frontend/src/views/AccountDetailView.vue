@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { View, CopyDocument, Hide } from '@element-plus/icons-vue'
 import { accountApi, type AccountDetail } from '@/api/account'
 import { repoApi, type Repo } from '@/api/repo'
 
@@ -13,6 +14,35 @@ const loading = ref(false)
 const acc = ref<AccountDetail | null>(null)
 const repos = ref<Repo[]>([])
 const activeTab = ref('repos')
+
+// 敏感信息查看
+const secretsVisible = ref(false)
+const secrets = ref({ token: '', password: '', email: '' })
+const secretsLoading = ref(false)
+
+async function revealSecrets() {
+  if (secretsVisible.value) {
+    secretsVisible.value = false
+    return
+  }
+  secretsLoading.value = true
+  try {
+    secrets.value = await accountApi.getSecrets(id)
+    secretsVisible.value = true
+  } finally {
+    secretsLoading.value = false
+  }
+}
+
+async function copyText(text: string, label: string) {
+  if (!text) { ElMessage.warning(`${label}为空`); return }
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success(`${label}已复制`)
+  } catch {
+    ElMessage.warning('复制失败，请手动选择复制')
+  }
+}
 
 async function loadAccount() {
   loading.value = true
@@ -95,13 +125,42 @@ onMounted(async () => {
         <el-descriptions-item label="GitHub ID">{{ acc.github_id }}</el-descriptions-item>
         <el-descriptions-item label="登录名">{{ acc.github_login }}</el-descriptions-item>
         <el-descriptions-item label="显示名">{{ acc.display_name }}</el-descriptions-item>
-        <el-descriptions-item label="Token">{{ acc.token_masked }}</el-descriptions-item>
+        <el-descriptions-item label="Token">
+          <div class="secret-row">
+            <code v-if="!secretsVisible" class="secret-masked">{{ acc.token_masked || '****' }}</code>
+            <code v-else class="secret-revealed">{{ secrets.token }}</code>
+            <el-button size="small" link :loading="secretsLoading" @click="revealSecrets">
+              <el-icon><View v-if="!secretsVisible" /><Hide v-else /></el-icon>
+              {{ secretsVisible ? '隐藏' : '查看' }}
+            </el-button>
+            <el-button v-if="secretsVisible" size="small" link @click="copyText(secrets.token, 'Token')">
+              <el-icon><CopyDocument /></el-icon> 复制
+            </el-button>
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item label="Token 权限">
           <el-tag v-for="s in (acc.token_scopes || '').split(',').filter(Boolean)" :key="s" size="small" class="scope-tag">{{ s }}</el-tag>
           <span v-if="!acc.token_scopes">—</span>
         </el-descriptions-item>
-        <el-descriptions-item label="已存密码">{{ acc.has_password ? '是' : '否' }}</el-descriptions-item>
-        <el-descriptions-item label="密保邮箱">{{ acc.recovery_masked || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="已存密码">
+          <div class="secret-row" v-if="acc.has_password || secretsVisible">
+            <span v-if="!secretsVisible">{{ acc.has_password ? '••••••' : '—' }}</span>
+            <code v-else class="secret-revealed">{{ secrets.password || '(空)' }}</code>
+            <el-button v-if="secretsVisible && secrets.password" size="small" link @click="copyText(secrets.password, '密码')">
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+          </div>
+          <span v-else>—</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="密保邮箱">
+          <div class="secret-row">
+            <span v-if="!secretsVisible">{{ acc.recovery_masked || '—' }}</span>
+            <code v-else class="secret-revealed">{{ secrets.email || '(空)' }}</code>
+            <el-button v-if="secretsVisible && secrets.email" size="small" link @click="copyText(secrets.email, '邮箱')">
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item label="最后检测">{{ acc.last_checked_at ? new Date(acc.last_checked_at).toLocaleString() : '—' }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ acc.note || '—' }}</el-descriptions-item>
         <el-descriptions-item label="状态详情" :span="3">{{ acc.status_reason || '—' }}</el-descriptions-item>
@@ -153,4 +212,12 @@ onMounted(async () => {
 .scope-tag { margin-right: 4px; }
 .repo-link { color: var(--primary); font-weight: 500; }
 .repo-flags { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
+.secret-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.secret-masked { font-size: 13px; color: var(--text-secondary); }
+.secret-revealed {
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Cascadia Code', Consolas, monospace;
+  background: var(--surface-3); padding: 2px 8px; border-radius: var(--radius-ctrl);
+  word-break: break-all;
+}
 </style>

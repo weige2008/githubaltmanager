@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
+	"githubaltmanager/internal/crypto"
 	"githubaltmanager/internal/service"
 )
 
@@ -24,6 +25,7 @@ func RegisterAccountRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.GET("", h.List)
 		grp.POST("/import", h.Import)
 		grp.GET("/:id", h.Get)
+		grp.GET("/:id/secrets", h.GetSecrets)
 		grp.PUT("/:id", h.Update)
 		grp.DELETE("/:id", h.Delete)
 		grp.POST("/:id/check", h.CheckStatus)
@@ -77,6 +79,23 @@ func (h *AccountHandler) Get(c *gin.Context) {
 		return
 	}
 	resp.OK(c, h.s.ToOut(acc))
+}
+
+// GetSecrets 解密并返回 token / password / email 明文
+func (h *AccountHandler) GetSecrets(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	token, acc, err := h.s.GetDecryptedToken(uint(id))
+	if err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
+	password, _ := crypto.DecryptField(acc.PasswordEnc)
+	email, _ := crypto.DecryptField(acc.RecoveryEmail)
+	resp.OK(c, gin.H{
+		"token":   token,
+		"password": password,
+		"email":   email,
+	})
 }
 
 type UpdatePayload struct {
