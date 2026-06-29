@@ -8,7 +8,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import { useThemeStore } from './stores/theme'
+import { vReveal } from './directives/reveal'
 import './styles/global.scss'
+import './styles/animations.scss'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -16,6 +18,9 @@ app.use(pinia)
 
 // 初始化主题
 useThemeStore(pinia).apply()
+
+// 注册指令
+app.directive('reveal', vReveal)
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

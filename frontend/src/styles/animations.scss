@@ -1,0 +1,182 @@
+// ============================================================
+// 动效系统 — keyframes + 动画工具类
+// ============================================================
+
+// ===== Keyframes =====
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 120, 212, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(0, 120, 212, 0.12); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.08); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+// ===== 工具类 =====
+.anim-fade-in { animation: fadeIn 0.4s ease both; }
+.anim-fade-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-fade-down { animation: fadeInDown 0.4s ease both; }
+.anim-fade-left { animation: fadeInLeft 0.5s ease both; }
+.anim-fade-scale { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-slide-right { animation: slideInRight 0.4s ease both; }
+.anim-float { animation: floatY 3s ease-in-out infinite; }
+
+// 延迟阶梯
+.delay-1 { animation-delay: 0.06s; }
+.delay-2 { animation-delay: 0.12s; }
+.delay-3 { animation-delay: 0.18s; }
+.delay-4 { animation-delay: 0.24s; }
+.delay-5 { animation-delay: 0.30s; }
+.delay-6 { animation-delay: 0.36s; }
+.delay-7 { animation-delay: 0.42s; }
+.delay-8 { animation-delay: 0.48s; }
+
+// ===== 路由切换动画 =====
+.route-enter-active {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.route-leave-active {
+  animation: fadeIn 0.15s ease reverse;
+}
+
+// ===== 全局过渡优化 =====
+* {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+// ===== Element Plus 动画增强 =====
+
+// 表格行入场
+.el-table tbody tr {
+  animation: fadeIn 0.3s ease both;
+}
+
+// 对话框入场
+.el-dialog {
+  animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+// 消息入场
+.el-message {
+  animation: fadeInDown 0.3s ease both !important;
+}
+
+// 下拉菜单入场
+.el-popper, .el-dropdown-menu {
+  animation: fadeInScale 0.18s ease both;
+}
+
+// 标签页切换
+.el-tabs__content {
+  animation: fadeIn 0.2s ease;
+}
+
+// ===== 骨架屏闪烁 =====
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-3) 0%,
+    var(--surface-hover) 50%,
+    var(--surface-3) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+// ===== 滚动渐显指令效果（通过 .reveal 类配合 IntersectionObserver） =====
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ===== 数字滚动动画占位 =====
+.count-up {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+// ===== 背景流动光斑（Glass 主题专用） =====
+:root[data-theme='glass'] body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 500px 350px at var(--orb1-x, 20%) var(--orb1-y, 15%),
+      rgba(76, 194, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 600px 400px at var(--orb2-x, 80%) var(--orb2-y, 25%),
+      rgba(192, 132, 252, 0.06) 0%, transparent 55%);
+  animation: orbFloat 20s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+
+// ===== 尊重 prefers-reduced-motion =====
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

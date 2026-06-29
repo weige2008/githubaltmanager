@@ -22,6 +22,12 @@ const stats = [
   { value: '0', suffix: '依赖', label: '无需外部组件' }
 ]
 
+const deploys = [
+  { os: 'Linux / macOS', icon: 'Monitor', code: '$ curl -fsSL https://raw.githubusercontent.com\n/weige2008/githubaltmanager/main/deploy.sh\n-o deploy.sh && bash deploy.sh' },
+  { os: 'Windows', icon: 'Platform', code: '> Invoke-WebRequest https://raw.githubusercontent.com\n/weige2008/githubaltmanager/main/deploy.ps1\n-OutFile deploy.ps1\npowershell -File deploy.ps1' },
+  { os: 'Docker', icon: 'Cpu', code: '$ docker compose up -d --build\n# 访问 http://localhost:8080' }
+]
+
 function goEnter() {
   router.push(app.isLoggedIn ? '/dashboard' : '/login')
 }
@@ -61,16 +67,16 @@ function goGithub() {
       </div>
       <div class="hero-inner">
         <div class="hero-left">
-          <div class="badge">
+          <div class="badge anim-fade-up">
             <span class="badge-dot"></span>
             v1.0.0 · 双主题 · 单文件部署
           </div>
-          <h1>让 GitHub 账户管理<br /><span class="grad-text">轻盈而强大</span></h1>
-          <p class="subtitle">
+          <h1 class="anim-fade-up delay-1">让 GitHub 账户管理<br /><span class="grad-text">轻盈而强大</span></h1>
+          <p class="subtitle anim-fade-up delay-2">
             现代、原生体验的多账户管理中枢。Token 加密导入、封禁检测、仓库浏览、
             Action 定时执行与批量创建——全部装进一个可执行文件。
           </p>
-          <div class="hero-btns">
+          <div class="hero-btns anim-fade-up delay-3">
             <el-button type="primary" size="large" @click="goEnter">
               <el-icon style="margin-right:4px"><Monitor /></el-icon>
               {{ app.isLoggedIn ? '进入控制台' : '开始使用' }}
@@ -83,7 +89,7 @@ function goGithub() {
         </div>
 
         <!-- 右侧模拟控制台 -->
-        <div class="hero-right">
+        <div class="hero-right anim-fade-scale delay-2">
           <div class="mock-window">
             <div class="mock-titlebar">
               <span class="dot red"></span>
@@ -116,8 +122,8 @@ function goGithub() {
       </div>
 
       <!-- 数据条 -->
-      <div class="stats-bar">
-        <div v-for="s in stats" :key="s.label" class="stat-item">
+      <div class="stats-bar anim-fade-up delay-4">
+        <div v-for="(s, i) in stats" :key="s.label" class="stat-item" :style="{ animationDelay: 0.2 + i * 0.08 + 's' }">
           <span class="stat-val">{{ s.value }}</span>
           <span class="stat-unit">{{ s.suffix }}</span>
           <span class="stat-lbl">{{ s.label }}</span>
@@ -132,7 +138,12 @@ function goGithub() {
         <p>从加密导入到批量执行，覆盖 GitHub 账户管理的完整工作流</p>
       </div>
       <div class="feat-grid">
-        <div v-for="f in features" :key="f.title" class="feat-card glass-card hover-lift">
+        <div
+          v-for="(f, i) in features"
+          :key="f.title"
+          v-reveal="{ delay: i * 80 }"
+          class="feat-card glass-card hover-lift"
+        >
           <div class="feat-icon" :style="{ background: f.color + '18', color: f.color }">
             <el-icon :size="24"><component :is="f.icon" /></el-icon>
           </div>
@@ -149,39 +160,24 @@ function goGithub() {
         <p>单文件二进制，无需 Node.js / 数据库 / Web 服务器，下载即用</p>
       </div>
       <div class="deploy-grid">
-        <div class="deploy-card glass-card">
+        <div
+          v-for="(d, i) in deploys"
+          :key="d.os"
+          v-reveal="{ delay: i * 100 }"
+          class="deploy-card glass-card"
+        >
           <div class="deploy-os">
-            <el-icon :size="20"><Monitor /></el-icon>
-            <h3>Linux / macOS</h3>
+            <el-icon :size="20"><component :is="d.icon" /></el-icon>
+            <h3>{{ d.os }}</h3>
           </div>
-          <pre><span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com
-/weige2008/githubaltmanager/main/deploy.sh
--o deploy.sh &amp;&amp; bash deploy.sh</pre>
-        </div>
-        <div class="deploy-card glass-card">
-          <div class="deploy-os">
-            <el-icon :size="20"><Platform /></el-icon>
-            <h3>Windows</h3>
-          </div>
-          <pre><span class="prompt">&gt;</span> Invoke-WebRequest https://raw.githubusercontent.com
-/weige2008/githubaltmanager/main/deploy.ps1
--OutFile deploy.ps1
-powershell -File deploy.ps1</pre>
-        </div>
-        <div class="deploy-card glass-card">
-          <div class="deploy-os">
-            <el-icon :size="20"><Cpu /></el-icon>
-            <h3>Docker</h3>
-          </div>
-          <pre><span class="prompt">$</span> docker compose up -d --build
-<span class="comment"># 访问 http://localhost:8080</span></pre>
+          <pre>{{ d.code }}</pre>
         </div>
       </div>
     </section>
 
     <!-- CTA -->
     <section class="section cta-section">
-      <div class="cta-card glass-card">
+      <div class="cta-card glass-card" v-reveal>
         <h2>准备好接管你的 GitHub 账户了吗？</h2>
         <p>立即体验系统级原生质感的账户管理中枢</p>
         <el-button type="primary" size="large" @click="goEnter">
@@ -325,6 +321,7 @@ h1 {
 .stat-item {
   text-align: center; padding: 16px;
   border-right: 1px solid var(--border);
+  animation: fadeInUp 0.5s ease both;
   &:last-child { border-right: none; }
 }
 .stat-val { font-size: 28px; font-weight: 800; color: var(--text-primary); }

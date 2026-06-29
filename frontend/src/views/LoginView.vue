@@ -76,7 +76,7 @@ onMounted(checkStatus)
       <ThemeSwitch />
     </div>
 
-    <div class="login-card glass-card">
+    <div class="login-card glass-card anim-fade-scale">
       <div class="login-header">
         <div class="logo-circle">
           <img src="/favicon.svg" alt="logo" />

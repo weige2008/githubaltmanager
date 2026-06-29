@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { statsApi, type Overview } from '@/api/stats'
+import CountUp from '@/components/CountUp.vue'
 
 const loading = ref(false)
 const data = ref<Overview>({ total: 0, active: 0, banned: 0, error: 0, unknown: 0, repos: 0, workflows: 0, tasks: 0, tasks_enabled: 0 })
@@ -35,30 +36,46 @@ onMounted(load)
 
 <template>
   <div class="page-container" v-loading="loading">
-    <!-- 统计卡片 -->
+    <!-- 统计卡片 — 阶梯入场 -->
     <div class="stat-grid">
-      <div v-for="c in cards" :key="c.key" class="stat-card">
+      <div
+        v-for="(c, i) in cards"
+        :key="c.key"
+        class="stat-card glass-card"
+        :class="'anim-fade-up delay-' + (i + 1)"
+      >
         <div class="sc-icon" :style="{ background: c.color + '14', color: c.color }">
           <el-icon :size="22"><component :is="c.icon" /></el-icon>
         </div>
         <div class="sc-body">
-          <div class="sc-num">{{ (data as any)[c.key] }}</div>
+          <div class="sc-num">
+            <CountUp :value="(data as any)[c.key]" :duration="600" />
+          </div>
           <div class="sc-label">{{ c.label }}</div>
         </div>
         <div class="sc-sub">{{ c.sub }}</div>
+        <!-- 底部装饰渐变线 -->
+        <div class="sc-line" :style="{ background: c.color }"></div>
       </div>
     </div>
 
     <!-- 下方双栏 -->
     <div class="bottom-grid">
       <!-- 快捷操作 -->
-      <div class="panel">
+      <div class="panel glass-card anim-fade-up delay-5">
         <div class="panel-head">
           <el-icon><Promotion /></el-icon>
           <span>快捷操作</span>
         </div>
         <div class="action-list">
-          <div v-for="a in actions" :key="a.title" class="action-item" @click="$router.push(a.to)">
+          <div
+            v-for="(a, i) in actions"
+            :key="a.title"
+            class="action-item"
+            :style="{ animationDelay: 0.3 + i * 0.06 + 's' } 
+"
+            @click="$router.push(a.to)"
+          >
             <div class="ai-icon" :style="{ background: a.color + '14', color: a.color }">
               <el-icon :size="18"><component :is="a.icon" /></el-icon>
             </div>
@@ -69,7 +86,7 @@ onMounted(load)
       </div>
 
       <!-- 数据概览 -->
-      <div class="panel">
+      <div class="panel glass-card anim-fade-up delay-6">
         <div class="panel-head">
           <el-icon><DataAnalysis /></el-icon>
           <span>数据概览</span>
@@ -80,7 +97,9 @@ onMounted(load)
               <el-icon><component :is="o.icon" /></el-icon>
             </div>
             <span class="ov-label">{{ o.label }}</span>
-            <span class="ov-val">{{ (data as any)[o.key] }}</span>
+            <span class="ov-val">
+              <CountUp :value="(data as any)[o.key]" :duration="500" />
+            </span>
           </div>
         </div>
       </div>
@@ -96,29 +115,26 @@ onMounted(load)
   margin-bottom: 16px;
 }
 
-// Fluent 统计卡片
 .stat-card {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 18px 20px;
-  background: var(--surface);
-  backdrop-filter: blur(var(--blur)) saturate(var(--blur-sat));
-  border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-resting);
   position: relative;
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  overflow: hidden;
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
   &:hover {
     transform: var(--hover-transform);
     box-shadow: var(--shadow-hover);
+    .sc-line { opacity: 1; transform: scaleX(1); }
   }
-  &::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
-    border-radius: var(--radius-card) var(--radius-card) 0 0;
-    pointer-events: none;
-  }
+}
+.sc-line {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  opacity: 0.3; transform: scaleX(0.3);
+  transition: opacity 0.3s, transform 0.3s;
+  border-radius: 2px;
 }
 .sc-icon {
   width: 44px; height: 44px;
@@ -137,28 +153,8 @@ onMounted(load)
   align-self: flex-start; margin-top: 2px;
 }
 
-// 下方
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.panel {
-  background: var(--surface);
-  backdrop-filter: blur(var(--blur)) saturate(var(--blur-sat));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-resting);
-  padding: 18px 20px;
-  position: relative;
-  &::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
-    border-radius: var(--radius-card) var(--radius-card) 0 0;
-    pointer-events: none;
-  }
-}
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.panel { border-radius: var(--radius-card); padding: 18px 20px; }
 .panel-head {
   display: flex; align-items: center; gap: 8px;
   font-size: 14px; font-weight: 600; color: var(--text-primary);
@@ -166,37 +162,38 @@ onMounted(load)
   border-bottom: 1px solid var(--border);
 }
 
-// 快捷操作
 .action-list { display: flex; flex-direction: column; gap: 4px; }
 .action-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px;
   border-radius: var(--radius-ctrl);
   cursor: pointer;
-  transition: background 0.12s ease;
+  animation: fadeInLeft 0.4s ease both;
+  transition: background 0.15s ease;
   &:hover {
     background: var(--primary-lighter);
     .ai-arrow { opacity: 1; transform: translateX(0); }
+    .ai-icon { transform: scale(1.1); }
   }
 }
 .ai-icon {
   width: 32px; height: 32px; border-radius: var(--radius-ctrl);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ai-label { flex: 1; font-size: 14px; font-weight: 500; color: var(--text-primary); }
 .ai-arrow {
   opacity: 0; transform: translateX(-4px);
-  color: var(--text-tertiary); transition: all 0.15s ease;
+  color: var(--text-tertiary); transition: all 0.2s ease;
 }
 
-// 概览
 .ov-list { display: flex; flex-direction: column; gap: 2px; }
 .ov-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 8px;
   border-radius: var(--radius-ctrl);
-  transition: background 0.12s ease;
+  transition: background 0.15s ease;
   &:hover { background: var(--primary-lighter); }
 }
 .ov-icon {

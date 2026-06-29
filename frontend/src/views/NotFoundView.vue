@@ -5,7 +5,7 @@ const router = useRouter()
 
 <template>
   <div class="nf-page">
-    <div class="nf-card glass-card">
+    <div class="nf-card glass-card anim-fade-scale">
       <div class="nf-code">404</div>
       <h2>页面走丢了</h2>
       <p>你访问的页面不存在。</p>
