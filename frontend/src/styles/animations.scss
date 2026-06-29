@@ -1,5 +1,6 @@
 // ============================================================
 // 动效系统 — keyframes + 动画工具类
+// 参考 Deep Space SaaS 高级视觉效果
 // ============================================================
 
 // ===== Keyframes =====
@@ -8,10 +9,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-16px); }
@@ -38,9 +36,26 @@
   50% { transform: translateY(-8px); }
 }
 
+// 环境光斑漂浮（参考 Deep Space SaaS 的 orb float）
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -50px) scale(1.1); }
+  50% { transform: translate(-30px, 30px) scale(0.95); }
+  75% { transform: translate(20px, -20px) scale(1.05); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 40px) scale(1.08); }
+  66% { transform: translate(30px, -30px) scale(0.92); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, 40px) scale(1.12); }
+}
+
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 120, 212, 0); }
-  50% { box-shadow: 0 0 20px 4px rgba(0, 120, 212, 0.12); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(76, 194, 255, 0); }
+  50% { box-shadow: 0 0 24px 4px rgba(76, 194, 255, 0.1); }
 }
 
 @keyframes shimmer {
@@ -56,15 +71,15 @@
   100% { background-position: 0% 50%; }
 }
 
-@keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.08); }
-  66% { transform: translate(-20px, 30px) scale(0.95); }
-}
-
 @keyframes barGrow {
   from { transform: scaleY(0); }
   to { transform: scaleY(1); }
+}
+
+// 3D 卡片轻微摆动
+@keyframes tiltSway {
+  0%, 100% { transform: perspective(1000px) rotateY(-12deg) rotateX(5deg) translateZ(0); }
+  50% { transform: perspective(1000px) rotateY(-8deg) rotateX(3deg) translateZ(10px); }
 }
 
 // ===== 工具类 =====
@@ -86,93 +101,79 @@
 .delay-7 { animation-delay: 0.42s; }
 .delay-8 { animation-delay: 0.48s; }
 
+// ===== 环境光斑（Glass 主题 — 参考 Deep Space SaaS 的 3 orb 系统） =====
+.ambient-orbs {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+}
+.ambient-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px);
+}
+.orb-blue {
+  width: 500px; height: 500px; top: -10%; left: 5%;
+  background: radial-gradient(circle, rgba(0, 120, 212, 0.2), transparent 70%);
+  animation: orbFloat1 18s ease-in-out infinite;
+}
+.orb-violet {
+  width: 450px; height: 450px; top: 30%; right: -5%;
+  background: radial-gradient(circle, rgba(168, 13, 242, 0.15), transparent 70%);
+  animation: orbFloat2 22s ease-in-out infinite;
+}
+.orb-cyan {
+  width: 400px; height: 400px; bottom: -10%; left: 40%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.12), transparent 70%);
+  animation: orbFloat3 16s ease-in-out infinite;
+}
+
+// Fluent 主题用更柔和的光斑
+:root[data-theme='fluent'] {
+  .orb-blue { background: radial-gradient(circle, rgba(0, 95, 184, 0.06), transparent 70%); opacity: 0.6; }
+  .orb-violet { background: radial-gradient(circle, rgba(168, 13, 242, 0.04), transparent 70%); opacity: 0.5; }
+  .orb-cyan { background: radial-gradient(circle, rgba(0, 212, 255, 0.04), transparent 70%); opacity: 0.5; }
+}
+
+// ===== 3D 卡片容器 =====
+.tilt-container { perspective: 1000px; }
+.tilt-card {
+  transform: rotateY(-12deg) rotateX(5deg);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+  &:hover {
+    transform: rotateY(0deg) rotateX(0deg) translateZ(20px);
+  }
+}
+
 // ===== 路由切换动画 =====
-.route-enter-active {
-  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.route-leave-active {
-  animation: fadeIn 0.15s ease reverse;
-}
+.route-enter-active { animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.route-leave-active { animation: fadeIn 0.15s ease reverse; }
 
 // ===== 全局过渡优化 =====
-* {
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
+* { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
 
 // ===== Element Plus 动画增强 =====
-
-// 表格行入场
-.el-table tbody tr {
-  animation: fadeIn 0.3s ease both;
-}
-
-// 对话框入场
-.el-dialog {
-  animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-}
-
-// 消息入场
-.el-message {
-  animation: fadeInDown 0.3s ease both !important;
-}
-
-// 下拉菜单入场
-.el-popper, .el-dropdown-menu {
-  animation: fadeInScale 0.18s ease both;
-}
-
-// 标签页切换
-.el-tabs__content {
-  animation: fadeIn 0.2s ease;
-}
+.el-table tbody tr { animation: fadeIn 0.3s ease both; }
+.el-dialog { animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) both !important; }
+.el-message { animation: fadeInDown 0.3s ease both !important; }
+.el-popper, .el-dropdown-menu { animation: fadeInScale 0.18s ease both; }
+.el-tabs__content { animation: fadeIn 0.2s ease; }
 
 // ===== 骨架屏闪烁 =====
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface-3) 0%,
-    var(--surface-hover) 50%,
-    var(--surface-3) 100%
-  );
+  background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-hover) 50%, var(--surface-3) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-// ===== 滚动渐显指令效果（通过 .reveal 类配合 IntersectionObserver） =====
+// ===== 滚动渐显 =====
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  &.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  &.visible { opacity: 1; transform: translateY(0); }
 }
 
-// ===== 数字滚动动画占位 =====
-.count-up {
-  display: inline-block;
-  font-variant-numeric: tabular-nums;
-}
+// ===== 数字滚动 =====
+.count-up { display: inline-block; font-variant-numeric: tabular-nums; }
 
-// ===== 背景流动光斑（Glass 主题专用） =====
-:root[data-theme='glass'] body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse 500px 350px at var(--orb1-x, 20%) var(--orb1-y, 15%),
-      rgba(76, 194, 255, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 400px at var(--orb2-x, 80%) var(--orb2-y, 25%),
-      rgba(192, 132, 252, 0.06) 0%, transparent 55%);
-  animation: orbFloat 20s ease-in-out infinite;
-  transition: opacity 0.3s;
-}
-
-// ===== 尊重 prefers-reduced-motion =====
+// ===== prefers-reduced-motion =====
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

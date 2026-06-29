@@ -88,9 +88,9 @@ function goGithub() {
           </div>
         </div>
 
-        <!-- 右侧模拟控制台 -->
-        <div class="hero-right anim-fade-scale delay-2">
-          <div class="mock-window">
+        <!-- 右侧模拟控制台 — 3D 倾斜 -->
+        <div class="hero-right tilt-container anim-fade-scale delay-2">
+          <div class="mock-window tilt-card">
             <div class="mock-titlebar">
               <span class="dot red"></span>
               <span class="dot yellow"></span>
@@ -171,6 +171,42 @@ function goGithub() {
             <h3>{{ d.os }}</h3>
           </div>
           <pre>{{ d.code }}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 工作流时间线 -->
+    <section id="workflow" class="section">
+      <div class="sec-head">
+        <h2>四步上手</h2>
+        <p>从导入到自动化，简单几步接管所有 GitHub 账户</p>
+      </div>
+      <div class="timeline">
+        <div class="timeline-line"></div>
+        <div
+          v-for="(step, i) in [
+            { n: 1, title: '导入 Token', desc: '粘贴 GitHub Token，系统自动验证并加密存储', icon: 'Key' },
+            { n: 2, title: '检测状态', desc: '多方案并发检测账户是否封禁', icon: 'View' },
+            { n: 3, title: '扫描仓库', desc: '自动拉取所有仓库和 Action workflow', icon: 'Search' },
+            { n: 4, title: '定时执行', desc: '设置 cron 定时触发或批量创建 Action', icon: 'AlarmClock' }
+          ]"
+          :key="step.n"
+          v-reveal="{ delay: i * 120 }"
+          class="timeline-step"
+          :class="{ left: i % 2 === 0 }"
+        >
+          <div class="timeline-dot">
+            <span>{{ step.n }}</span>
+          </div>
+          <div class="timeline-card glass-card">
+            <div class="ts-icon">
+              <el-icon :size="20"><component :is="step.icon" /></el-icon>
+            </div>
+            <div>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.desc }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -373,6 +409,45 @@ pre {
   p { font-size: 15px; color: var(--text-secondary); margin: 0 0 24px; }
 }
 
+// 工作流时间线
+.timeline {
+  position: relative; max-width: 720px; margin: 0 auto; padding: 16px 0;
+}
+.timeline-line {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, var(--primary), var(--accent), transparent);
+  transform: translateX(-50%);
+  opacity: 0.5;
+}
+.timeline-step {
+  position: relative; width: 50%; padding: 16px 32px;
+  &.left { text-align: right; }
+  &:not(.left) { margin-left: 50%; }
+}
+.timeline-dot {
+  position: absolute; top: 24px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800;
+  box-shadow: 0 0 20px rgba(0, 120, 212, 0.3), 0 0 0 4px var(--bg-base);
+  z-index: 2;
+}
+.timeline-step.left .timeline-dot { right: -18px; }
+.timeline-step:not(.left) .timeline-dot { left: -18px; }
+.timeline-card {
+  display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--radius-card);
+}
+.ts-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-ctrl);
+  background: var(--primary-light); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.timeline-step.left .ts-icon { order: 2; }
+.timeline-card h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; color: var(--text-primary); }
+.timeline-card p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+.timeline-step.left .timeline-card > div:last-child { text-align: right; }
+
 // 页脚
 .footer { border-top: 1px solid var(--border); margin-top: 24px; }
 .footer-inner {
@@ -392,5 +467,16 @@ pre {
   .stats-bar { grid-template-columns: repeat(2, 1fr); }
   .stat-item:nth-child(2) { border-right: none; }
   .footer-inner { flex-direction: column; text-align: center; }
+  // 移动端时间线简化
+  .timeline-line { left: 18px; }
+  .timeline-step { width: 100%; padding: 12px 12px 12px 48px; text-align: left !important;
+    &.left { text-align: left !important; } margin-left: 0 !important;
+  }
+  .timeline-step.left .timeline-dot { right: auto; left: 0; }
+  .timeline-step:not(.left) .timeline-dot { left: 0; }
+  .timeline-step.left .ts-icon { order: 0; }
+  .timeline-step.left .timeline-card > div:last-child { text-align: left; }
+  // 移动端关闭 3D 倾斜
+  .tilt-card { transform: none !important; }
 }
 </style>

@@ -216,20 +216,19 @@ html, body, #app {
 }
 
 // Fluent 背景：Mica 效果（几乎纯色，极淡渐变）
-// Glass 背景：深色 + 彩色光斑
+// Glass 背景：深色渐变 + 3 环境光斑（通过 .ambient-orbs 实现，见 animations.scss）
 body {
   background: var(--bg-tint), var(--bg-base);
   background-attachment: fixed;
   min-height: 100vh;
+  position: relative;
 }
 
-// Glass 背景：深色渐变 + 多层彩色光斑（青/紫/粉），营造通透感与深度
+// Glass 主题：深空背景 + 极淡径向辅助光
 :root[data-theme='glass'] body {
   background:
-    radial-gradient(ellipse 600px 400px at 10% 10%, rgba(76, 194, 255, 0.13) 0%, transparent 60%),
-    radial-gradient(ellipse 700px 500px at 90% 15%, rgba(192, 132, 252, 0.11) 0%, transparent 55%),
-    radial-gradient(ellipse 500px 400px at 70% 85%, rgba(236, 72, 153, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse 400px 300px at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 800px 600px at 15% 20%, rgba(0, 120, 212, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 500px at 85% 80%, rgba(168, 13, 242, 0.06) 0%, transparent 55%),
     var(--bg-tint), var(--bg-base);
   background-attachment: fixed;
 }
@@ -244,11 +243,20 @@ a {
 
 code { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+// 自定义滚动条 — 主题感知（Fluent: 浅灰 / Glass: 深色半透明）
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 150, 170, 0.25); border-radius: 6px;
-  &:hover { background: rgba(140, 150, 170, 0.45); }
+  background: var(--border-strong); border-radius: 8px;
+  &:hover { background: var(--text-tertiary); }
+}
+// Glass 主题滚动条 — 参考 Deep Space SaaS 风格
+:root[data-theme='glass'] {
+  &::-webkit-scrollbar-track { background: #050510; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15); border-radius: 8px;
+    &:hover { background: rgba(255, 255, 255, 0.25); }
+  }
 }
 
 // ============================================================
@@ -262,7 +270,7 @@ code { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-resting);
   position: relative;
-  // 顶部高光（光从上方来）
+  // 顶部高光
   &::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
@@ -272,21 +280,18 @@ code { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
   transition: box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// Glass 主题专属卡片增强：内光晕 + 渐变描边
+// Glass 主题专属：高保真玻璃 — 渐变背景 + 渐变描边 + 内光晕
 :root[data-theme='glass'] .glass-card {
-  // 渐变描边（用 ::after 模拟 border-image）
+  background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.06) 100%);
   border-color: transparent;
   &::after {
-    content: ''; position: absolute; inset: 0;
-    border-radius: inherit;
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
     padding: 1px;
     background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.12) 100%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: 0;
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none; z-index: 0;
   }
 }
 
