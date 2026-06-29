@@ -84,9 +84,16 @@ func (h *AccountHandler) Get(c *gin.Context) {
 // GetSecrets 解密并返回 token / password / email 明文
 func (h *AccountHandler) GetSecrets(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	token, acc, err := h.s.GetDecryptedToken(uint(id))
+	// 先确认账户存在
+	acc, err := h.s.Get(uint(id))
 	if err != nil {
 		resp.NotFound(c, "账户不存在")
+		return
+	}
+	// 解密
+	token, derr := crypto.DecryptField(acc.TokenEnc)
+	if derr != nil {
+		resp.Internal(c, "解密失败，可能是主密码已更改", derr)
 		return
 	}
 	password, _ := crypto.DecryptField(acc.PasswordEnc)
