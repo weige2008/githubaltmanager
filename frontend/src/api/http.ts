@@ -39,13 +39,20 @@ service.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status
+    const url = error.config?.url || ''
     const body: ApiErrorBody = error.response?.data
+
     if (status === 401) {
-      localStorage.removeItem('gam_token')
-      ElMessage.error('登录已失效，请重新登录')
-      // 避免在登录页死循环
-      if (!window.location.hash.includes('/login') && !window.location.pathname.includes('/login')) {
-        setTimeout(() => window.location.reload(), 800)
+      // 登录/设置接口的 401 = 密码错误，不要清除 token / 刷新页面
+      if (url.includes('/auth/login') || url.includes('/auth/setup')) {
+        ElMessage.error(body?.message || '密码错误')
+      } else {
+        // 其他接口的 401 = token 过期
+        localStorage.removeItem('gam_token')
+        ElMessage.error('登录已失效，请重新登录')
+        if (!window.location.pathname.includes('/login')) {
+          setTimeout(() => { window.location.href = '/login' }, 800)
+        }
       }
     } else if (body?.message) {
       ElMessage.error(body.message)
