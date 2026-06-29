@@ -24,58 +24,60 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="layout-root">
-    <aside class="sidebar" :class="{ collapsed: isCollapse }">
-      <div class="logo-area">
-        <div class="logo-box">
-          <img src="/favicon.svg" alt="logo" />
-        </div>
-        <span v-show="!isCollapse" class="logo-text">GitHub 管理器</span>
+  <div class="layout">
+    <!-- 侧边栏 — Fluent NavigationView (Mica 材质) -->
+    <aside class="nav-view" :class="{ collapsed: isCollapse }">
+      <div class="nav-header">
+        <img src="/favicon.svg" alt="logo" class="nav-logo" />
+        <span v-show="!isCollapse" class="nav-title">GitHub 管理器</span>
       </div>
 
-      <nav class="menu">
+      <nav class="nav-menu">
         <router-link
           v-for="item in menuRoutes"
           :key="item.path"
           :to="item.path"
-          class="menu-item"
+          class="nav-item"
           :class="{ active: activeMenu === item.path }"
         >
           <el-icon :size="18"><component :is="(item.meta as any)?.icon" /></el-icon>
-          <span v-show="!isCollapse" class="menu-label">{{ (item.meta as any)?.title }}</span>
+          <span v-show="!isCollapse" class="nav-text">{{ (item.meta as any)?.title }}</span>
         </router-link>
       </nav>
 
-      <div class="sidebar-bottom">
-        <button class="home-btn" @click="router.push('/')">
-          <el-icon><HomeFilled /></el-icon>
-          <span v-show="!isCollapse">返回主页</span>
+      <div class="nav-footer">
+        <button class="nav-item home-btn" @click="router.push('/')">
+          <el-icon :size="18"><HomeFilled /></el-icon>
+          <span v-show="!isCollapse" class="nav-text">返回主页</span>
         </button>
       </div>
     </aside>
 
-    <div class="main-area">
+    <!-- 主区域 -->
+    <div class="main">
+      <!-- 顶栏 — 亚克力 -->
       <header class="topbar">
         <div class="topbar-left">
-          <button class="collapse-btn" @click="isCollapse = !isCollapse">
-            <el-icon :size="18"><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
+          <button class="icon-btn" @click="isCollapse = !isCollapse">
+            <el-icon :size="16"><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
           </button>
-          <span class="page-title">{{ (route.meta as any)?.title || '控制台' }}</span>
+          <span class="topbar-title">{{ (route.meta as any)?.title || '控制台' }}</span>
         </div>
         <div class="topbar-right">
           <ThemeSwitch />
           <el-dropdown>
-            <div class="user-pill">
-              <div class="user-icon"><el-icon><UserFilled /></el-icon></div>
+            <button class="user-btn">
+              <div class="user-ava"><el-icon><UserFilled /></el-icon></div>
               <span>管理员</span>
-            </div>
+              <el-icon :size="12" class="caret"><CaretBottom /></el-icon>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="router.push('/settings')">
-                  <el-icon><Setting /></el-icon> 设置
+                  <el-icon><Setting /></el-icon>&nbsp;设置
                 </el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">
-                  <el-icon><SwitchButton /></el-icon> 退出登录
+                  <el-icon><SwitchButton /></el-icon>&nbsp;退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -83,6 +85,7 @@ async function handleLogout() {
         </div>
       </header>
 
+      <!-- 内容 -->
       <main class="content">
         <RouterView />
       </main>
@@ -91,169 +94,150 @@ async function handleLogout() {
 </template>
 
 <style scoped lang="scss">
-.layout-root {
+.layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-.sidebar {
-  width: 220px;
-  background: var(--sidebar-bg);
-  backdrop-filter: blur(40px);
+// ===== 侧边栏 — Fluent NavigationView =====
+.nav-view {
+  width: 230px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  transition: width 0.2s ease;
-  &.collapsed { width: 64px; }
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border-right: 1px solid var(--sidebar-border);
+  transition: width 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+  &.collapsed { width: 56px; }
 }
 
-.logo-area {
-  height: 60px;
+.nav-header {
+  height: 56px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 20px;
+  padding: 0 16px;
   flex-shrink: 0;
 }
-.logo-box {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex; align-items: center; justify-content: center;
+.nav-logo {
+  width: 24px; height: 24px;
   flex-shrink: 0;
-  img { width: 22px; height: 22px; }
 }
-.logo-text {
-  font-size: 14px; font-weight: 700; color: #fff;
-  white-space: nowrap; letter-spacing: 0.2px;
+.nav-title {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; letter-spacing: 0.1px;
 }
 
-.menu {
+.nav-menu {
   flex: 1;
-  padding: 8px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   overflow-y: auto;
 }
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  color: var(--sidebar-text);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-  }
-  &.active {
-    background: var(--sidebar-active);
-    color: #fff;
-  }
-}
-.menu-label { overflow: hidden; }
 
-.sidebar-bottom {
-  padding: 12px;
-  flex-shrink: 0;
-}
-.home-btn {
+// Fluent 导航项
+.nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 14px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
+  gap: 12px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-ctrl);
   color: var(--sidebar-text);
   font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
-  &:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  white-space: nowrap;
+  transition: background 0.12s ease;
+  &:hover {
+    background: var(--sidebar-item-hover);
+    color: var(--text-primary);
+  }
+  &.active {
+    background: var(--sidebar-item-active);
+    color: var(--sidebar-text-active);
+    font-weight: 600;
+    // Fluent 左侧指示条
+    box-shadow: inset 2px 0 0 var(--primary);
+  }
 }
+.nav-text { overflow: hidden; }
 
-.main-area {
+.nav-footer {
+  padding: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--sidebar-border);
+}
+.home-btn { width: 100%; }
+
+// ===== 主区域 =====
+.main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+// 顶栏 — 亚克力
 .topbar {
-  height: 56px;
+  height: 48px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  background: var(--surface);
-  backdrop-filter: blur(var(--blur-amount)) saturate(var(--blur-saturate));
-  border-bottom: 1px solid var(--surface-border-soft);
+  padding: 0 16px;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border-bottom: 1px solid var(--sidebar-border);
 }
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.collapse-btn {
-  width: 34px; height: 34px;
-  border: 1px solid var(--surface-border-soft);
-  border-radius: var(--radius-sm);
-  background: var(--surface-3);
-  color: var(--text-secondary);
-  cursor: pointer;
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+
+// Fluent 图标按钮
+.icon-btn {
+  width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s ease;
-  &:hover { color: var(--primary); border-color: var(--primary); }
-}
-.page-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  border: none; border-radius: var(--radius-ctrl);
+  background: transparent; color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  &:hover { background: var(--sidebar-item-hover); color: var(--text-primary); }
+  &:active { background: var(--surface-active); }
 }
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.topbar-title {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
 }
-.user-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px 4px 4px;
-  border-radius: 100px;
-  background: var(--surface-2);
-  border: 1px solid var(--surface-border-soft);
-  cursor: pointer;
-  outline: none;
-  transition: all 0.15s ease;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  &:hover { background: var(--surface-hover); }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+// 用户胶囊
+.user-btn {
+  display: flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 8px 0 4px;
+  border: none; border-radius: var(--radius-ctrl);
+  background: transparent; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  transition: background 0.12s ease;
+  &:hover { background: var(--sidebar-item-hover); }
 }
-.user-icon {
-  width: 26px; height: 26px;
-  border-radius: 50%;
+.user-ava {
+  width: 24px; height: 24px; border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--primary));
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
 }
+.caret { color: var(--text-tertiary); }
 
 .content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
+  flex: 1; overflow-y: auto;
 }
 </style>

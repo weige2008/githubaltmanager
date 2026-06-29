@@ -136,9 +136,9 @@ powershell -File deploy.ps1</pre>
 
 .nav {
   position: sticky; top: 0; z-index: 50;
-  background: var(--surface);
-  backdrop-filter: blur(var(--blur-amount)) saturate(var(--blur-saturate));
-  border-bottom: 1px solid var(--surface-border-soft);
+  background: var(--topbar-bg, var(--surface));
+  backdrop-filter: blur(var(--blur)) saturate(var(--blur-sat));
+  border-bottom: 1px solid var(--sidebar-border, var(--border));
 }
 .nav-inner {
   max-width: 1200px; margin: 0 auto; padding: 12px 32px;
@@ -163,8 +163,8 @@ powershell -File deploy.ps1</pre>
 }
 .badge {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: 100px; font-size: 12px;
-  background: var(--surface-2); border: 1px solid var(--surface-border-soft);
+  padding: 5px 12px; border-radius: var(--radius-ctrl); font-size: 12px;
+  background: var(--surface-2); border: 1px solid var(--border);
   color: var(--text-secondary); margin-bottom: 20px;
 }
 .badge-dot {
@@ -257,7 +257,7 @@ h1 {
 
 .footer {
   text-align: center; padding: 40px 32px;
-  border-top: 1px solid var(--surface-border-soft);
+  border-top: 1px solid var(--border);
   color: var(--text-tertiary); font-size: 13px;
 }
 

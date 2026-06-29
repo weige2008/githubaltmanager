@@ -126,18 +126,18 @@ onMounted(checkStatus)
 }
 .back-btn {
   display: flex; align-items: center; gap: 4px;
-  padding: 6px 14px; border-radius: 100px;
+  padding: 6px 14px; border-radius: var(--radius-ctrl);
   background: var(--surface-2);
-  border: 1px solid var(--surface-border-soft);
+  border: 1px solid var(--border);
   color: var(--text-secondary); font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s ease;
+  cursor: pointer; transition: all 0.12s ease;
   &:hover { color: var(--primary); background: var(--surface-hover); }
 }
 
 .login-card {
   width: 400px;
   padding: 36px 32px 24px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
 }
 .login-header { text-align: center; margin-bottom: 24px; }
 .logo-circle {
@@ -151,7 +151,7 @@ h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text-prima
 p { margin: 0; font-size: 14px; color: var(--text-secondary); }
 .login-foot {
   margin-top: 20px; padding-top: 16px;
-  border-top: 1px solid var(--surface-border-soft);
+  border-top: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center; gap: 6px;
   font-size: 11px; color: var(--text-tertiary);
 }
