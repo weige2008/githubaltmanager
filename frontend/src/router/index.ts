@@ -3,15 +3,23 @@ import { useAppStore } from '@/stores/app'
 
 const routes: RouteRecordRaw[] = [
   {
+    // 公开主页（无需登录）
+    path: '/',
+    name: 'landing',
+    component: () => import('@/views/LandingView.vue'),
+    meta: { public: true, title: 'GitHub 账户管理器' }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
     meta: { public: true, title: '登录' }
   },
   {
-    path: '/',
+    // 控制台根路径，重定向到 dashboard
+    path: '/app',
     component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/dashboard',
+    redirect: '/app/dashboard',
     children: [
       {
         path: 'dashboard',
@@ -66,16 +74,28 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (_to.hash) return { el: _to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  }
 })
 
 router.beforeEach((to) => {
   const app = useAppStore()
+  // 受保护路由：必须登录
   if (!to.meta.public && !app.isLoggedIn) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
+  // 已登录用户访问登录页 → 直接进控制台
   if (to.name === 'login' && app.isLoggedIn) {
     return { name: 'dashboard' }
+  }
+  // 兼容旧路径（无 /app 前缀）→ 重定向到 /app/xxx
+  if (app.isLoggedIn && to.matched.length === 0 && !to.meta.public) {
+    const guess = '/app' + to.fullPath
+    return { path: guess }
   }
   if (to.meta.title) {
     document.title = `${to.meta.title} · GitHub 账户管理器`
@@ -84,7 +104,8 @@ router.beforeEach((to) => {
 
 export default router
 
-// 导出菜单项（供侧边栏使用）
-export const menuRoutes = routes
-  .find((r) => r.path === '/')
-  ?.children?.filter((r) => !r.meta?.hidden) ?? []
+// 侧边栏菜单项（仅控制台子路由，过滤 hidden）
+export const menuRoutes =
+  routes
+    .find((r) => r.path === '/app')
+    ?.children?.filter((r) => !r.meta?.hidden) ?? []

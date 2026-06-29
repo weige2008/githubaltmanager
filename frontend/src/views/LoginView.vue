@@ -67,83 +67,189 @@ async function handleSubmit() {
   }
 }
 
+function goHome() {
+  router.push('/')
+}
+
 onMounted(checkStatus)
 </script>
 
 <template>
   <div class="login-root">
-    <div class="login-card">
+    <!-- 背景装饰光斑 -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <!-- 返回主页 -->
+    <div class="back-home" @click="goHome">
+      <el-icon><ArrowLeftBold /></el-icon>
+      <span>返回主页</span>
+    </div>
+
+    <div class="login-card glass-card hover-lift">
       <div class="login-header">
-        <img src="/favicon.svg" alt="logo" />
+        <div class="logo-orb">
+          <img src="/favicon.svg" alt="logo" />
+        </div>
         <h2>GitHub 账户管理器</h2>
-        <p class="subtitle">{{ isSetupMode ? '首次使用，请设置主密码' : '请输入主密码登录' }}</p>
+        <p class="subtitle">
+          {{ isSetupMode ? '首次使用，请设置主密码' : '欢迎回来，请输入主密码登录' }}
+        </p>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleSubmit">
         <el-form-item label="主密码" prop="masterPassword">
-          <el-input v-model="form.masterPassword" type="password" show-password placeholder="请输入主密码" @keyup.enter="handleSubmit" />
+          <el-input
+            v-model="form.masterPassword"
+            type="password"
+            show-password
+            size="large"
+            placeholder="请输入主密码"
+            @keyup.enter="handleSubmit"
+          />
         </el-form-item>
 
         <el-form-item v-if="isSetupMode" label="确认密码" prop="confirmPassword">
-          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入主密码" @keyup.enter="handleSubmit" />
+          <el-input
+            v-model="form.confirmPassword"
+            type="password"
+            show-password
+            size="large"
+            placeholder="再次输入主密码"
+            @keyup.enter="handleSubmit"
+          />
         </el-form-item>
 
-        <el-alert v-if="isSetupMode" type="warning" :closable="false" class="tip">
-          主密码用于加密所有 token / 密码，<b>忘记后无法找回</b>。请妥善保管。
+        <el-alert v-if="isSetupMode" type="warning" :closable="false" class="tip" show-icon>
+          主密码用于加密所有 token / 密码，<b>忘记后无法找回</b>。请用密码管理器妥善保管。
         </el-alert>
 
-        <el-button type="primary" :loading="loading" class="submit-btn" @click="handleSubmit">
+        <el-button type="primary" size="large" :loading="loading" class="submit-btn" @click="handleSubmit">
           {{ isSetupMode ? '完成初始化' : '登 录' }}
         </el-button>
       </el-form>
+
+      <div class="login-footer">
+        <el-icon><Lock /></el-icon>
+        <span>AES-256-GCM 端到端加密 · Argon2id 密钥派生</span>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .login-root {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1f2a44 0%, #24292e 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+// 背景光斑
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: float 14s ease-in-out infinite;
+}
+.orb-1 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(0, 120, 212, 0.5), transparent 70%);
+  top: -120px; left: -100px;
+}
+.orb-2 {
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent 70%);
+  bottom: -180px; right: -120px;
+  animation-delay: -5s;
+}
+.orb-3 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(76, 194, 255, 0.35), transparent 70%);
+  top: 40%; left: 50%;
+  animation-delay: -9s;
+}
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.97); }
+}
+
+.back-home {
+  position: absolute; top: 24px; left: 28px; z-index: 10;
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  padding: 8px 14px; border-radius: 100px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  transition: all 0.2s var(--ease-fluent);
+  &:hover { color: var(--fluent-primary); background: rgba(255, 255, 255, 0.8); transform: translateX(-2px); }
 }
 
 .login-card {
-  width: 400px;
-  padding: 40px 32px 32px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  width: 440px;
+  padding: 44px 40px 32px;
+  position: relative;
+  z-index: 5;
+  border-radius: var(--radius-xl);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 24px;
-
-  img {
-    width: 56px;
-    height: 56px;
-  }
-
-  h2 {
-    margin: 12px 0 4px;
-    font-size: 20px;
-    color: #303133;
-  }
-
-  .subtitle {
-    color: #909399;
-    font-size: 13px;
-    margin: 0;
-  }
+  margin-bottom: 32px;
+}
+.logo-orb {
+  width: 72px; height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(76, 194, 255, 0.25), rgba(0, 120, 212, 0.2));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 120, 212, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  img { width: 40px; height: 40px; }
+}
+h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
 }
 
 .tip {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  border-radius: var(--radius-md);
 }
 
 .submit-btn {
   width: 100%;
+  height: 46px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--radius-md) !important;
+}
+
+.login-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>

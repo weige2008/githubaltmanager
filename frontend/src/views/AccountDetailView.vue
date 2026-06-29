@@ -77,7 +77,7 @@ onMounted(async () => {
 
 <template>
   <div class="page-container" v-loading="loading">
-    <el-page-header @back="router.push('/accounts')" class="mb-16">
+    <el-page-header @back="router.push('/app/accounts')" class="mb-16">
       <template #content>
         <span class="ph-title">
           <el-avatar :size="28" :src="acc?.avatar_url">{{ acc?.github_login?.[0]?.toUpperCase() }}</el-avatar>
@@ -136,7 +136,7 @@ onMounted(async () => {
             </el-table-column>
             <el-table-column label="操作" width="100" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" link @click="router.push(`/repos?rid=${row.id}`)">浏览</el-button>
+                <el-button size="small" link @click="router.push(`/app/repos?rid=${row.id}`)">浏览</el-button>
               </template>
             </el-table-column>
           </el-table>
