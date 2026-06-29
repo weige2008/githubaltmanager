@@ -45,17 +45,17 @@ func (c *Container) RunDueTasks() {
 	NewTaskService(c.DB).RunDueTasks(c)
 }
 
-// === AutoTaskRunner 接口实现 ===
+// === AutoTaskRunner 接口实现（间隔模式） ===
 
-func (c *Container) GetAutoConfig() (checkEnabled bool, checkCron string, syncEnabled bool, syncCron string) {
+func (c *Container) GetAutoConfig() (checkEnabled bool, checkInterval int, syncEnabled bool, syncInterval int) {
 	var cfg struct {
-		AutoCheckEnabled bool   `gorm:"column:auto_check_enabled"`
-		AutoCheckCron    string `gorm:"column:auto_check_cron"`
-		AutoSyncEnabled  bool   `gorm:"column:auto_sync_enabled"`
-		AutoSyncCron     string `gorm:"column:auto_sync_cron"`
+		AutoCheckEnabled  bool `gorm:"column:auto_check_enabled"`
+		AutoCheckInterval int  `gorm:"column:auto_check_interval"`
+		AutoSyncEnabled   bool `gorm:"column:auto_sync_enabled"`
+		AutoSyncInterval  int  `gorm:"column:auto_sync_interval"`
 	}
 	c.DB.Table("app_configs").First(&cfg, 1)
-	return cfg.AutoCheckEnabled, cfg.AutoCheckCron, cfg.AutoSyncEnabled, cfg.AutoSyncCron
+	return cfg.AutoCheckEnabled, cfg.AutoCheckInterval, cfg.AutoSyncEnabled, cfg.AutoSyncInterval
 }
 
 func (c *Container) RunAutoCheck() {

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/config"
@@ -24,6 +26,8 @@ func RegisterAutoTaskRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.PUT("", h.Update)
 		grp.POST("/check-now", h.RunCheckNow)
 		grp.POST("/sync-now", h.RunSyncNow)
+		grp.GET("/logs", h.GetLogs)
+		grp.GET("/running", h.GetRunning)
 	}
 }
 
@@ -42,11 +46,11 @@ func (h *AutoTaskHandler) Update(c *gin.Context) {
 		resp.BadRequest(c, "bad params", err)
 		return
 	}
-	if req.AutoCheckCron == "" {
-		req.AutoCheckCron = "0 8 * * *"
+	if req.AutoCheckInterval < 1 {
+		req.AutoCheckInterval = 1440
 	}
-	if req.AutoSyncCron == "" {
-		req.AutoSyncCron = "0 0 * * *"
+	if req.AutoSyncInterval < 1 {
+		req.AutoSyncInterval = 1440
 	}
 	if err := h.s.UpdateAutoTaskConfig(req); err != nil {
 		resp.Internal(c, "update failed", err)
@@ -63,4 +67,26 @@ func (h *AutoTaskHandler) RunCheckNow(c *gin.Context) {
 func (h *AutoTaskHandler) RunSyncNow(c *gin.Context) {
 	go h.s.RunAutoSync(h.c)
 	resp.OK(c, gin.H{"ok": true, "msg": "auto sync started"})
+}
+
+func (h *AutoTaskHandler) GetLogs(c *gin.Context) {
+	limit := 50
+	if l, err := strconv.Atoi(c.Query("limit")); err == nil && l > 0 {
+		limit = l
+	}
+	logs, err := h.s.GetLogs(limit)
+	if err != nil {
+		resp.Internal(c, "query logs failed", err)
+		return
+	}
+	resp.OK(c, logs)
+}
+
+func (h *AutoTaskHandler) GetRunning(c *gin.Context) {
+	task, err := h.s.GetRunningTask()
+	if err != nil {
+		resp.OK(c, gin.H{"running": false})
+		return
+	}
+	resp.OK(c, gin.H{"running": true, "task": task})
 }

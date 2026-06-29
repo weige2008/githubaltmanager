@@ -52,5 +52,6 @@ func autoMigrate(db *gorm.DB) error {
 		&model.Workflow{},
 		&model.ScheduledTask{},
 		&model.AuditLog{},
+		&model.AutoTaskLog{},
 	)
 }

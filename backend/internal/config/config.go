@@ -51,10 +51,10 @@ type SchedulerConfig struct {
 
 // AutoTaskConfig 自动任务配置（存储在数据库，前端可改）
 type AutoTaskConfig struct {
-	AutoCheckEnabled bool   `json:"auto_check_enabled"`
-	AutoCheckCron    string `json:"auto_check_cron"`
-	AutoSyncEnabled  bool   `json:"auto_sync_enabled"`
-	AutoSyncCron     string `json:"auto_sync_cron"`
+	AutoCheckEnabled  bool   `json:"auto_check_enabled"`
+	AutoCheckInterval int    `json:"auto_check_interval"`
+	AutoSyncEnabled   bool   `json:"auto_sync_enabled"`
+	AutoSyncInterval  int    `json:"auto_sync_interval"`
 }
 
 // Load 从环境变量加载配置，缺失时使用合理默认值

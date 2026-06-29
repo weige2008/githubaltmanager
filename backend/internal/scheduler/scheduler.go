@@ -12,9 +12,9 @@ type TaskRunner interface {
 	RunDueTasks()
 }
 
-// AutoTaskScheduler 可动态调度的自动任务运行器
+// AutoTaskRunner 间隔模式接口
 type AutoTaskRunner interface {
-	GetAutoConfig() (checkEnabled bool, checkCron string, syncEnabled bool, syncCron string)
+	GetAutoConfig() (checkEnabled bool, checkInterval int, syncEnabled bool, syncInterval int)
 	RunAutoCheck()
 	RunAutoSync()
 }
@@ -73,35 +73,55 @@ func Stop() {
 	log.Printf("[scheduler] stopped")
 }
 
-// === 自动任务调度（独立 cron 实例，支持动态更新） ===
+// === 自动任务调度（间隔模式） ===
 
 var (
-	autoCron    *cron.Cron
-	autoMu      sync.Mutex
-	autoRunning bool
-	autoEntryID cron.EntryID
+	lastCheckTime   time.Time
+	lastSyncTime    time.Time
+	autoRunning     bool
+	autoMu          sync.Mutex
+	autoStopChan    chan struct{}
 )
 
-// StartAutoScheduler 启动自动任务调度器（每分钟检查配置变化）
+// StartAutoScheduler 启动自动任务调度（间隔模式，每 30 秒检查是否该执行）
 func StartAutoScheduler(runner AutoTaskRunner) {
 	autoMu.Lock()
 	defer autoMu.Unlock()
 	if autoRunning {
 		return
 	}
-	autoCron = cron.New(cron.WithLocation(time.Local))
-	autoCron.Start()
+	autoStopChan = make(chan struct{})
 	autoRunning = true
-	log.Printf("[auto-scheduler] started")
+	log.Printf("[auto-scheduler] started (interval mode)")
 
-	// 每 60 秒检查一次配置，按需添加/移除任务
 	go func() {
-		ticker := time.NewTicker(60 * time.Second)
+		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
-		// 启动后立即执行一次
-		syncAutoTasks(runner)
-		for range ticker.C {
-			syncAutoTasks(runner)
+		for {
+			select {
+			case <-ticker.C:
+				checkEnabled, checkInterval, syncEnabled, syncInterval := runner.GetAutoConfig()
+				now := time.Now()
+
+				if checkEnabled && checkInterval > 0 {
+					next := lastCheckTime.Add(time.Duration(checkInterval) * time.Minute)
+					if now.After(next) || lastCheckTime.IsZero() {
+						lastCheckTime = now
+						go runner.RunAutoCheck()
+					}
+				}
+
+				if syncEnabled && syncInterval > 0 {
+					next := lastSyncTime.Add(time.Duration(syncInterval) * time.Minute)
+					if now.After(next) || lastSyncTime.IsZero() {
+						lastSyncTime = now
+						go runner.RunAutoSync()
+					}
+				}
+
+			case <-autoStopChan:
+				return
+			}
 		}
 	}()
 }
@@ -109,50 +129,10 @@ func StartAutoScheduler(runner AutoTaskRunner) {
 func StopAutoScheduler() {
 	autoMu.Lock()
 	defer autoMu.Unlock()
-	if !autoRunning || autoCron == nil {
+	if !autoRunning {
 		return
 	}
-	autoCron.Stop()
+	close(autoStopChan)
 	autoRunning = false
 	log.Printf("[auto-scheduler] stopped")
-}
-
-// syncAutoTasks 根据当前配置动态注册自动检测/同步任务
-func syncAutoTasks(runner AutoTaskRunner) {
-	checkEnabled, checkCron, syncEnabled, syncCron := runner.GetAutoConfig()
-
-	autoMu.Lock()
-	defer autoMu.Unlock()
-	if autoCron == nil {
-		return
-	}
-
-	// 先移除旧的
-	for _, e := range autoCron.Entries() {
-		autoCron.Remove(e.ID)
-	}
-
-	if checkEnabled && checkCron != "" {
-		cr := checkCron
-		if _, err := autoCron.AddFunc(cr, func() {
-			log.Printf("[auto-scheduler] 触发自动检测 (cron=%s)", cr)
-			runner.RunAutoCheck()
-		}); err != nil {
-			log.Printf("[auto-scheduler] 注册自动检测失败 (cron=%s): %v", cr, err)
-		} else {
-			log.Printf("[auto-scheduler] 已注册自动检测 (cron=%s)", cr)
-		}
-	}
-
-	if syncEnabled && syncCron != "" {
-		cr := syncCron
-		if _, err := autoCron.AddFunc(cr, func() {
-			log.Printf("[auto-scheduler] 触发自动同步 (cron=%s)", cr)
-			runner.RunAutoSync()
-		}); err != nil {
-			log.Printf("[auto-scheduler] 注册自动同步失败 (cron=%s): %v", cr, err)
-		} else {
-			log.Printf("[auto-scheduler] 已注册自动同步 (cron=%s)", cr)
-		}
-	}
 }

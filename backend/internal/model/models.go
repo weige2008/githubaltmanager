@@ -15,13 +15,25 @@ type AppConfig struct {
 	MasterPasswordHash string `gorm:"column:master_password_hash;type:text;not null" json:"-"`
 	IsInitialized      bool   `gorm:"column:is_initialized;not null;default:false" json:"is_initialized"`
 
-	// 自动任务设置
-	AutoCheckEnabled bool   `gorm:"column:auto_check_enabled;not null;default:false" json:"auto_check_enabled"`
-	AutoCheckCron    string `gorm:"column:auto_check_cron;size:100;default:'0 8 * * *'" json:"auto_check_cron"`
-	AutoSyncEnabled  bool   `gorm:"column:auto_sync_enabled;not null;default:true" json:"auto_sync_enabled"`
-	AutoSyncCron     string `gorm:"column:auto_sync_cron;size:100;default:'0 0 * * *'" json:"auto_sync_cron"`
-	AutoSyncLastAt   *time.Time `gorm:"column:auto_sync_last_at" json:"auto_sync_last_at"`
-	AutoCheckLastAt  *time.Time `gorm:"column:auto_check_last_at" json:"auto_check_last_at"`
+	// 自动任务设置 — 间隔模式（分钟）
+	AutoCheckEnabled  bool   `gorm:"column:auto_check_enabled;not null;default:false" json:"auto_check_enabled"`
+	AutoCheckInterval int    `gorm:"column:auto_check_interval;default:1440" json:"auto_check_interval"`
+	AutoSyncEnabled   bool   `gorm:"column:auto_sync_enabled;not null;default:true" json:"auto_sync_enabled"`
+	AutoSyncInterval  int    `gorm:"column:auto_sync_interval;default:1440" json:"auto_sync_interval"`
+	AutoSyncLastAt    *time.Time `gorm:"column:auto_sync_last_at" json:"auto_sync_last_at"`
+	AutoCheckLastAt   *time.Time `gorm:"column:auto_check_last_at" json:"auto_check_last_at"`
+}
+
+// AutoTaskLog 自动任务执行日志
+type AutoTaskLog struct {
+	BaseModel
+	TaskType   string `gorm:"column:task_type;size:20;not null;index" json:"task_type"`  // check / sync
+	Status     string `gorm:"column:status;size:20;not null" json:"status"`               // running / success / failed
+	TotalCount int    `gorm:"column:total_count;default:0" json:"total_count"`
+	SuccessCnt int    `gorm:"column:success_cnt;default:0" json:"success_cnt"`
+	FailedCnt  int    `gorm:"column:failed_cnt;default:0" json:"failed_cnt"`
+	Duration   int64  `gorm:"column:duration;default:0" json:"duration_ms"`               // 毫秒
+	Detail     string `gorm:"column:detail;type:text" json:"detail"`
 }
 
 // Account GitHub 账户
