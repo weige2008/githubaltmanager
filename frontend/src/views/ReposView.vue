@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { repoApi, type DirEntry, type FileContent, type Repo, type Workflow } from '@/api/repo'
 import { accountApi } from '@/api/account'
 
@@ -23,6 +24,20 @@ const workflows = ref<Workflow[]>([])
 const wfVisible = ref(false)
 
 const repoDetail = computed(() => repos.value.find((r) => r.id === selectedRepo.value))
+const syncing = ref(false)
+
+async function syncRepos() {
+  if (!selectedAcc.value) return
+  syncing.value = true
+  try {
+    const res = await repoApi.refreshRepos(selectedAcc.value)
+    ElMessage.success(`同步完成：${res.total} 个仓库`)
+    await loadRepos()
+  } catch {
+  } finally {
+    syncing.value = false
+  }
+}
 
 async function loadAccounts() {
   accLoading.value = true
@@ -164,12 +179,23 @@ onMounted(loadAccounts)
         <el-select v-model="selectedAcc" placeholder="选择账户" style="width: 200px" :loading="accLoading">
           <el-option v-for="a in accounts" :key="a.id" :label="a.github_login" :value="a.id" />
         </el-select>
-        <span>仓库:</span>
-        <el-select v-model="selectedRepo" placeholder="选择仓库" style="width: 320px" filterable>
-          <el-option v-for="r in repos" :key="r.id" :label="r.full_name" :value="r.id" />
-        </el-select>
-        <el-button size="small" @click="loadWorkflows" :disabled="!selectedRepo">Workflows</el-button>
-        <a v-if="repoDetail" :href="repoDetail.html_url" target="_blank" class="gh-link">在 GitHub 打开 ↗</a>
+        <el-button size="small" :icon="Refresh" :loading="syncing" @click="syncRepos" :disabled="!selectedAcc">
+          {{ syncing ? '同步中...' : '同步仓库' }}
+        </el-button>
+        <template v-if="repos.length > 0">
+          <span>仓库:</span>
+          <el-select v-model="selectedRepo" placeholder="选择仓库" style="width: 320px" filterable>
+            <el-option v-for="r in repos" :key="r.id" :label="r.full_name" :value="r.id" />
+          </el-select>
+          <el-button size="small" @click="loadWorkflows" :disabled="!selectedRepo">Workflows</el-button>
+          <a v-if="repoDetail" :href="repoDetail.html_url" target="_blank" class="gh-link">在 GitHub 打开 ↗</a>
+        </template>
+      </div>
+      <!-- 空状态：仓库未同步 -->
+      <div v-if="selectedAcc && repos.length === 0 && !syncing" class="empty-repos">
+        <el-icon :size="32" color="var(--text-tertiary)"><FolderOpened /></el-icon>
+        <p>该账户还没有同步过仓库</p>
+        <el-button type="primary" size="small" :icon="Refresh" @click="syncRepos">立即同步</el-button>
       </div>
     </el-card>
 
@@ -251,6 +277,11 @@ onMounted(loadAccounts)
 
 <style scoped lang="scss">
 .gh-link { color: var(--primary); font-size: 13px; font-weight: 500; }
+.empty-repos {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 32px 16px; text-align: center;
+  p { color: var(--text-tertiary); font-size: 13px; margin: 0; }
+}
 .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
 .breadcrumb .sep { color: var(--text-tertiary); margin: 0 2px; }
 .file-list { max-height: 480px; overflow-y: auto; }

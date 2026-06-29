@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Refresh, RefreshRight, QuestionFilled, CopyDocument } from '@element-plus/icons-vue'
 import { accountApi, type Account } from '@/api/account'
+import { repoApi } from '@/api/repo'
 
 const router = useRouter()
 const loading = ref(false)
@@ -117,6 +118,14 @@ async function doImport() {
     ElMessage.success(`导入成功：${acc.github_login}`)
     importVisible.value = false
     load()
+    // 自动同步仓库
+    try {
+      const res = await repoApi.refreshRepos(acc.id)
+      ElMessage.success(`已自动同步 ${res.total} 个仓库`)
+      load()
+    } catch {
+      ElMessage.warning('仓库自动同步失败，请稍后手动同步')
+    }
   } finally {
     importing.value = false
   }
