@@ -153,7 +153,7 @@ onMounted(load)
         </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="router.push(`/app/accounts/${row.id}`)">详情</el-button>
+            <el-button size="small" @click="router.push(`/accounts/${row.id}`)">详情</el-button>
             <el-button size="small" type="primary" plain @click="checkStatus(row.id)">检测</el-button>
             <el-button size="small" type="danger" plain @click="remove(row.id, row.github_login)">删除</el-button>
           </template>

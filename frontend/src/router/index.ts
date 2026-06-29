@@ -1,9 +1,19 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 
+// 控制台子路由定义（供菜单和布局共用）
+export const consoleChildren: RouteRecordRaw[] = [
+  { path: '/dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '仪表盘', icon: 'Odometer' } },
+  { path: '/accounts', name: 'accounts', component: () => import('@/views/AccountsView.vue'), meta: { title: '账户管理', icon: 'User' } },
+  { path: '/accounts/:id', name: 'account-detail', component: () => import('@/views/AccountDetailView.vue'), meta: { title: '账户详情', hidden: true } },
+  { path: '/repos', name: 'repos', component: () => import('@/views/ReposView.vue'), meta: { title: '仓库浏览', icon: 'FolderOpened' } },
+  { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue'), meta: { title: '定时任务', icon: 'AlarmClock' } },
+  { path: '/batch', name: 'batch', component: () => import('@/views/BatchView.vue'), meta: { title: '批量操作', icon: 'Operation' } },
+  { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: '设置', icon: 'Setting' } }
+]
+
 const routes: RouteRecordRaw[] = [
   {
-    // 公开主页（无需登录）
     path: '/',
     name: 'landing',
     component: () => import('@/views/LandingView.vue'),
@@ -15,55 +25,39 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LoginView.vue'),
     meta: { public: true, title: '登录' }
   },
+  // 控制台路由——每条都套 MainLayout
   {
-    // 控制台根路径，重定向到 dashboard
-    path: '/app',
+    path: '/dashboard',
     component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/app/dashboard',
+    children: [{ path: '', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '仪表盘', icon: 'Odometer' } }]
+  },
+  {
+    path: '/accounts',
+    component: () => import('@/layouts/MainLayout.vue'),
     children: [
-      {
-        path: 'dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/DashboardView.vue'),
-        meta: { title: '仪表盘', icon: 'Odometer' }
-      },
-      {
-        path: 'accounts',
-        name: 'accounts',
-        component: () => import('@/views/AccountsView.vue'),
-        meta: { title: '账户管理', icon: 'User' }
-      },
-      {
-        path: 'accounts/:id',
-        name: 'account-detail',
-        component: () => import('@/views/AccountDetailView.vue'),
-        meta: { title: '账户详情', hidden: true }
-      },
-      {
-        path: 'repos',
-        name: 'repos',
-        component: () => import('@/views/ReposView.vue'),
-        meta: { title: '仓库浏览', icon: 'FolderOpened' }
-      },
-      {
-        path: 'tasks',
-        name: 'tasks',
-        component: () => import('@/views/TasksView.vue'),
-        meta: { title: '定时任务', icon: 'AlarmClock' }
-      },
-      {
-        path: 'batch',
-        name: 'batch',
-        component: () => import('@/views/BatchView.vue'),
-        meta: { title: '批量操作', icon: 'Operation' }
-      },
-      {
-        path: 'settings',
-        name: 'settings',
-        component: () => import('@/views/SettingsView.vue'),
-        meta: { title: '设置', icon: 'Setting' }
-      }
+      { path: '', name: 'accounts', component: () => import('@/views/AccountsView.vue'), meta: { title: '账户管理', icon: 'User' } },
+      { path: ':id', name: 'account-detail', component: () => import('@/views/AccountDetailView.vue'), meta: { title: '账户详情', hidden: true } }
     ]
+  },
+  {
+    path: '/repos',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [{ path: '', name: 'repos', component: () => import('@/views/ReposView.vue'), meta: { title: '仓库浏览', icon: 'FolderOpened' } }]
+  },
+  {
+    path: '/tasks',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [{ path: '', name: 'tasks', component: () => import('@/views/TasksView.vue'), meta: { title: '定时任务', icon: 'AlarmClock' } }]
+  },
+  {
+    path: '/batch',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [{ path: '', name: 'batch', component: () => import('@/views/BatchView.vue'), meta: { title: '批量操作', icon: 'Operation' } }]
+  },
+  {
+    path: '/settings',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [{ path: '', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: '设置', icon: 'Setting' } }]
   },
   {
     path: '/:pathMatch(.*)*',
@@ -84,18 +78,13 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const app = useAppStore()
-  // 受保护路由：必须登录
-  if (!to.meta.public && !app.isLoggedIn) {
+  // 需要登录的控制台路由
+  const protectedRoutes = ['dashboard', 'accounts', 'account-detail', 'repos', 'tasks', 'batch', 'settings']
+  if (protectedRoutes.includes(to.name as string) && !app.isLoggedIn) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
-  // 已登录用户访问登录页 → 直接进控制台
   if (to.name === 'login' && app.isLoggedIn) {
     return { name: 'dashboard' }
-  }
-  // 兼容旧路径（无 /app 前缀）→ 重定向到 /app/xxx
-  if (app.isLoggedIn && to.matched.length === 0 && !to.meta.public) {
-    const guess = '/app' + to.fullPath
-    return { path: guess }
   }
   if (to.meta.title) {
     document.title = `${to.meta.title} · GitHub 账户管理器`
@@ -104,8 +93,4 @@ router.beforeEach((to) => {
 
 export default router
 
-// 侧边栏菜单项（仅控制台子路由，过滤 hidden）
-export const menuRoutes =
-  routes
-    .find((r) => r.path === '/app')
-    ?.children?.filter((r) => !r.meta?.hidden) ?? []
+export const menuRoutes = consoleChildren.filter((r) => !r.meta?.hidden)
