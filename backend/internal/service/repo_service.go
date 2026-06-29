@@ -97,6 +97,10 @@ func (s *RepoService) RefreshRepos(c *Container, accountID uint) (int, error) {
 		}(r)
 	}
 	wg.Wait()
+
+	// 同步完仓库后，自动扫描 workflow
+	s.scanWorkflowsInternal(c, accountID)
+
 	return count, nil
 }
 
@@ -201,10 +205,15 @@ func (s *RepoService) ScanWorkflows(c *Container, accountID uint) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		repos, err = s.ListByAccount(accountID)
-		if err != nil {
-			return 0, err
-		}
+	}
+	return s.scanWorkflowsInternal(c, accountID)
+}
+
+// scanWorkflowsInternal 实际扫描逻辑（被 RefreshRepos 和 ScanWorkflows 共用）
+func (s *RepoService) scanWorkflowsInternal(c *Container, accountID uint) (int, error) {
+	repos, err := s.ListByAccount(accountID)
+	if err != nil || len(repos) == 0 {
+		return 0, err
 	}
 
 	ghc, _, err := s.GetClient(c, accountID)
@@ -224,7 +233,6 @@ func (s *RepoService) ScanWorkflows(c *Container, accountID uint) (int, error) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			// 跳过归档/禁用的仓库（无 actions 权限）
 			if repo.Archived || repo.Disabled {
 				return
 			}
@@ -232,11 +240,9 @@ func (s *RepoService) ScanWorkflows(c *Container, accountID uint) (int, error) {
 			if err != nil || code >= 400 {
 				return
 			}
-			// 获取最近一次运行状态
 			runs, _, _ := ghc.ListWorkflowRuns(repo.OwnerLogin, repo.Name, 5)
 
 			for _, w := range list.Workflows {
-				// 解析 filename
 				filename := w.Path
 				if idx := strings.LastIndex(filename, "/"); idx >= 0 {
 					filename = filename[idx+1:]
@@ -256,7 +262,6 @@ func (s *RepoService) ScanWorkflows(c *Container, accountID uint) (int, error) {
 						rec.LastRunAt = &t
 					}
 				}
-				// upsert
 				var found model.Workflow
 				if e := s.DB.Where("repository_id = ? AND path = ?", repo.ID, w.Path).First(&found).Error; errors.Is(e, gorm.ErrRecordNotFound) {
 					s.DB.Create(&rec)
