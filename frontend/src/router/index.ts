@@ -56,6 +56,11 @@ const routes: RouteRecordRaw[] = [
     children: [{ path: '', name: 'batch', component: () => import('@/views/BatchView.vue'), meta: { title: '批量操作', icon: 'Operation' } }]
   },
   {
+    path: '/automation',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [{ path: '', name: 'automation', component: () => import('@/views/AutomationView.vue'), meta: { title: '自动化日志', icon: 'Timer' } }]
+  },
+  {
     path: '/settings',
     component: () => import('@/layouts/MainLayout.vue'),
     children: [{ path: '', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: '设置', icon: 'Setting' } }]
@@ -79,8 +84,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const app = useAppStore()
-  // 需要登录的控制台路由
-  const protectedRoutes = ['dashboard', 'accounts', 'account-detail', 'repos', 'tasks', 'batch', 'settings']
+  const protectedRoutes = ['dashboard', 'accounts', 'account-detail', 'repos', 'tasks', 'batch', 'automation', 'settings']
   if (protectedRoutes.includes(to.name as string) && !app.isLoggedIn) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
