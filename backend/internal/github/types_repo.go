@@ -35,14 +35,14 @@ type Permissions struct {
 	Pull  bool `json:"pull"`
 }
 
-// ListAllRepos 列出 token 可见所有仓库（个人 + 协作者 + 组织），自动分页
-// perPage 最大 100
+// ListAllRepos 列出 token 可见所有仓库（个人 + 协作者 + 组织 + 公开仓库的 fork）。
+// 使用 type=all 确保最大化覆盖范围。自动分页。
 func (c *Client) ListAllRepos() ([]Repo, error) {
 	var all []Repo
 	page := 1
 	perPage := 100
 	for {
-		path := fmt.Sprintf("/user/repos?per_page=%d&page=%d&sort=updated&affiliation=owner,collaborator,organization_member", perPage, page)
+		path := fmt.Sprintf("/user/repos?per_page=%d&page=%d&sort=updated&type=all", perPage, page)
 		var batch []Repo
 		code, err := c.Get(path, &batch)
 		if err != nil {
@@ -56,7 +56,7 @@ func (c *Client) ListAllRepos() ([]Repo, error) {
 			break
 		}
 		page++
-		if page > 50 { // 安全上限
+		if page > 50 {
 			break
 		}
 	}
