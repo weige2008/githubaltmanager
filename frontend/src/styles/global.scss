@@ -97,64 +97,96 @@
 
 // ========================================
 // 主题 B：Glassmorphism（深色玻璃态）
+// 设计 DNA：雾面玻璃卡片 + 深色渐变背景 + 霓虹高光 + 内光晕
+// 透明度梯度 0.03–0.12，渐变描边，悬浮发光
 // ========================================
 :root[data-theme='glass'] {
-  --bg-base: #0a0e1a;
-  --bg-tint: linear-gradient(135deg, #080b16 0%, #0c1020 50%, #0a0e1a 100%);
+  // 背景 — 深色 + 多层彩色光斑（营造通透感与深度）
+  --bg-base: #070a14;
+  --bg-tint: linear-gradient(135deg, #050811 0%, #0a0f1e 40%, #080c18 70%, #060912 100%);
 
-  --surface: rgba(255, 255, 255, 0.06);
-  --surface-2: rgba(255, 255, 255, 0.04);
+  // 玻璃表面 — 透明度梯度（提示词要求 0.05–0.2）
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-2: rgba(255, 255, 255, 0.05);
   --surface-3: rgba(255, 255, 255, 0.03);
-  --surface-hover: rgba(255, 255, 255, 0.1);
-  --surface-active: rgba(255, 255, 255, 0.08);
+  --surface-hover: rgba(255, 255, 255, 0.12);
+  --surface-active: rgba(255, 255, 255, 0.06);
 
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --border-highlight: rgba(255, 255, 255, 0.2);
+  // 渐变描边 — 顶部高光 + 整体微白
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-highlight: rgba(255, 255, 255, 0.25);
+  // 玻璃卡片专属：内光晕色
+  --glow-inner: inset 0 1px 1px rgba(255, 255, 255, 0.08), inset 0 0 20px rgba(255, 255, 255, 0.02);
 
-  --sidebar-bg: rgba(10, 14, 26, 0.92);
+  // 侧边栏 — 深色玻璃
+  --sidebar-bg: rgba(8, 11, 22, 0.85);
   --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-text: rgba(255, 255, 255, 0.7);
+  --sidebar-text: rgba(255, 255, 255, 0.65);
   --sidebar-text-active: #4cc2ff;
   --sidebar-item-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-item-active: rgba(76, 194, 255, 0.12);
+  --sidebar-item-active: rgba(76, 194, 255, 0.1);
 
-  --topbar-bg: rgba(255, 255, 255, 0.04);
+  // 顶栏
+  --topbar-bg: rgba(10, 14, 26, 0.55);
 
-  --text-primary: #f0f4ff;
-  --text-secondary: #a8b3cf;
-  --text-tertiary: #6b7591;
+  // 文字 — 高对比
+  --text-primary: #eef2ff;
+  --text-secondary: #9ba8c4;
+  --text-tertiary: #5f6b85;
 
+  // 霓虹强调色
   --primary: #4cc2ff;
-  --primary-hover: #7dd4ff;
-  --primary-pressed: #3ab5f0;
-  --primary-light: rgba(76, 194, 255, 0.1);
+  --primary-hover: #6dd5ff;
+  --primary-pressed: #38b4e8;
+  --primary-light: rgba(76, 194, 255, 0.12);
   --primary-lighter: rgba(76, 194, 255, 0.06);
   --accent: #c084fc;
 
-  --shadow-resting: 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.4);
-  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 1px rgba(76, 194, 255, 0.2);
-  --shadow-flyout: 0 8px 32px rgba(0, 0, 0, 0.5), 0 16px 56px rgba(0, 0, 0, 0.4);
-  --shadow-dialog: 0 28px 80px rgba(0, 0, 0, 0.6);
+  // 阴影 — 玻璃悬浮（外阴影 + 彩色光晕）
+  --shadow-resting:
+    0 4px 16px rgba(0, 0, 0, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.25),
+    var(--glow-inner);
+  --shadow-hover:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 2px 8px rgba(76, 194, 255, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  --shadow-flyout:
+    0 16px 56px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  --shadow-dialog:
+    0 32px 80px rgba(0, 0, 0, 0.6),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  // CTA 发光
+  --glow-cta: 0 0 20px rgba(76, 194, 255, 0.35), 0 0 40px rgba(76, 194, 255, 0.15);
 
-  --radius-ctrl: 8px;
-  --radius-card: 14px;
+  // 圆角 — 大圆角增强通透感
+  --radius-ctrl: 10px;
+  --radius-card: 16px;
 
-  --blur: 32px;
+  // 模糊 — 高斯模糊更深
+  --blur: 24px;
   --blur-sat: 180%;
 
+  // 表格
   --table-header: rgba(255, 255, 255, 0.04);
-  --table-row-hover: rgba(76, 194, 255, 0.05);
+  --table-row-hover: rgba(76, 194, 255, 0.06);
 
+  // 输入
   --input-bg: rgba(255, 255, 255, 0.05);
   --input-border: rgba(255, 255, 255, 0.1);
   --input-border-hover: rgba(255, 255, 255, 0.2);
   --input-border-focus: var(--primary);
 
-  --dialog-overlay: rgba(0, 0, 0, 0.6);
-  --loading-mask: rgba(10, 14, 26, 0.72);
+  // 遮罩
+  --dialog-overlay: rgba(3, 5, 12, 0.7);
+  --loading-mask: rgba(7, 10, 20, 0.75);
 
-  --hover-transform: translateY(-3px);
+  // hover 行为
+  --hover-transform: translateY(-4px);
 
   // 兼容
   --surface-border: var(--border);
@@ -191,13 +223,15 @@ body {
   min-height: 100vh;
 }
 
-// Glass 主题额外加彩色光斑
+// Glass 背景：深色渐变 + 多层彩色光斑（青/紫/粉），营造通透感与深度
 :root[data-theme='glass'] body {
   background:
-    radial-gradient(at 15% 15%, rgba(76, 194, 255, 0.12) 0px, transparent 45%),
-    radial-gradient(at 85% 20%, rgba(192, 132, 252, 0.1) 0px, transparent 45%),
-    radial-gradient(at 50% 90%, rgba(236, 72, 153, 0.06) 0px, transparent 45%),
-    var(--bg-base);
+    radial-gradient(ellipse 600px 400px at 10% 10%, rgba(76, 194, 255, 0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 500px at 90% 15%, rgba(192, 132, 252, 0.11) 0%, transparent 55%),
+    radial-gradient(ellipse 500px 400px at 70% 85%, rgba(236, 72, 153, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 400px 300px at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    var(--bg-tint), var(--bg-base);
+  background-attachment: fixed;
 }
 
 * { box-sizing: border-box; }
@@ -227,22 +261,44 @@ code { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-resting);
-  // Fluent 标志：顶部高光（光从上方来）
   position: relative;
+  // 顶部高光（光从上方来）
   &::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-highlight), transparent);
     border-radius: var(--radius-card) var(--radius-card) 0 0;
     pointer-events: none;
   }
-  transition: box-shadow 0.2s var(--ease-fluent, ease), transform 0.2s ease;
+  transition: box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Glass 主题专属卡片增强：内光晕 + 渐变描边
+:root[data-theme='glass'] .glass-card {
+  // 渐变描边（用 ::after 模拟 border-image）
+  border-color: transparent;
+  &::after {
+    content: ''; position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.12) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .hover-lift {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   &:hover {
     transform: var(--hover-transform);
     box-shadow: var(--shadow-hover);
+  }
+  // Glass 主题：active 缩放 0.98
+  &:active {
+    transform: scale(0.98);
   }
 }
 
@@ -506,3 +562,98 @@ code { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
 
 // Element Plus 菜单（侧边栏用原生 nav，这里仅为兼容）
 .el-menu { background: transparent !important; border-right: none !important; }
+
+// ============================================================
+// Glass 主题专属增强
+// 内光晕 · 渐变描边 · 霓虹高光 · CTA 发光 · active 缩放
+// ============================================================
+:root[data-theme='glass'] {
+  // 卡片 — 内光晕 + 渐变描边
+  .el-card {
+    border-color: transparent !important;
+    &::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.1) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none; z-index: 0;
+    }
+  }
+
+  // 按钮 — CTA 悬停发光 + active 缩放 0.98
+  .el-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    &.el-button--primary {
+      box-shadow: 0 2px 8px rgba(76, 194, 255, 0.2);
+      &:hover {
+        box-shadow: var(--glow-cta);
+        filter: brightness(1.08);
+      }
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 0 12px rgba(76, 194, 255, 0.25);
+      }
+    }
+    // 默认按钮 hover 轻微提亮
+    &:not(.el-button--primary):not(.el-button--danger):not(.el-button--text):hover {
+      box-shadow: 0 2px 12px rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  // 输入框 — 聚焦时霓虹发光
+  .el-input__wrapper.is-focus {
+    box-shadow: 0 0 0 2px var(--primary) inset, 0 0 16px rgba(76, 194, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  // 对话框 — 渐变描边
+  .el-dialog {
+    border-color: transparent !important;
+    &::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.12) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none; z-index: 0;
+    }
+  }
+
+  // 输入聚焦 textarega
+  .el-textarea__inner:focus {
+    box-shadow: 0 0 0 2px var(--primary) inset, 0 0 16px rgba(76, 194, 255, 0.12) !important;
+  }
+
+  // 下拉菜单 — 渐变描边
+  .el-dropdown-menu, .el-popper.is-light {
+    border-color: transparent !important;
+    &::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.03) 50%, rgba(255,255,255,0.1) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none; z-index: 0;
+    }
+  }
+
+  // 消息 — 发光
+  .el-message {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px rgba(76, 194, 255, 0.1),
+                inset 0 1px 1px rgba(255, 255, 255, 0.06) !important;
+  }
+
+  // 标签页 active bar 发光
+  .el-tabs__active-bar {
+    box-shadow: 0 0 8px rgba(76, 194, 255, 0.4);
+  }
+
+  // 头像 — 发光边缘
+  .el-avatar {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 12px rgba(76, 194, 255, 0.15);
+  }
+}
