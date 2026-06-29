@@ -188,9 +188,16 @@ onMounted(load)
 </template>
 
 <style scoped lang="scss">
-.toolbar .count { color: #909399; font-size: 13px; }
+.toolbar { padding: 4px 0 16px; }
+.toolbar .count {
+  color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+  background: var(--surface-3); padding: 4px 12px; border-radius: 100px;
+}
 .acc-cell { display: flex; align-items: center; gap: 10px; }
-.acc-login { font-weight: 600; color: #303133; }
-.acc-name { font-size: 12px; color: #909399; }
-.token-mask { font-size: 12px; color: #606266; }
+.acc-login { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.acc-name { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.token-mask {
+  font-size: 12px; color: var(--text-secondary);
+  background: var(--surface-3); padding: 2px 8px; border-radius: var(--radius-ctrl);
+}
 </style>

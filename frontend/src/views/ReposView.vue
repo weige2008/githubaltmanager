@@ -250,18 +250,19 @@ onMounted(loadAccounts)
 </template>
 
 <style scoped lang="scss">
-.gh-link { color: #409eff; font-size: 13px; }
+.gh-link { color: var(--primary); font-size: 13px; font-weight: 500; }
 .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
-.breadcrumb .sep { color: #909399; margin: 0 2px; }
+.breadcrumb .sep { color: var(--text-tertiary); margin: 0 2px; }
 .file-list { max-height: 480px; overflow-y: auto; }
 .file-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 8px; cursor: pointer; border-radius: 4px;
-  &:hover { background: #f5f7fa; }
-  &.dir .fname { font-weight: 600; color: #409eff; }
+  padding: 7px 10px; cursor: pointer; border-radius: var(--radius-ctrl);
+  transition: background 0.12s ease;
+  &:hover { background: var(--primary-lighter); }
+  &.dir .fname { font-weight: 600; color: var(--primary); }
 }
-.fname { font-size: 13px; }
-.muted { color: #909399; }
+.fname { font-size: 13px; color: var(--text-secondary); }
+.muted { color: var(--text-tertiary); }
 .editor :deep(textarea) { tab-size: 2; }
 .commit-bar { margin-top: 12px; }
 </style>

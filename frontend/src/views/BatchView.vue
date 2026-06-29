@@ -207,5 +207,6 @@ onMounted(load)
 </template>
 
 <style scoped lang="scss">
-.count { color: #909399; font-size: 13px; }
+.count { color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+  background: var(--surface-3); padding: 4px 12px; border-radius: 100px; }
 </style>

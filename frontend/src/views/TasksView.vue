@@ -172,7 +172,8 @@ onMounted(load)
 </template>
 
 <style scoped lang="scss">
-.count { color: #909399; font-size: 13px; }
-.wf { font-size: 12px; color: #606266; }
-.hint { font-size: 12px; color: #909399; margin-top: 4px; }
+.count { color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+  background: var(--surface-3); padding: 4px 12px; border-radius: 100px; }
+.wf { font-size: 12px; color: var(--text-secondary); }
+.hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
 </style>

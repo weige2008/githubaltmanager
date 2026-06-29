@@ -148,8 +148,9 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .ph-title { display: inline-flex; align-items: center; gap: 8px; }
-.count { color: #909399; font-size: 13px; }
+.count { color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+  background: var(--surface-3); padding: 4px 12px; border-radius: 100px; }
 .scope-tag { margin-right: 4px; }
-.repo-link { color: #409eff; }
+.repo-link { color: var(--primary); font-weight: 500; }
 .repo-flags { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
 </style>
