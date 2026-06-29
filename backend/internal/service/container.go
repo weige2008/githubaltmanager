@@ -40,8 +40,34 @@ func (c *Container) EnsureUnlocked() error {
 // RunDueTasks 实现 scheduler.TaskRunner 接口：执行到期定时任务
 func (c *Container) RunDueTasks() {
 	if !crypto.IsUnlocked() {
-		// 未登录态下不执行（无法解密 token）
 		return
 	}
 	NewTaskService(c.DB).RunDueTasks(c)
+}
+
+// === AutoTaskRunner 接口实现 ===
+
+func (c *Container) GetAutoConfig() (checkEnabled bool, checkCron string, syncEnabled bool, syncCron string) {
+	var cfg struct {
+		AutoCheckEnabled bool   `gorm:"column:auto_check_enabled"`
+		AutoCheckCron    string `gorm:"column:auto_check_cron"`
+		AutoSyncEnabled  bool   `gorm:"column:auto_sync_enabled"`
+		AutoSyncCron     string `gorm:"column:auto_sync_cron"`
+	}
+	c.DB.Table("app_configs").First(&cfg, 1)
+	return cfg.AutoCheckEnabled, cfg.AutoCheckCron, cfg.AutoSyncEnabled, cfg.AutoSyncCron
+}
+
+func (c *Container) RunAutoCheck() {
+	if !crypto.IsUnlocked() {
+		return
+	}
+	NewAutoTaskService(c.DB).RunAutoCheck(c)
+}
+
+func (c *Container) RunAutoSync() {
+	if !crypto.IsUnlocked() {
+		return
+	}
+	NewAutoTaskService(c.DB).RunAutoSync(c)
 }

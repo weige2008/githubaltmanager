@@ -14,6 +14,14 @@ type AppConfig struct {
 	BaseModel
 	MasterPasswordHash string `gorm:"column:master_password_hash;type:text;not null" json:"-"`
 	IsInitialized      bool   `gorm:"column:is_initialized;not null;default:false" json:"is_initialized"`
+
+	// 自动任务设置
+	AutoCheckEnabled bool   `gorm:"column:auto_check_enabled;not null;default:false" json:"auto_check_enabled"`
+	AutoCheckCron    string `gorm:"column:auto_check_cron;size:100;default:'0 8 * * *'" json:"auto_check_cron"`
+	AutoSyncEnabled  bool   `gorm:"column:auto_sync_enabled;not null;default:true" json:"auto_sync_enabled"`
+	AutoSyncCron     string `gorm:"column:auto_sync_cron;size:100;default:'0 0 * * *'" json:"auto_sync_cron"`
+	AutoSyncLastAt   *time.Time `gorm:"column:auto_sync_last_at" json:"auto_sync_last_at"`
+	AutoCheckLastAt  *time.Time `gorm:"column:auto_check_last_at" json:"auto_check_last_at"`
 }
 
 // Account GitHub 账户

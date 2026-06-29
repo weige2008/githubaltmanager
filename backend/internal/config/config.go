@@ -49,6 +49,14 @@ type SchedulerConfig struct {
 	Timezone string // 例 Asia/Shanghai
 }
 
+// AutoTaskConfig 自动任务配置（存储在数据库，前端可改）
+type AutoTaskConfig struct {
+	AutoCheckEnabled bool   `json:"auto_check_enabled"`
+	AutoCheckCron    string `json:"auto_check_cron"`
+	AutoSyncEnabled  bool   `json:"auto_sync_enabled"`
+	AutoSyncCron     string `json:"auto_sync_cron"`
+}
+
 // Load 从环境变量加载配置，缺失时使用合理默认值
 func Load() (*Config, error) {
 	cfg := &Config{

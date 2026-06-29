@@ -34,9 +34,13 @@ func main() {
 	// 依赖注入容器
 	container := service.NewContainer(db, cfg)
 
-	// 启动定时调度器
+	// 启动定时任务调度器（用户创建的 workflow_dispatch 定时任务）
 	scheduler.Start(container)
 	defer scheduler.Stop()
+
+	// 启动自动任务调度器（自动检测封禁 + 自动同步仓库）
+	scheduler.StartAutoScheduler(container)
+	defer scheduler.StopAutoScheduler()
 
 	// HTTP 服务
 	staticDir := os.Getenv("GAM_STATIC_DIR")

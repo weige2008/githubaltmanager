@@ -56,6 +56,7 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	handlers.RegisterTaskRoutes(protected, c)
 	handlers.RegisterBatchRoutes(protected, c)
 	handlers.RegisterStatsRoutes(protected, c)
+	handlers.RegisterAutoTaskRoutes(protected, c)
 
 	registerSPA(r, staticDir)
 
