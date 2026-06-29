@@ -70,6 +70,10 @@ func registerSPA(r *gin.Engine, staticDir string) {
 	if embedded {
 		r.NoRoute(func(c *gin.Context) {
 			p := strings.TrimPrefix(c.Request.URL.Path, "/")
+			// 强制不缓存所有响应
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
 			if p == "" {
 				serveEmbeddedIndex(c)
 				return
@@ -78,7 +82,12 @@ func registerSPA(r *gin.Engine, staticDir string) {
 				c.Data(http.StatusOK, mimeByExt(p), data)
 				return
 			}
-			serveEmbeddedIndex(c)
+			// SPA fallback: 所有非 /api 路径返回 index.html
+			if !strings.HasPrefix(c.Request.URL.Path, "/api") {
+				serveEmbeddedIndex(c)
+				return
+			}
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		})
 		return
 	}
