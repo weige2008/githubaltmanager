@@ -28,7 +28,7 @@ const guideSteps = [
   {
     title: '打开 GitHub Token 设置页',
     desc: '点击下方按钮直接跳转到 GitHub 的 Token 创建页面（需先登录 GitHub）。',
-    link: 'https://github.com/settings/tokens/new?scopes=repo,workflow,read:user,user,admin:public_key,delete_repo,admin:org,gist,notifications',
+    link: 'https://github.com/settings/tokens/new?scopes=repo,repo:status,repo_deployment,public_repo,repo:invite,security_events,workflow,write:packages,read:packages,delete:packages,admin:org,write:org,read:org,manage_runners:org,admin:public_key,write:public_key,read:public_key,admin:repo_hook,write:repo_hook,read:repo_hook,admin:org_hook,gist,notifications,user,user:email,user:follow,delete_repo,write:discussion,read:discussion,read:enterprise,audit_log,read:audit_log,codespace,codespace:secrets,read:project,admin:gpg_key,write:gpg_key,read:gpg_key,admin:ssh_signing_key,write:ssh_signing_key,read:ssh_signing_key',
     linkText: '打开 GitHub Token 页 →',
     code: ''
   },
@@ -37,7 +37,7 @@ const guideSteps = [
     desc: '在 Note 填写备注（如 GAM），Expiration 选择有效期（推荐 90 天或 No expiration），然后勾选下方所有 scope 权限：',
     link: '',
     linkText: '',
-    code: '☑ repo          (仓库完全读写)\n☑ workflow      (编辑 GitHub Actions)\n☑ read:user     (读取用户信息)\n☑ user          (用户邮箱)\n☑ admin:public_key (SSH 公钥)\n☑ delete_repo   (删除仓库)\n☑ admin:org     (组织管理)\n☑ gist          (Gist)\n☑ notifications (通知)\n☑ write:packages (包发布)\n☑ read:packages  (包读取)\n☑ delete:packages(包删除)\n☑ admin:gpg_key  (GPG 密钥)'
+    code: '☑ repo                  仓库完全读写（含私有）\n☑ repo:status            提交状态\n☑ repo_deployment        部署状态\n☑ public_repo            公开仓库\n☑ repo:invite            仓库邀请\n☑ security_events        安全事件\n☑ workflow               GitHub Actions\n☑ write:packages         上传包\n☑ read:packages          下载包\n☑ delete:packages        删除包\n☑ admin:org              组织管理\n☑ write:org              组织成员\n☑ read:org               组织只读\n☑ manage_runners:org     组织 Runner\n☑ admin:public_key       SSH 公钥\n☑ write:public_key       写公钥\n☑ read:public_key        读公钥\n☑ admin:repo_hook        仓库 Hook\n☑ write:repo_hook        写 Hook\n☑ read:repo_hook         读 Hook\n☑ admin:org_hook         组织 Hook\n☑ gist                   Gist\n☑ notifications          通知\n☑ user                   用户数据\n☑ user:email             用户邮箱\n☑ user:follow            关注用户\n☑ delete_repo            删除仓库\n☑ write:discussion       团队讨论\n☑ read:discussion        讨论只读\n☑ read:enterprise        企业只读\n☑ audit_log              审计日志\n☑ read:audit_log         审计只读\n☑ codespace              Codespaces\n☑ codespace:secrets      Codespace 密钥\n☑ read:project           项目只读\n☑ admin:gpg_key          GPG 密钥\n☑ write:gpg_key          写 GPG\n☑ read:gpg_key           读 GPG\n☑ admin:ssh_signing_key  SSH 签名密钥\n☑ write:ssh_signing_key  写签名密钥\n☑ read:ssh_signing_key   读签名密钥'
   },
   {
     title: '生成并复制 Token',
@@ -263,7 +263,7 @@ onMounted(load)
             <el-tag size="small" class="scope-chip">repo</el-tag>
             <el-tag size="small" class="scope-chip">workflow</el-tag>
             <el-tag size="small" class="scope-chip">read:user</el-tag>
-            <a href="https://github.com/settings/tokens/new?scopes=repo,workflow,read:user" target="_blank" class="quick-link">一键创建 →</a>
+            <a href="https://github.com/settings/tokens/new?scopes=repo,repo:status,repo_deployment,public_repo,repo:invite,security_events,workflow,write:packages,read:packages,delete:packages,admin:org,write:org,read:org,manage_runners:org,admin:public_key,write:public_key,read:public_key,admin:repo_hook,write:repo_hook,read:repo_hook,admin:org_hook,gist,notifications,user,user:email,user:follow,delete_repo,write:discussion,read:discussion,read:enterprise,audit_log,read:audit_log,codespace,codespace:secrets,read:project,admin:gpg_key,write:gpg_key,read:gpg_key,admin:ssh_signing_key,write:ssh_signing_key,read:ssh_signing_key" target="_blank" class="quick-link">一键创建 →</a>
           </div>
         </el-form-item>
         <el-form-item label="账户密码（选填）" class="mt-16">
