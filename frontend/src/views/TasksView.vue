@@ -16,10 +16,39 @@ const form = ref({
   repository_id: null as number | null,
   workflow_filename: '',
   ref: 'main',
-  cron_expr: '0 8 * * *',
+  interval: 1440,
   inputs_json: '',
   enabled: true
 })
+
+const intervalOptions = [
+  { label: '每 30 分钟', value: 30 },
+  { label: '每 1 小时', value: 60 },
+  { label: '每 2 小时', value: 120 },
+  { label: '每 3 小时', value: 180 },
+  { label: '每 6 小时', value: 360 },
+  { label: '每 12 小时', value: 720 },
+  { label: '每 24 小时', value: 1440 },
+  { label: '每 3 天', value: 4320 },
+  { label: '每 7 天', value: 10080 }
+]
+
+function intervalToCron(min: number): string {
+  if (min < 60) return `*/${min} * * * *`
+  if (min < 1440) return `0 */${min / 60} * * *`
+  if (min === 1440) return '0 0 * * *'
+  return `0 0 */${min / 1440} * *`
+}
+
+function cronToInterval(cron: string): number {
+  const parts = cron.trim().split(/\s+/)
+  if (parts.length !== 5) return 1440
+  const [min, hour, dom] = parts
+  if (min.startsWith('*/')) return parseInt(min.slice(2))
+  if (hour.startsWith('*/')) return parseInt(hour.slice(2)) * 60
+  if (dom && dom.startsWith('*/')) return parseInt(dom.slice(2)) * 1440
+  return 1440
+}
 
 async function load() {
   loading.value = true
@@ -36,21 +65,22 @@ async function loadRepos(accId: number) {
 }
 
 function openCreate() {
-  form.value = { account_id: null, repository_id: null, workflow_filename: '', ref: 'main', cron_expr: '0 8 * * *', inputs_json: '', enabled: true }
+  form.value = { account_id: null, repository_id: null, workflow_filename: '', ref: 'main', interval: 1440, inputs_json: '', enabled: true }
   createVisible.value = true
 }
 
 async function doCreate() {
-  if (!form.value.account_id || !form.value.repository_id || !form.value.workflow_filename || !form.value.cron_expr) {
+  if (!form.value.account_id || !form.value.repository_id || !form.value.workflow_filename) {
     ElMessage.warning('请填写完整')
     return
   }
+  const cronExpr = intervalToCron(form.value.interval)
   await taskApi.create({
     account_id: form.value.account_id,
     repository_id: form.value.repository_id,
     workflow_filename: form.value.workflow_filename,
     ref: form.value.ref || 'main',
-    cron_expr: form.value.cron_expr,
+    cron_expr: cronExpr,
     inputs_json: form.value.inputs_json,
     enabled: form.value.enabled
   })
@@ -107,8 +137,8 @@ onMounted(load)
             <code class="wf">{{ row.workflow_filename }} @ {{ row.ref }}</code>
           </template>
         </el-table-column>
-        <el-table-column label="Cron" width="140">
-          <template #default="{ row }"><code>{{ row.cron_expr }}</code></template>
+        <el-table-column label="间隔" width="120">
+          <template #default="{ row }"><span class="interval-text">{{ (intervalOptions.find(o => o.value === cronToInterval(row.cron_expr))?.label) || row.cron_expr }}</span></template>
         </el-table-column>
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
@@ -152,9 +182,10 @@ onMounted(load)
         <el-form-item label="分支/Tag">
           <el-input v-model="form.ref" placeholder="main" />
         </el-form-item>
-        <el-form-item label="Cron 表达式 (分 时 日 月 周)">
-          <el-input v-model="form.cron_expr" placeholder="0 8 * * *" />
-          <div class="hint">示例：<code>0 8 * * *</code> 每天 8 点；<code>0 */2 * * *</code> 每 2 小时</div>
+        <el-form-item label="执行间隔">
+          <el-select v-model="form.interval" placeholder="选择间隔" style="width: 200px">
+            <el-option v-for="o in intervalOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="Inputs JSON (选填)">
           <el-input v-model="form.inputs_json" type="textarea" :rows="2" placeholder='{"key":"value"}' />
@@ -175,5 +206,5 @@ onMounted(load)
 .count { color: var(--text-tertiary); font-size: 13px; font-weight: 500;
   background: var(--surface-3); padding: 4px 12px; border-radius: 100px; }
 .wf { font-size: 12px; color: var(--text-secondary); }
-.hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.interval-text { font-size: 13px; color: var(--text-primary); font-weight: 500; }
 </style>
