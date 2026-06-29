@@ -9,6 +9,7 @@ export const consoleChildren: RouteRecordRaw[] = [
   { path: '/repos', name: 'repos', component: () => import('@/views/ReposView.vue'), meta: { title: '仓库浏览', icon: 'FolderOpened' } },
   { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue'), meta: { title: '定时任务', icon: 'AlarmClock' } },
   { path: '/batch', name: 'batch', component: () => import('@/views/BatchView.vue'), meta: { title: '批量操作', icon: 'Operation' } },
+  { path: '/automation', name: 'automation', component: () => import('@/views/AutomationView.vue'), meta: { title: '自动化日志', icon: 'Timer' } },
   { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: '设置', icon: 'Setting' } }
 ]
 

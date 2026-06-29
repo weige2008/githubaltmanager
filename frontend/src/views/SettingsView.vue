@@ -43,35 +43,42 @@ async function changePassword() {
 // 自动任务
 const autoConfig = ref<AutoTaskConfig>({
   auto_check_enabled: false,
-  auto_check_cron: '0 8 * * *',
+  auto_check_interval: 1440,
   auto_sync_enabled: true,
-  auto_sync_cron: '0 0 * * *'
+  auto_sync_interval: 1440
 })
 const autoLoading = ref(false)
 
+const intervalOptions = [
+  { label: '每 30 分钟', value: 30 },
+  { label: '每 1 小时', value: 60 },
+  { label: '每 3 小时', value: 180 },
+  { label: '每 6 小时', value: 360 },
+  { label: '每 12 小时', value: 720 },
+  { label: '每 24 小时', value: 1440 },
+  { label: '每 3 天', value: 4320 },
+  { label: '每 7 天', value: 10080 }
+]
+
 async function loadAutoConfig() {
-  try {
-    autoConfig.value = await autoTaskApi.get()
-  } catch {}
+  try { autoConfig.value = await autoTaskApi.get() } catch {}
 }
 
 async function saveAutoConfig() {
   autoLoading.value = true
   try {
     await autoTaskApi.update(autoConfig.value)
-    ElMessage.success('自动任务配置已保存')
-  } finally {
-    autoLoading.value = false
-  }
+    ElMessage.success('已保存')
+  } finally { autoLoading.value = false }
 }
 
 async function runCheckNow() {
   await autoTaskApi.checkNow()
-  ElMessage.success('已触发全量检测（后台执行中）')
+  ElMessage.success('已触发全量检测')
 }
 async function runSyncNow() {
   await autoTaskApi.syncNow()
-  ElMessage.success('已触发全量同步（后台执行中）')
+  ElMessage.success('已触发全量同步')
 }
 
 onMounted(loadAutoConfig)
@@ -79,56 +86,48 @@ onMounted(loadAutoConfig)
 
 <template>
   <div class="page-container">
-    <!-- 自动任务配置 -->
     <el-card shadow="never" class="mb-16">
       <template #header>
-        <div class="card-header">
-          <el-icon><AlarmClock /></el-icon>
-          <span>自动化任务</span>
-        </div>
+        <div class="card-header"><el-icon><AlarmClock /></el-icon><span>自动化任务</span></div>
       </template>
 
-      <!-- 自动检测封禁 -->
       <div class="auto-section">
         <div class="auto-head">
           <div class="auto-info">
             <el-switch v-model="autoConfig.auto_check_enabled" />
             <div class="auto-text">
               <div class="auto-title">自动检测账户封禁状态</div>
-              <div class="auto-desc">按 cron 表达式定时对所有账户执行多方案封禁检测</div>
+              <div class="auto-desc">按设定间隔对所有账户执行多方案封禁检测</div>
             </div>
           </div>
-          <el-button size="small" plain @click="runCheckNow" :disabled="!autoConfig.auto_check_enabled">
-            立即执行
-          </el-button>
+          <el-button size="small" plain @click="runCheckNow">立即执行</el-button>
         </div>
-        <div v-if="autoConfig.auto_check_enabled" class="auto-cron-row">
-          <span class="cron-label">检测频率（Cron）</span>
-          <el-input v-model="autoConfig.auto_check_cron" style="width: 200px" placeholder="0 8 * * *" />
-          <span class="cron-hint">示例：<code>0 8 * * *</code> 每天 8:00；<code>0 */6 * * *</code> 每 6 小时</span>
+        <div v-if="autoConfig.auto_check_enabled" class="auto-row">
+          <span class="row-label">执行间隔</span>
+          <el-select v-model="autoConfig.auto_check_interval" style="width: 160px">
+            <el-option v-for="o in intervalOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
         </div>
       </div>
 
       <el-divider />
 
-      <!-- 自动同步仓库 -->
       <div class="auto-section">
         <div class="auto-head">
           <div class="auto-info">
             <el-switch v-model="autoConfig.auto_sync_enabled" />
             <div class="auto-text">
               <div class="auto-title">自动同步仓库</div>
-              <div class="auto-desc">按 cron 表达式定时拉取所有账户的最新仓库列表</div>
+              <div class="auto-desc">按设定间隔拉取所有账户的最新仓库列表</div>
             </div>
           </div>
-          <el-button size="small" plain @click="runSyncNow" :disabled="!autoConfig.auto_sync_enabled">
-            立即执行
-          </el-button>
+          <el-button size="small" plain @click="runSyncNow">立即执行</el-button>
         </div>
-        <div v-if="autoConfig.auto_sync_enabled" class="auto-cron-row">
-          <span class="cron-label">同步频率（Cron）</span>
-          <el-input v-model="autoConfig.auto_sync_cron" style="width: 200px" placeholder="0 0 * * *" />
-          <span class="cron-hint">示例：<code>0 0 * * *</code> 每日零点；<code>0 0 * * 1</code> 每周一</span>
+        <div v-if="autoConfig.auto_sync_enabled" class="auto-row">
+          <span class="row-label">执行间隔</span>
+          <el-select v-model="autoConfig.auto_sync_interval" style="width: 160px">
+            <el-option v-for="o in intervalOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
         </div>
       </div>
 
@@ -137,13 +136,9 @@ onMounted(loadAutoConfig)
       </div>
     </el-card>
 
-    <!-- 修改主密码 -->
     <el-card shadow="never" class="mb-16">
       <template #header>
-        <div class="card-header">
-          <el-icon><Lock /></el-icon>
-          <span>修改主密码</span>
-        </div>
+        <div class="card-header"><el-icon><Lock /></el-icon><span>修改主密码</span></div>
       </template>
       <el-form ref="pwdRef" :model="pwdForm" :rules="rules" label-position="top" style="max-width: 420px">
         <el-form-item label="原密码" prop="oldPassword">
@@ -161,43 +156,27 @@ onMounted(loadAutoConfig)
       </el-form>
     </el-card>
 
-    <!-- 关于 -->
     <el-card shadow="never">
       <template #header>
-        <div class="card-header">
-          <el-icon><InfoFilled /></el-icon>
-          <span>关于</span>
-        </div>
+        <div class="card-header"><el-icon><InfoFilled /></el-icon><span>关于</span></div>
       </template>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="项目">GitHub 账户管理器</el-descriptions-item>
         <el-descriptions-item label="技术栈">Vue 3 + Element Plus / Go + Gin + GORM + SQLite</el-descriptions-item>
         <el-descriptions-item label="加密">AES-256-GCM + Argon2id</el-descriptions-item>
-        <el-descriptions-item label="双主题">Fluent 2（浅色）+ Glassmorphism（深色）</el-descriptions-item>
       </el-descriptions>
     </el-card>
   </div>
 </template>
 
 <style scoped lang="scss">
-.card-header {
-  display: flex; align-items: center; gap: 6px;
-  font-weight: 600; font-size: 15px;
-}
+.card-header { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; }
 .auto-section { padding: 4px 0; }
-.auto-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-}
+.auto-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .auto-info { display: flex; align-items: center; gap: 14px; }
 .auto-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
 .auto-desc { font-size: 13px; color: var(--text-tertiary); margin-top: 2px; }
-.auto-cron-row {
-  display: flex; align-items: center; gap: 10px;
-  margin-top: 14px; padding-left: 50px;
-}
-.cron-label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
-.cron-hint { font-size: 12px; color: var(--text-tertiary);
-  code { background: var(--surface-3); padding: 1px 5px; border-radius: var(--radius-ctrl); }
-}
+.auto-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-left: 50px; }
+.row-label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
 .auto-save-bar { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 </style>
