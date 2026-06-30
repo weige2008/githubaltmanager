@@ -20,7 +20,9 @@
     "tailwind-merge": "^2.5.4",
     "class-variance-authority": "^0.7.0",
     "sonner": "^1.7.0",
-    "recharts": "^2.13.0"
+    "recharts": "^2.13.0",
+    "framer-motion": "^11.15.0",
+    "react-countup": "^6.5.3"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
