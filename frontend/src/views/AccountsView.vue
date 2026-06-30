@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Refresh, RefreshRight, QuestionFilled, CopyDocument } from '@element-plus/icons-vue'
+import { Plus, Refresh, RefreshRight, QuestionFilled, CopyDocument, Edit } from '@element-plus/icons-vue'
 import { accountApi, type Account } from '@/api/account'
 import { repoApi } from '@/api/repo'
 
@@ -173,6 +173,37 @@ function onSelectionChange(rows: Account[]) {
   selection.value = rows
 }
 
+// 备注编辑
+const noteVisible = ref(false)
+const noteTarget = ref<{ id: number; login: string } | null>(null)
+const noteValue = ref('')
+const noteSaving = ref(false)
+
+function openNoteEditor(id: number, login: string, currentNote: string) {
+  noteTarget.value = { id, login }
+  noteValue.value = currentNote || ''
+  noteVisible.value = true
+}
+
+async function saveNote() {
+  if (!noteTarget.value) return
+  noteSaving.value = true
+  try {
+    await accountApi.update(noteTarget.value.id, { note: noteValue.value })
+    ElMessage.success('备注已保存')
+    noteVisible.value = false
+    load()
+  } finally { noteSaving.value = false }
+}
+
+// 显示名：有备注则显示「备注(用户名)」，否则显示用户名
+function displayName(row: Account): string {
+  if (row.note && row.note.trim()) {
+    return `${row.note.trim()}(${row.github_login})`
+  }
+  return row.github_login
+}
+
 function statusType(s: string) {
   return ({ active: 'success', banned: 'danger', error: 'warning', unknown: 'info' } as any)[s] || 'info'
 }
@@ -198,16 +229,19 @@ onMounted(load)
 
       <el-table :data="accounts" v-loading="loading" @selection-change="onSelectionChange" stripe>
         <el-table-column type="selection" width="42" />
-        <el-table-column label="账户" min-width="200">
+        <el-table-column label="账户" min-width="240">
           <template #default="{ row }">
             <div class="acc-cell">
               <el-avatar :size="32" :src="row.avatar_url">
                 {{ row.github_login?.[0]?.toUpperCase() }}
               </el-avatar>
               <div>
-                <div class="acc-login">{{ row.github_login }}</div>
+                <div class="acc-login">                {{ displayName(row as Account) }}</div>
                 <div class="acc-name">{{ row.display_name }}</div>
               </div>
+              <el-button size="small" link class="note-btn" @click="openNoteEditor(row.id, row.github_login, row.note)">
+                <el-icon><Edit /></el-icon>
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -279,6 +313,22 @@ onMounted(load)
       <template #footer>
         <el-button @click="importVisible = false">取消</el-button>
         <el-button type="primary" :loading="importing" @click="doImport">导入</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 备注编辑对话框 -->
+    <el-dialog v-model="noteVisible" :title="'编辑备注 - ' + (noteTarget?.login || '')" width="420px">
+      <el-input
+        v-model="noteValue"
+        placeholder="输入备注名，如「主账户」「备用号1」"
+        clearable
+        maxlength="50"
+        show-word-limit
+      />
+      <div class="note-hint">设置备注后，该账户在列表和下拉框中显示为「备注名(原用户名)」</div>
+      <template #footer>
+        <el-button @click="noteVisible = false">取消</el-button>
+        <el-button type="primary" :loading="noteSaving" @click="saveNote">保存</el-button>
       </template>
     </el-dialog>
 
@@ -459,4 +509,6 @@ onMounted(load)
   display: flex; align-items: center; justify-content: space-between; width: 100%;
 }
 .step-info { font-size: 13px; color: var(--text-tertiary); font-weight: 600; }
+.note-btn { opacity: 0.4; transition: opacity 0.15s; &:hover { opacity: 1; } }
+.note-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; }
 </style>

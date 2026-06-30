@@ -54,7 +54,7 @@ async function load() {
   loading.value = true
   try {
     tasks.value = await taskApi.list()
-    accounts.value = (await accountApi.list()).map((a) => ({ id: a.id, github_login: a.github_login }))
+    accounts.value = (await accountApi.list()).map((a) => ({ id: a.id, github_login: a.note && a.note.trim() ? `${a.note.trim()}(${a.github_login})` : a.github_login }))
   } finally {
     loading.value = false
   }

@@ -43,7 +43,7 @@ async function loadAccounts() {
   accLoading.value = true
   try {
     const list = await accountApi.list()
-    accounts.value = list.map((a) => ({ id: a.id, github_login: a.github_login }))
+    accounts.value = list.map((a) => ({ id: a.id, github_login: a.note && a.note.trim() ? `${a.note.trim()}(${a.github_login})` : a.github_login }))
     if (accounts.value.length && selectedAcc.value === null) {
       selectedAcc.value = accounts.value[0].id
     }

@@ -111,7 +111,7 @@ onMounted(async () => {
       <template #content>
         <span class="ph-title">
           <el-avatar :size="28" :src="acc?.avatar_url">{{ acc?.github_login?.[0]?.toUpperCase() }}</el-avatar>
-          {{ acc?.github_login || '加载中' }}
+          {{ acc ? (acc.note && acc.note.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login) : '加载中' }}
           <el-tag v-if="acc" :type="statusType(acc.status)" size="small">{{ statusText(acc.status) }}</el-tag>
         </span>
       </template>
