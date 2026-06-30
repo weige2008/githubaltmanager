@@ -154,26 +154,35 @@ async function loadWorkflows() {
   wfVisible.value = true
 }
 
+const dispatchLoading = ref(false)
+
 async function dispatchWf(filename: string) {
   if (!selectedRepo.value) return
-  // 先获取 workflow inputs 定义
+  dispatchLoading.value = true
   try {
     const res = await repoApi.getWorkflowInputs(selectedRepo.value, filename)
-    const inputs = res.inputs || []
+    const inputs = (res && res.inputs) || []
     if (inputs.length > 0) {
-      // 有参数，弹出表单
       openDispatchDialog(filename, inputs)
     } else {
-      // 无参数，直接触发
       await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
       ElMessage.success(`已触发 ${filename}`)
     }
-  } catch {
-    // 获取失败，直接触发（让后端报错）
+  } catch (err: any) {
+    // 获取参数失败，尝试直接触发
     try {
       await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
       ElMessage.success(`已触发 ${filename}`)
-    } catch {}
+    } catch (e: any) {
+      const msg = e?.message || ''
+      if (msg.includes('Required input') || msg.includes('422')) {
+        // 确实需要参数，弹出手动输入
+        ElMessage.warning('该 Workflow 需要参数，请手动填写')
+        openDispatchDialog(filename, [])
+      }
+    }
+  } finally {
+    dispatchLoading.value = false
   }
 }
 
@@ -333,7 +342,7 @@ onMounted(loadAccounts)
         </el-table-column>
         <el-table-column label="操作" width="90">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="dispatchWf(row.filename)">触发</el-button>
+            <el-button size="small" type="primary" link :loading="dispatchLoading" @click="dispatchWf(row.filename)">触发</el-button>
           </template>
         </el-table-column>
       </el-table>
