@@ -46,6 +46,15 @@ export interface Workflow {
   last_run_at: string | null
 }
 
+export interface WorkflowInput {
+  name: string
+  description: string
+  required: boolean
+  default: string
+  type: string
+  options: string[]
+}
+
 export const repoApi = {
   listByAccount: (accountId: number) =>
     http.get<unknown, Repo[]>(`/accounts/${accountId}/repos`),
@@ -66,5 +75,7 @@ export const repoApi = {
   createWorkflow: (repoId: number, payload: { filename: string; content: string; commit_message: string; branch?: string }) =>
     http.post<unknown, { path: string }>(`/repos/${repoId}/workflows`, payload),
   dispatchWorkflow: (repoId: number, payload: { filename: string; ref?: string; inputs?: Record<string, any> }) =>
-    http.post<unknown, { ok: boolean }>(`/repos/${repoId}/dispatch`, payload)
+    http.post<unknown, { ok: boolean }>(`/repos/${repoId}/dispatch`, payload),
+  getWorkflowInputs: (repoId: number, filename: string) =>
+    http.get<unknown, { inputs: WorkflowInput[] }>(`/repos/${repoId}/workflow-inputs`, { params: { filename } })
 }

@@ -187,6 +187,14 @@ func (c *Client) DispatchWorkflow(owner, repo, filename string, payload Dispatch
 	return code, err
 }
 
+// GetWorkflowByID 通过 filename 获取单个 workflow 的元数据（含 path）
+func (c *Client) GetWorkflowByID(owner, repo, filename string) (*Workflow, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/workflows/%s", owner, repo, filename)
+	var wf Workflow
+	code, err := c.Get(p, &wf)
+	return &wf, code, err
+}
+
 // WorkflowRun 最近一次运行
 type WorkflowRun struct {
 	ID         int64  `json:"id"`

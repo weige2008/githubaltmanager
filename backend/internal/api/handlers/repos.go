@@ -27,6 +27,7 @@ func RegisterRepoRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.GET("/:id/workflows", h.ListWorkflows)
 		grp.POST("/:id/workflows", h.CreateWorkflow)
 		grp.POST("/:id/dispatch", h.Dispatch)
+		grp.GET("/:id/workflow-inputs", h.GetWorkflowInputs)
 	}
 }
 
@@ -173,4 +174,20 @@ func (h *RepoHandler) Dispatch(c *gin.Context) {
 		return
 	}
 	resp.OK(c, gin.H{"ok": true})
+}
+
+// GetWorkflowInputs 读取 workflow yml 文件，解析 workflow_dispatch.inputs 定义
+func (h *RepoHandler) GetWorkflowInputs(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	filename := c.Query("filename")
+	if filename == "" {
+		resp.BadRequest(c, "缺少 filename 参数")
+		return
+	}
+	inputs, err := h.s.GetWorkflowInputs(h.c, uint(id), filename)
+	if err != nil {
+		resp.OK(c, gin.H{"inputs": []any{}})
+		return
+	}
+	resp.OK(c, gin.H{"inputs": inputs})
 }

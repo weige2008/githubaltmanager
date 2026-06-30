@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { repoApi, type DirEntry, type FileContent, type Repo, type Workflow } from '@/api/repo'
+import { repoApi, type DirEntry, type FileContent, type Repo, type Workflow, type WorkflowInput } from '@/api/repo'
 import { accountApi } from '@/api/account'
 
 const route = useRoute()
@@ -156,49 +156,70 @@ async function loadWorkflows() {
 
 async function dispatchWf(filename: string) {
   if (!selectedRepo.value) return
-  // 先尝试无参数触发，如果失败提示输入参数
+  // 先获取 workflow inputs 定义
   try {
-    await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
-    ElMessage.success(`已触发 ${filename}`)
-  } catch (err: any) {
-    const msg = err?.message || ''
-    if (msg.includes('Required input') || msg.includes('422') || msg.includes('not provided')) {
-      // 需要参数，弹出输入框
-      dispatchTarget.value = filename
-      dispatchInputs.value = ''
-      dispatchVisible.value = true
+    const res = await repoApi.getWorkflowInputs(selectedRepo.value, filename)
+    const inputs = res.inputs || []
+    if (inputs.length > 0) {
+      // 有参数，弹出表单
+      openDispatchDialog(filename, inputs)
+    } else {
+      // 无参数，直接触发
+      await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
+      ElMessage.success(`已触发 ${filename}`)
     }
+  } catch {
+    // 获取失败，直接触发（让后端报错）
+    try {
+      await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
+      ElMessage.success(`已触发 ${filename}`)
+    } catch {}
   }
 }
 
-// 带参数触发
+// 参数触发对话框
 const dispatchVisible = ref(false)
 const dispatchTarget = ref('')
-const dispatchInputs = ref('')
+const dispatchParamDefs = ref<WorkflowInput[]>([])
+const dispatchParamValues = ref<Record<string, string>>({})
 const dispatching = ref(false)
 
-function openDispatchWithInputs(filename: string) {
+function openDispatchDialog(filename: string, inputs: WorkflowInput[]) {
   dispatchTarget.value = filename
-  dispatchInputs.value = ''
+  dispatchParamDefs.value = inputs
+  // 预填默认值
+  const vals: Record<string, string> = {}
+  for (const inp of inputs) {
+    vals[inp.name] = inp.default || ''
+  }
+  dispatchParamValues.value = vals
   dispatchVisible.value = true
+}
+
+function openDispatchWithInputs(filename: string) {
+  if (!selectedRepo.value) return
+  dispatchWf(filename)
 }
 
 async function doDispatchWithInputs() {
   if (!selectedRepo.value || !dispatchTarget.value) return
-  let inputs: Record<string, string> | undefined
-  if (dispatchInputs.value.trim()) {
-    try {
-      inputs = JSON.parse(dispatchInputs.value)
-    } catch {
-      ElMessage.error('Inputs JSON 格式错误')
+  // 检查必填项
+  for (const inp of dispatchParamDefs.value) {
+    if (inp.required && !dispatchParamValues.value[inp.name]) {
+      ElMessage.warning(`请填写必填参数: ${inp.name}`)
       return
     }
+  }
+  // 构造 inputs（只包含非空值）
+  const inputs: Record<string, string> = {}
+  for (const [k, v] of Object.entries(dispatchParamValues.value)) {
+    if (v !== '') inputs[k] = v
   }
   dispatching.value = true
   try {
     await repoApi.dispatchWorkflow(selectedRepo.value, {
       filename: dispatchTarget.value,
-      inputs
+      inputs: Object.keys(inputs).length > 0 ? inputs : undefined
     })
     ElMessage.success(`已触发 ${dispatchTarget.value}`)
     dispatchVisible.value = false
@@ -310,29 +331,50 @@ onMounted(loadAccounts)
         <el-table-column label="最近运行" min-width="120">
           <template #default="{ row }">{{ row.last_run_status || '—' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="90">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="dispatchWf(row.filename)">触发</el-button>
-            <el-button size="small" link @click="openDispatchWithInputs(row.filename)">带参数</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-dialog>
 
-    <!-- 带参数触发对话框 -->
-    <el-dialog v-model="dispatchVisible" :title="`触发 ${dispatchTarget}`" width="520px">
-      <el-alert type="info" :closable="false" class="mb-12">
-        该 workflow 有必填参数。请填写 Inputs JSON，例如：
-        <code style="display:block;margin-top:4px">{"FRONT_IP": "127.0.0.1", "PORT": "8080"}</code>
-        参数名需与 workflow yml 中 <code>workflow_dispatch.inputs</code> 定义一致。
-      </el-alert>
-      <el-input
-        v-model="dispatchInputs"
-        type="textarea"
-        :rows="8"
-        placeholder='{"FRONT_IP": "127.0.0.1"}'
-        :input-style="{ fontFamily: 'Cascadia Code, Consolas, monospace', fontSize: '13px' }"
-      />
+    <!-- 触发参数对话框（自动渲染表单） -->
+    <el-dialog v-model="dispatchVisible" :title="`触发 ${dispatchTarget}`" width="540px">
+      <div v-if="dispatchParamDefs.length === 0" class="muted">
+        该 workflow 无需额外参数，直接点击触发即可。
+      </div>
+      <el-form v-else label-position="top">
+        <el-form-item
+          v-for="param in dispatchParamDefs"
+          :key="param.name"
+          :label="param.name + (param.required ? ' *' : '')"
+        >
+          <!-- choice 类型 → 下拉 -->
+          <el-select
+            v-if="param.type === 'choice' && param.options && param.options.length > 0"
+            v-model="dispatchParamValues[param.name]"
+            :placeholder="param.description || '请选择'"
+            style="width: 100%"
+          >
+            <el-option v-for="opt in param.options" :key="opt" :label="opt" :value="opt" />
+          </el-select>
+          <!-- boolean 类型 → 开关 -->
+          <el-switch
+            v-else-if="param.type === 'boolean'"
+            v-model="dispatchParamValues[param.name]"
+            active-value="true"
+            inactive-value="false"
+          />
+          <!-- 默认 → 文本输入 -->
+          <el-input
+            v-else
+            v-model="dispatchParamValues[param.name]"
+            :placeholder="param.description || param.default || '请输入'"
+          />
+          <div v-if="param.description" class="param-desc">{{ param.description }}</div>
+        </el-form-item>
+      </el-form>
       <template #footer>
         <el-button @click="dispatchVisible = false">取消</el-button>
         <el-button type="primary" :loading="dispatching" @click="doDispatchWithInputs">触发</el-button>
@@ -362,4 +404,5 @@ onMounted(loadAccounts)
 .muted { color: var(--text-tertiary); }
 .editor :deep(textarea) { tab-size: 2; }
 .commit-bar { margin-top: 12px; }
+.param-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 </style>
