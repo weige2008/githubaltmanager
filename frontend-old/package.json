@@ -1,0 +1,30 @@
+{
+  "name": "githubaltmanager-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "element-plus": "^2.8.4",
+    "@element-plus/icons-vue": "^2.3.1",
+    "pinia": "^2.2.4",
+    "vue": "^3.5.10",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "sass": "^1.79.4",
+    "typescript": "~5.5.4",
+    "unplugin-auto-import": "^0.18.3",
+    "unplugin-vue-components": "^0.27.4",
+    "vite": "^5.4.8",
+    "vue-tsc": "^2.1.6"
+  }
+}

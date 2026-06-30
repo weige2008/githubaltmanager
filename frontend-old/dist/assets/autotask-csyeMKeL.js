@@ -1,0 +1,1 @@
+import{s as t}from"./http-C3FgVnsb.js";const s={get:()=>t.get("/autotask"),update:a=>t.put("/autotask",a),checkNow:()=>t.post("/autotask/check-now"),syncNow:()=>t.post("/autotask/sync-now"),logs:(a=50)=>t.get("/autotask/logs",{params:{limit:a}}),running:()=>t.get("/autotask/running")};export{s as a};

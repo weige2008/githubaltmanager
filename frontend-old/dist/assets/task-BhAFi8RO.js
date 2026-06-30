@@ -1,0 +1,1 @@
+import{s}from"./http-C3FgVnsb.js";const o={list:()=>s.get("/tasks"),create:t=>s.post("/tasks",t),update:(t,a)=>s.put(`/tasks/${t}`,a),remove:t=>s.delete(`/tasks/${t}`),toggle:(t,a)=>s.post(`/tasks/${t}/toggle`,{enabled:a}),runNow:t=>s.post(`/tasks/${t}/run`)},p={createWorkflows:t=>s.post("/batch/create-workflows",t),dispatch:t=>s.post("/batch/dispatch",t)};export{p as b,o as t};

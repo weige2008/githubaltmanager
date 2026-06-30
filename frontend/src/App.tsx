@@ -26,16 +26,16 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
-      {/* 受保护的控制台 */}
-      <Route path="/" element={<Protected><MainLayout /></Protected>}>
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="accounts" element={<AccountsPage />} />
-        <Route path="accounts/:id" element={<AccountDetailPage />} />
-        <Route path="repos" element={<ReposPage />} />
-        <Route path="tasks" element={<TasksPage />} />
-        <Route path="batch" element={<BatchPage />} />
-        <Route path="automation" element={<AutomationPage />} />
-        <Route path="settings" element={<SettingsPage />} />
+      {/* 受保护的控制台（嵌套路由，MainLayout 含 Outlet） */}
+      <Route element={<Protected><MainLayout /></Protected>}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/:id" element={<AccountDetailPage />} />
+        <Route path="/repos" element={<ReposPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/batch" element={<BatchPage />} />
+        <Route path="/automation" element={<AutomationPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

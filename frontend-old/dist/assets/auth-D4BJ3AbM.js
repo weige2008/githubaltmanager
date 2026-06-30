@@ -1,0 +1,1 @@
+import{s as t}from"./http-C3FgVnsb.js";const o={status:()=>t.get("/auth/status"),setup:s=>t.post("/auth/setup",s),login:s=>t.post("/auth/login",s),changePassword:s=>t.post("/auth/change-password",s)};export{o as a};
