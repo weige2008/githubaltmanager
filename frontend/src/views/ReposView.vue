@@ -156,10 +156,55 @@ async function loadWorkflows() {
 
 async function dispatchWf(filename: string) {
   if (!selectedRepo.value) return
+  // 先尝试无参数触发，如果失败提示输入参数
   try {
     await repoApi.dispatchWorkflow(selectedRepo.value, { filename })
     ElMessage.success(`已触发 ${filename}`)
-  } catch {}
+  } catch (err: any) {
+    const msg = err?.message || ''
+    if (msg.includes('Required input') || msg.includes('422') || msg.includes('not provided')) {
+      // 需要参数，弹出输入框
+      dispatchTarget.value = filename
+      dispatchInputs.value = ''
+      dispatchVisible.value = true
+    }
+  }
+}
+
+// 带参数触发
+const dispatchVisible = ref(false)
+const dispatchTarget = ref('')
+const dispatchInputs = ref('')
+const dispatching = ref(false)
+
+function openDispatchWithInputs(filename: string) {
+  dispatchTarget.value = filename
+  dispatchInputs.value = ''
+  dispatchVisible.value = true
+}
+
+async function doDispatchWithInputs() {
+  if (!selectedRepo.value || !dispatchTarget.value) return
+  let inputs: Record<string, string> | undefined
+  if (dispatchInputs.value.trim()) {
+    try {
+      inputs = JSON.parse(dispatchInputs.value)
+    } catch {
+      ElMessage.error('Inputs JSON 格式错误')
+      return
+    }
+  }
+  dispatching.value = true
+  try {
+    await repoApi.dispatchWorkflow(selectedRepo.value, {
+      filename: dispatchTarget.value,
+      inputs
+    })
+    ElMessage.success(`已触发 ${dispatchTarget.value}`)
+    dispatchVisible.value = false
+  } catch {} finally {
+    dispatching.value = false
+  }
 }
 
 const isTextFile = computed(() => {
@@ -265,12 +310,33 @@ onMounted(loadAccounts)
         <el-table-column label="最近运行" min-width="120">
           <template #default="{ row }">{{ row.last_run_status || '—' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="90">
+        <el-table-column label="操作" width="120">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="dispatchWf(row.filename)">触发</el-button>
+            <el-button size="small" link @click="openDispatchWithInputs(row.filename)">带参数</el-button>
           </template>
         </el-table-column>
       </el-table>
+    </el-dialog>
+
+    <!-- 带参数触发对话框 -->
+    <el-dialog v-model="dispatchVisible" :title="`触发 ${dispatchTarget}`" width="520px">
+      <el-alert type="info" :closable="false" class="mb-12">
+        该 workflow 有必填参数。请填写 Inputs JSON，例如：
+        <code style="display:block;margin-top:4px">{"FRONT_IP": "127.0.0.1", "PORT": "8080"}</code>
+        参数名需与 workflow yml 中 <code>workflow_dispatch.inputs</code> 定义一致。
+      </el-alert>
+      <el-input
+        v-model="dispatchInputs"
+        type="textarea"
+        :rows="8"
+        placeholder='{"FRONT_IP": "127.0.0.1"}'
+        :input-style="{ fontFamily: 'Cascadia Code, Consolas, monospace', fontSize: '13px' }"
+      />
+      <template #footer>
+        <el-button @click="dispatchVisible = false">取消</el-button>
+        <el-button type="primary" :loading="dispatching" @click="doDispatchWithInputs">触发</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
