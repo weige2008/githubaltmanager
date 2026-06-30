@@ -31,8 +31,10 @@ export default function MainLayout() {
       {/* Sidebar */}
       <aside className="flex w-60 flex-col border-r bg-card/50 backdrop-blur-xl">
         <div className="flex h-16 items-center gap-2 px-5 border-b">
-          <Github className="h-6 w-6 text-primary" />
-          <span className="font-bold tracking-tight">GitHub 管理器</span>
+          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Github className="h-6 w-6 text-primary" />
+            <span className="font-bold tracking-tight">GitHub 管理器</span>
+          </a>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {navItems.map((item) => {
@@ -67,7 +69,7 @@ export default function MainLayout() {
         {/* Topbar */}
         <header className="flex h-16 items-center justify-between border-b px-6 backdrop-blur-xl">
           <h1 className="text-lg font-semibold">
-            {navItems.find((n) => location.pathname.startsWith(n.to))?.label || '控制台'}
+            {navItems.find((n) => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label || '控制台'}
           </h1>
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
