@@ -43,9 +43,9 @@ async function changePassword() {
 // 自动任务
 const autoConfig = ref<AutoTaskConfig>({
   auto_check_enabled: false,
-  auto_check_interval: 1440,
+  auto_check_interval: 30,
   auto_sync_enabled: true,
-  auto_sync_interval: 1440
+  auto_sync_interval: 30
 })
 const autoLoading = ref(false)
 

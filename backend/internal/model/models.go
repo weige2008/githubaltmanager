@@ -17,9 +17,9 @@ type AppConfig struct {
 
 	// 自动任务设置 — 间隔模式（分钟）
 	AutoCheckEnabled  bool   `gorm:"column:auto_check_enabled;not null;default:false" json:"auto_check_enabled"`
-	AutoCheckInterval int    `gorm:"column:auto_check_interval;default:1440" json:"auto_check_interval"`
+	AutoCheckInterval int    `gorm:"column:auto_check_interval;default:30" json:"auto_check_interval"`
 	AutoSyncEnabled   bool   `gorm:"column:auto_sync_enabled;not null;default:true" json:"auto_sync_enabled"`
-	AutoSyncInterval  int    `gorm:"column:auto_sync_interval;default:1440" json:"auto_sync_interval"`
+	AutoSyncInterval  int    `gorm:"column:auto_sync_interval;default:30" json:"auto_sync_interval"`
 	AutoSyncLastAt    *time.Time `gorm:"column:auto_sync_last_at" json:"auto_sync_last_at"`
 	AutoCheckLastAt   *time.Time `gorm:"column:auto_check_last_at" json:"auto_check_last_at"`
 }

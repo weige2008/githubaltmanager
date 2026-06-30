@@ -2,9 +2,13 @@ package service
 
 import (
 	"fmt"
+	"log"
+	"os"
 
+	"githubaltmanager/internal/auth"
 	"githubaltmanager/internal/config"
 	"githubaltmanager/internal/crypto"
+	"githubaltmanager/internal/model"
 
 	"gorm.io/gorm"
 )
@@ -39,6 +43,7 @@ func (c *Container) EnsureUnlocked() error {
 
 // RunDueTasks 实现 scheduler.TaskRunner 接口：执行到期定时任务
 func (c *Container) RunDueTasks() {
+	c.ensureUnlockedForAuto()
 	if !crypto.IsUnlocked() {
 		return
 	}
@@ -59,6 +64,7 @@ func (c *Container) GetAutoConfig() (checkEnabled bool, checkInterval int, syncE
 }
 
 func (c *Container) RunAutoCheck() {
+	c.ensureUnlockedForAuto()
 	if !crypto.IsUnlocked() {
 		return
 	}
@@ -66,8 +72,37 @@ func (c *Container) RunAutoCheck() {
 }
 
 func (c *Container) RunAutoSync() {
+	c.ensureUnlockedForAuto()
 	if !crypto.IsUnlocked() {
 		return
 	}
 	NewAutoTaskService(c.DB).RunAutoSync(c)
+}
+
+// ensureUnlockedForAuto 尝试用配置的 master 密码自动解锁 keystore
+// 支持 GAM_MASTER_PASSWORD 环境变量
+func (c *Container) ensureUnlockedForAuto() {
+	if crypto.IsUnlocked() {
+		return
+	}
+	// 方式1：环境变量 GAM_MASTER_PASSWORD
+	masterPwd := os.Getenv("GAM_MASTER_PASSWORD")
+	if masterPwd == "" {
+		return
+	}
+	params := c.KeyParams()
+	key, err := crypto.DeriveKey(masterPwd, c.CFG.Security.MasterSalt, params)
+	if err != nil {
+		return
+	}
+	// 验证密码是否正确
+	var cfg model.AppConfig
+	if err := c.DB.First(&cfg, 1).Error; err != nil {
+		return
+	}
+	ok, _ := auth.VerifyMasterPassword(masterPwd, cfg.MasterPasswordHash, c.CFG.Security.MasterSalt, params)
+	if ok {
+		crypto.SetMasterKey(key)
+		log.Printf("[auto] keystore auto-unlocked via GAM_MASTER_PASSWORD")
+	}
 }

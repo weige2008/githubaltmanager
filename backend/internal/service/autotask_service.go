@@ -37,10 +37,10 @@ func (s *AutoTaskService) GetAutoTaskConfig() (*config.AutoTaskConfig, error) {
 // UpdateAutoTaskConfig 更新自动任务配置
 func (s *AutoTaskService) UpdateAutoTaskConfig(req config.AutoTaskConfig) error {
 	if req.AutoCheckInterval < 1 {
-		req.AutoCheckInterval = 1440
+		req.AutoCheckInterval = 30
 	}
 	if req.AutoSyncInterval < 1 {
-		req.AutoSyncInterval = 1440
+		req.AutoSyncInterval = 30
 	}
 	return s.DB.Model(&model.AppConfig{}).Where("id = 1").Updates(map[string]any{
 		"auto_check_enabled":  req.AutoCheckEnabled,
