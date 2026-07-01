@@ -20,6 +20,7 @@ import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { CommandMenu } from '@/components/command-menu'
+import { TopNav } from '@/components/top-nav'
 import { SkipToMain } from '@/components/skip-to-main'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Palette } from 'lucide-react'
@@ -139,6 +140,11 @@ export default function MainLayout() {
           <Github className="size-5 shrink-0" />
           <span className="hidden text-sm font-bold tracking-tight sm:block">{t('common.appName')}</span>
         </a>
+
+        {/* Top Navigation (desktop only, matching New API) */}
+        <div className="ms-2 hidden lg:block">
+          <TopNav />
+        </div>
 
         {/* Right cluster */}
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
