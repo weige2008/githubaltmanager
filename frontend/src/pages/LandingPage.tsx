@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
 import { Button } from '@/components/ui/button'
@@ -124,6 +124,10 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const { token, theme, toggleTheme } = useAppStore()
   const [initialized, setInitialized] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const { scrollY } = useScroll()
+
+  useMotionValueEvent(scrollY, 'change', (latest) => { setScrolled(latest > 60) })
 
   useEffect(() => { authApi.status().then((d) => setInitialized(d.isInitialized)).catch(() => {}) }, [])
   useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark') }, [theme])
@@ -213,29 +217,54 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* ===== Nav ===== */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <div className="flex items-center gap-2 font-bold">
-            <Github className="h-6 w-6 text-primary" />
-            <span>GitHub 管理器</span>
+      {/* ===== Floating Nav (scroll-aware pill) ===== */}
+      <div className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-3 pointer-events-none">
+        <motion.nav
+          animate={{
+            maxWidth: scrolled ? 'max-w-3xl' : '100%',
+            marginTop: scrolled ? 0 : 0,
+            paddingTop: scrolled ? 8 : 16,
+            paddingBottom: scrolled ? 8 : 16,
+          }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className={`pointer-events-auto flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] h-12 rounded-2xl px-4 backdrop-blur-2xl ${
+            scrolled
+              ? 'bg-background/70 ring-[0.5px] ring-border/50 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.02)] dark:shadow-[0_2px_16px_-6px_rgba(0,0,0,0.4)] w-full max-w-3xl'
+              : 'bg-transparent border-0 shadow-none w-full max-w-6xl ring-0'
+          }`}
+        >
+          {/* Logo */}
+          <a href="/" className="group flex shrink-0 items-center gap-2.5">
+            <div className="flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105">
+              <Github className="size-full rounded-lg" />
+            </div>
+            <span className="text-sm font-semibold tracking-tight">GitHub 管理器</span>
+          </a>
+
+          {/* Center links (desktop) */}
+          <div className="hidden items-center gap-0.5 sm:flex">
+            <a href="/" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground">主页</a>
+            <button onClick={() => navigate('/dashboard')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">控制台</button>
+            <button onClick={() => navigate('/automation')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">自动化</button>
+            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">文档</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-muted-foreground">
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </Button>
-            <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer">
-              <Button variant="outline" size="sm" className="gap-1.5 border-border/50">
-                <Github className="size-4" /> GitHub
-              </Button>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1.5">
+            <button onClick={toggleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
+              {theme === 'dark' ? <span className="text-sm">☀️</span> : <span className="text-sm">🌙</span>}
+            </button>
+            <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
+              <Github className="size-4" />
             </a>
-            <Button size="sm" className="gap-1.5" onClick={goEnter}>
+            <div className="mx-1 hidden h-4 w-px bg-border/40 sm:block" />
+            <button onClick={goEnter} className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
               {token ? '控制台' : '登录'}
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Button>
+              <ArrowRight className="size-3" />
+            </button>
           </div>
-        </div>
-      </header>
+        </motion.nav>
+      </div>
 
       {/* ===== Hero ===== */}
       <section className="relative z-10 overflow-hidden px-6 pt-24 pb-16 md:pt-32 md:pb-24">
