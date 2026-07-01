@@ -58,8 +58,8 @@
   --muted-foreground: 75 10% 65%;
   --accent: 60 8% 33%;
   --accent-foreground: 95 15% 87%;
-  --border: hsl(60 10% 100% / 0.1);
-  --input: hsl(60 10% 100% / 0.15);
+  --border: 60 6% 30%;
+  --input: 60 6% 33%;
   --ring: 40 45% 62%;
 }
 
@@ -261,40 +261,9 @@
   --muted-foreground: 0 0% 78%;
   --accent: 0 0% 36%;
   --accent-foreground: 0 0% 94%;
-  --border: hsl(0 0% 100% / 0.18);
-  --input: hsl(0 0% 100% / 0.18);
+  --border: 0 0% 35%;
+  --input: 0 0% 35%;
   --ring: 0 0% 94%;
-}
-
-/* ── Semantic surface bridge ── */
-/* Auto-derive card/popover/muted/border from primary for color presets */
-[data-theme-preset]:not([data-theme-preset='default']):not([data-theme-preset='anthropic']):not([data-theme-preset='simple-large']) {
-  --card: color-mix(in srgb, hsl(var(--primary)) 3%, hsl(var(--background)));
-  --popover: color-mix(in srgb, hsl(var(--primary)) 5%, hsl(var(--background)));
-  --muted: color-mix(in srgb, hsl(var(--primary)) 7%, hsl(var(--background)));
-  --muted-foreground: color-mix(in srgb, hsl(var(--foreground)) 68%, hsl(var(--primary)));
-  --accent: color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--background)));
-  --border: color-mix(in srgb, hsl(var(--primary)) 20%, hsl(var(--background)));
-  --input: color-mix(in srgb, hsl(var(--primary)) 22%, hsl(var(--background)));
-  --sidebar: color-mix(in srgb, hsl(var(--primary)) 4%, hsl(var(--background)));
-  --sidebar-accent: color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--background)));
-  --sidebar-border: color-mix(in srgb, hsl(var(--primary)) 18%, hsl(var(--background)));
-  --success: var(--chart-2);
-  --warning: var(--chart-4);
-  --info: var(--chart-1);
-  --neutral: var(--muted-foreground);
-}
-.dark [data-theme-preset]:not([data-theme-preset='default']):not([data-theme-preset='anthropic']):not([data-theme-preset='simple-large']) {
-  --card: color-mix(in srgb, hsl(var(--primary)) 8%, hsl(var(--background)));
-  --popover: color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--background)));
-  --muted: color-mix(in srgb, hsl(var(--primary)) 13%, hsl(var(--background)));
-  --muted-foreground: color-mix(in srgb, hsl(var(--foreground)) 60%, hsl(var(--primary)));
-  --accent: color-mix(in srgb, hsl(var(--primary)) 18%, hsl(var(--background)));
-  --border: color-mix(in srgb, hsl(var(--primary)) 25%, hsl(var(--background)));
-  --input: color-mix(in srgb, hsl(var(--primary)) 29%, hsl(var(--background)));
-  --sidebar: color-mix(in srgb, hsl(var(--primary)) 6%, hsl(var(--background)));
-  --sidebar-accent: color-mix(in srgb, hsl(var(--primary)) 18%, hsl(var(--background)));
-  --sidebar-border: color-mix(in srgb, hsl(var(--primary)) 22%, hsl(var(--background)));
 }
 
 /* ── Font axis ── */

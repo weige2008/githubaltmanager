@@ -78,10 +78,8 @@
     --info-foreground: 0 0% 98.5%;
     --neutral: 0 0% 76%;
     --neutral-foreground: 0 0% 14.5%;
-    --border: 0 0% 100%;
-    --border-opacity: 0.1;
-    --input: 0 0% 100%;
-    --input-opacity: 0.17;
+    --border: 0 0% 31%;
+    --input: 0 0% 36%;
     --ring: 0 0% 68%;
     --chart-1: 225 70% 60%;
     --chart-2: 142 45% 50%;
@@ -95,20 +93,12 @@
     --sidebar-primary-foreground: 0 0% 15.5%;
     --sidebar-accent: 0 0% 35.5%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 100%;
-    --sidebar-border-opacity: 0.11;
+    --sidebar-border: 0 0% 32%;
     --sidebar-ring: 0 0% 68%;
     /* Skeleton */
     --skeleton-base: 0 0% 33.5%;
     --skeleton-highlight: 0 0% 44%;
   }
-}
-
-/* Apply opacity-based borders in dark mode */
-.dark {
-  --border: hsl(0 0% 100% / 0.1);
-  --input: hsl(0 0% 100% / 0.17);
-  --sidebar-border: hsl(0 0% 100% / 0.11);
 }
 
 * {
