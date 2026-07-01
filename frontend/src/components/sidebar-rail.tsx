@@ -2,50 +2,22 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 interface SidebarRailProps {
-  onResize?: (width: number) => void
-  minWidth?: number
-  maxWidth?: number
+  onToggle?: () => void
   className?: string
 }
 
-const SidebarRail = ({ onResize, minWidth = 64, maxWidth = 320, className }: SidebarRailProps) => {
-  const [isDragging, setIsDragging] = React.useState(false)
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-
-    const startX = e.clientX
-    const startWidth = parseInt(document.documentElement.style.getPropertyValue('--sidebar-width') || '240', 10)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const delta = e.clientX - startX
-      const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta))
-      document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`)
-      onResize?.(newWidth)
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(false)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }
-
+const SidebarRail = ({ onToggle, className }: SidebarRailProps) => {
   return (
-    <div
-      onMouseDown={handleMouseDown}
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label="Toggle Sidebar"
+      tabIndex={-1}
       className={cn(
-        'absolute right-0 top-0 h-full w-1 cursor-col-resize transition-colors',
-        'hover:bg-primary/20',
-        isDragging && 'bg-primary/40',
+        'absolute inset-y-0 right-0 z-20 hidden w-4 cursor-pointer transition-all ease-linear',
+        'after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] after:-translate-x-1/2',
+        'after:bg-transparent after:transition-colors hover:after:bg-border',
+        'sm:flex',
         className
       )}
     />

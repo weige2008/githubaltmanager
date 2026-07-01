@@ -1,14 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store/app'
 import { useThemeStore } from '@/store/theme'
+import { useSearchStore } from '@/store/search'
 import { Button } from '@/components/ui/button'
 import { RouteProgress } from '@/components/RouteProgress'
 import { ThemeDrawer } from '@/components/ThemeDrawer'
 import { cn } from '@/lib/utils'
-import { MOTION_TRANSITION, PAGE_TRANSITION } from '@/lib/motion'
+import { MOTION_TRANSITION } from '@/lib/motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
   LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings,
@@ -62,7 +63,7 @@ export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [commandOpen, setCommandOpen] = useState(false)
+  const { isOpen: commandOpen, setOpen: setCommandOpen } = useSearchStore()
   const reducedMotion = useReducedMotion()
 
   const toggleCollapse = () => {
@@ -70,6 +71,18 @@ export default function MainLayout() {
     setCollapsed(next)
     localStorage.setItem('sidebar_collapsed', String(next))
   }
+
+  // Ctrl+B toggles sidebar (matching New API)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        toggleCollapse()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [collapsed])
 
   const activeLabel = (() => {
     for (const g of navGroups) for (const item of g.items) {
@@ -205,7 +218,7 @@ export default function MainLayout() {
           )}
 
           {/* Sidebar Rail */}
-          <SidebarRail />
+          <SidebarRail onToggle={toggleCollapse} />
         </motion.aside>
 
         {/* Mobile sidebar drawer */}
