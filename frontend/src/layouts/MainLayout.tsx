@@ -18,7 +18,7 @@ type NavGroupDef = { title: string; items: NavItem[] }
 const navGroups: NavGroupDef[] = [
   {
     title: '概览',
-    items: [{ to: '/dashboard', label: '仪表盘', icon: LayoutDashboard },
+    items: [{ to: '/dashboard', label: '仪表盘', icon: LayoutDashboard }],
   },
   {
     title: '管理',
