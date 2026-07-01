@@ -25,7 +25,10 @@ function CommandDialog({ children, className, ...props }: CommandDialogProps) {
         <DialogTitle>Command Palette</DialogTitle>
         <DialogDescription>Search for a command to run...</DialogDescription>
       </DialogHeader>
-      <DialogContent className={cn('top-1/3 max-w-[640px] translate-y-0 overflow-hidden rounded-xl p-0', className)} hideClose>
+      <DialogContent
+        className={cn('top-1/3 !max-w-none translate-y-0 overflow-hidden p-0 sm:max-w-none', className)}
+        showCloseButton={false}
+      >
         {children}
       </DialogContent>
     </Dialog>
@@ -34,14 +37,12 @@ function CommandDialog({ children, className, ...props }: CommandDialogProps) {
 
 function CommandInput({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div className="p-1 pb-0">
-      <div className="flex h-8 items-center rounded-lg border border-input/30 bg-input/30 px-2 shadow-none">
-        <Search className="size-4 shrink-0 opacity-50" />
-        <CommandPrimitive.Input
-          className={cn('ml-2 w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50', className)}
-          {...props}
-        />
-      </div>
+    <div className="border-b px-3" cmdk-input-wrapper="">
+      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <CommandPrimitive.Input
+        className={cn('flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50', className)}
+        {...props}
+      />
     </div>
   )
 }
@@ -49,7 +50,7 @@ function CommandInput({ className, ...props }: React.ComponentProps<typeof Comma
 function CommandList({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
     <CommandPrimitive.List
-      className={cn('max-h-72 overflow-x-hidden overflow-y-auto outline-none', className)}
+      className={cn('max-h-[300px] overflow-y-auto overflow-x-hidden outline-none', className)}
       {...props}
     />
   )
@@ -83,13 +84,12 @@ function CommandItem({ className, children, ...props }: React.ComponentProps<typ
   return (
     <CommandPrimitive.Item
       className={cn(
-        'group/command-item relative flex cursor-default select-none items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-muted data-[selected=true]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4',
+        'relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground',
         className
       )}
       {...props}
     >
       {children}
-      <Check className="ml-auto size-4 opacity-0 group-data-[selected=true]/command-item:opacity-100" />
     </CommandPrimitive.Item>
   )
 }
