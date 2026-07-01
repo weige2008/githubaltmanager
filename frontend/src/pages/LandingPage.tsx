@@ -64,33 +64,41 @@ function Counter({ end, suffix = '', duration = 1600 }: { end: number; suffix?: 
 // ===== Hero terminal demo =====
 function HeroTerminalDemo() {
   return (
-    <div className="w-full max-w-md rounded-xl border border-border/40 bg-card shadow-2xl overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/30 px-4 py-2.5">
-        <div className="h-3 w-3 rounded-full bg-red-400/70" />
-        <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
-        <div className="h-3 w-3 rounded-full bg-green-400/70" />
-        <span className="ml-2 text-xs text-muted-foreground">GAM Console</span>
+    <div className="w-full max-w-lg rounded-xl border border-border/40 bg-card shadow-2xl overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/30 px-4 py-3">
+        <div className="h-3.5 w-3.5 rounded-full bg-red-400/70" />
+        <div className="h-3.5 w-3.5 rounded-full bg-yellow-400/70" />
+        <div className="h-3.5 w-3.5 rounded-full bg-green-400/70" />
+        <span className="ml-2 text-xs font-medium text-muted-foreground">GAM Console</span>
       </div>
-      <div className="space-y-3 p-4">
+      <div className="space-y-3 p-5">
         {[
-          { icon: KeyRound, label: 'weige2008', status: 'active', color: 'text-green-400' },
-          { icon: KeyRound, label: 'Akilaea', status: 'banned', color: 'text-red-400' },
-          { icon: KeyRound, label: 'xbox-cn', status: 'active', color: 'text-green-400' },
+          { label: 'weige2008', note: '主账户', status: 'active', color: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'Akilaea', note: 'CDK 节点', status: 'banned', color: 'text-red-500', bg: 'bg-red-500/10' },
+          { label: 'xbox-cn', note: '自动注册', status: 'active', color: 'text-green-500', bg: 'bg-green-500/10' },
         ].map((row, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-lg bg-muted/20 p-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-xs font-bold text-white">
+          <div key={i} className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/15 p-3 transition-colors hover:bg-muted/30">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-bold text-white shadow-md">
               {row.label[0].toUpperCase()}
             </div>
-            <div className="flex-1 space-y-1">
-              <div className="h-2.5 rounded bg-muted" style={{ width: `${60 + i * 5}%` }} />
-              <div className="h-2 rounded bg-muted/50" style={{ width: `${30 + i * 3}%` }} />
+            <div className="flex-1 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{row.label}</span>
+                <span className="text-[10px] text-muted-foreground">{row.note}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${row.bg} ${row.color}`}>{row.status.toUpperCase()}</span>
+                <div className="h-1 flex-1 rounded-full bg-muted">
+                  <div className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${75 - i * 15}%` }} />
+                </div>
+              </div>
             </div>
-            <span className={`text-[10px] font-medium ${row.color}`}>{row.status}</span>
           </div>
         ))}
-        <div className="flex items-end gap-1 px-2 pt-2" style={{ height: 50 }}>
-          {[40, 65, 30, 80, 55, 70, 45].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-500/40 to-purple-500/40" style={{ height: `${h}%` }} />
+        {/* Mini chart */}
+        <div className="flex items-end gap-1.5 rounded-lg border border-border/30 bg-muted/15 p-3" style={{ height: 64 }}>
+          {[40, 65, 30, 80, 55, 70, 45, 60, 35, 75].map((h, i) => (
+            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-500/50 to-purple-500/50 transition-all duration-300 hover:from-blue-500/70 hover:to-purple-500/70" style={{ height: `${h}%` }} />
           ))}
         </div>
       </div>
