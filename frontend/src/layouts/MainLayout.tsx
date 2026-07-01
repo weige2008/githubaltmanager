@@ -141,13 +141,12 @@ export default function MainLayout() {
           <span className="hidden text-sm font-bold tracking-tight sm:block">{t('common.appName')}</span>
         </a>
 
-        {/* Top Navigation (desktop only, matching New API) */}
-        <div className="ms-2 hidden lg:block">
-          <TopNav />
-        </div>
-
         {/* Right cluster */}
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
+          {/* Top Navigation (desktop only, right before search — matching New API) */}
+          <div className="me-1 hidden lg:block">
+            <TopNav />
+          </div>
           <div className="hidden md:block">
             <SearchBox />
           </div>
