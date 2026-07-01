@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Sun, Moon, Monitor, Home, Terminal, Bot, FileText } from 'lucide-react'
 import {
-  CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator,
+  Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator,
 } from '@/components/ui/command'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { useThemeStore } from '@/store/theme'
 
 interface CommandMenuProps {
@@ -28,9 +27,9 @@ const CommandMenu = ({ open, onOpenChange }: CommandMenuProps) => {
 
   return (
     <CommandDialog modal open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder={t('common.search') + '...'} />
-      <CommandList>
-        <ScrollArea className="h-72 pe-1">
+      <Command>
+        <CommandInput placeholder={t('common.search') + '...'} />
+        <CommandList>
           <CommandEmpty>{t('common.noData')}</CommandEmpty>
 
           <CommandGroup heading="主页">
@@ -109,8 +108,8 @@ const CommandMenu = ({ open, onOpenChange }: CommandMenuProps) => {
               {mode === 'system' && <span className="ml-auto">✓</span>}
             </CommandItem>
           </CommandGroup>
-        </ScrollArea>
-      </CommandList>
+        </CommandList>
+      </Command>
     </CommandDialog>
   )
 }
