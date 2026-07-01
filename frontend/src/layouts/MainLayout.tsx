@@ -115,10 +115,14 @@ export default function MainLayout() {
           <h1 className="text-lg font-semibold">
             {navItems.find((n) => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label || '控制台'}
           </h1>
-          <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(true)}>
-            <Palette className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={toggleCollapse}>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(true)}>
+              <Palette className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={toggleCollapse}>
+              {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+            </Button>
+           </div>
         </header>
 
         <main className="flex-1 overflow-auto p-6">
