@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/lora": "^5.2.8",
+    "@fontsource-variable/public-sans": "^5.2.7",
     "@fontsource/inter": "^5.2.8",
     "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-accordion": "^1.2.15",

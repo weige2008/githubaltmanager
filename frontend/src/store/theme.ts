@@ -35,16 +35,16 @@ export const DEFAULT_CONFIG: ThemeConfig = {
 
 // ===== Preset metadata for UI =====
 export const PRESETS: { value: ThemePreset; label: string; swatches: [string, string] }[] = [
-  { value: 'default', label: '默认', swatches: ['hsl(222 47% 11%)', 'hsl(0 0% 95%)'] },
-  { value: 'anthropic', label: 'Anthropic', swatches: ['hsl(30 40% 88%)', 'hsl(15 60% 52%)'] },
+  { value: 'default', label: '默认', swatches: ['hsl(0 0% 13%)', 'hsl(0 0% 95%)'] },
+  { value: 'anthropic', label: 'Anthropic', swatches: ['hsl(95 25% 97%)', 'hsl(38 55% 58%)'] },
   { value: 'simple-large', label: '超大字体简易', swatches: ['hsl(0 0% 15%)', 'hsl(0 0% 99%)'] },
-  { value: 'underground', label: '暗夜', swatches: ['hsl(153 49% 42%)', 'hsl(337 31% 53%)'] },
-  { value: 'rose-garden', label: '玫瑰花园', swatches: ['hsl(12 80% 44%)', 'hsl(5 30% 77%)'] },
-  { value: 'lake-view', label: '湖光', swatches: ['hsl(163 38% 63%)', 'hsl(201 28% 53%)'] },
-  { value: 'sunset-glow', label: '日落霞光', swatches: ['hsl(25 56% 48%)', 'hsl(42 38% 75%)'] },
-  { value: 'forest-whisper', label: '森林低语', swatches: ['hsl(182 31% 41%)', 'hsl(250 15% 45%)'] },
-  { value: 'ocean-breeze', label: '海风', swatches: ['hsl(263 52% 52%)', 'hsl(277 48% 56%)'] },
-  { value: 'lavender-dream', label: '薰衣草梦', swatches: ['hsl(307 43% 53%)', 'hsl(201 17% 77%)'] },
+  { value: 'underground', label: '暗夜', swatches: ['hsl(156 35% 46%)', 'hsl(337 25% 50%)'] },
+  { value: 'rose-garden', label: '玫瑰花园', swatches: ['hsl(12 72% 49%)', 'hsl(6 32% 76%)'] },
+  { value: 'lake-view', label: '湖光', swatches: ['hsl(163 35% 63%)', 'hsl(201 25% 50%)'] },
+  { value: 'sunset-glow', label: '日落霞光', swatches: ['hsl(25 52% 50%)', 'hsl(42 35% 74%)'] },
+  { value: 'forest-whisper', label: '森林低语', swatches: ['hsl(182 28% 42%)', 'hsl(250 12% 45%)'] },
+  { value: 'ocean-breeze', label: '海风', swatches: ['hsl(263 48% 53%)', 'hsl(277 44% 56%)'] },
+  { value: 'lavender-dream', label: '薰衣草梦', swatches: ['hsl(307 38% 54%)', 'hsl(201 14% 76%)'] },
 ]
 
 export const RADIUS_OPTIONS = [
@@ -95,9 +95,9 @@ function applyConfig(cfg: ThemeConfig) {
 
   // Apply font to body
   if (resolvedFont === 'serif') {
-    body.style.fontFamily = 'Georgia, "Times New Roman", serif'
+    body.style.fontFamily = '"Lora", "Source Serif Pro", Georgia, "Times New Roman", serif'
   } else {
-    body.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif'
+    body.style.fontFamily = '"Public Sans", Inter, system-ui, -apple-system, sans-serif'
   }
 }
 

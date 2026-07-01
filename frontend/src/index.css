@@ -4,49 +4,111 @@
 
 @layer base {
   :root {
+    /* ── Base palette: neutral grayscale (matching New API) ── */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 14.5%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 14.5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 94%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.625rem;
+    --popover-foreground: 0 0% 14.5%;
+    --primary: 0 0% 13%;
+    --primary-foreground: 0 0% 98.5%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 14.5%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 49%;
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 14.5%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98.5%;
+    --success: 142 50% 45%;
+    --success-foreground: 0 0% 98.5%;
+    --warning: 38 80% 50%;
+    --warning-foreground: 0 0% 14.5%;
+    --info: 213 70% 50%;
+    --info-foreground: 0 0% 98.5%;
+    --neutral: 0 0% 60%;
+    --neutral-foreground: 0 0% 14.5%;
+    --border: 0 0% 93%;
+    --input: 0 0% 93%;
+    --ring: 0 0% 60%;
+    --chart-1: 28 85% 52%;
+    --chart-2: 184 60% 42%;
+    --chart-3: 227 45% 40%;
+    --chart-4: 44 80% 60%;
+    --chart-5: 70 70% 55%;
+    /* Sidebar */
+    --sidebar: 0 0% 97.5%;
+    --sidebar-foreground: 0 0% 14.5%;
+    --sidebar-primary: 0 0% 13%;
+    --sidebar-primary-foreground: 0 0% 98.5%;
+    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent-foreground: 0 0% 14.5%;
+    --sidebar-border: 0 0% 93%;
+    --sidebar-ring: 0 0% 60%;
+    /* Skeleton */
+    --skeleton-base: 0 0% 97%;
+    --skeleton-highlight: 0 0% 98.5%;
+    /* Radius */
+    --radius: 1rem;
   }
 
   .dark {
-    --background: 222 47% 5%;
-    --foreground: 210 20% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 20% 98%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 14%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 224 76% 48%;
+    --background: 0 0% 23.5%;
+    --foreground: 0 0% 96.5%;
+    --card: 0 0% 28.5%;
+    --card-foreground: 0 0% 96.5%;
+    --popover: 0 0% 30.5%;
+    --popover-foreground: 0 0% 96.5%;
+    --primary: 0 0% 96.5%;
+    --primary-foreground: 0 0% 15.5%;
+    --secondary: 0 0% 33.5%;
+    --secondary-foreground: 0 0% 96.5%;
+    --muted: 0 0% 30.5%;
+    --muted-foreground: 0 0% 78%;
+    --accent: 0 0% 36.5%;
+    --accent-foreground: 0 0% 96.5%;
+    --destructive: 0 58% 55%;
+    --destructive-foreground: 0 0% 98.5%;
+    --success: 142 45% 50%;
+    --success-foreground: 0 0% 98.5%;
+    --warning: 38 76% 58%;
+    --warning-foreground: 0 0% 14.5%;
+    --info: 213 60% 58%;
+    --info-foreground: 0 0% 98.5%;
+    --neutral: 0 0% 76%;
+    --neutral-foreground: 0 0% 14.5%;
+    --border: 0 0% 100%;
+    --border-opacity: 0.1;
+    --input: 0 0% 100%;
+    --input-opacity: 0.17;
+    --ring: 0 0% 68%;
+    --chart-1: 225 70% 60%;
+    --chart-2: 142 45% 50%;
+    --chart-3: 44 80% 60%;
+    --chart-4: 280 60% 60%;
+    --chart-5: 16 70% 58%;
+    /* Sidebar */
+    --sidebar: 0 0% 22.5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 96.5%;
+    --sidebar-primary-foreground: 0 0% 15.5%;
+    --sidebar-accent: 0 0% 35.5%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-border-opacity: 0.11;
+    --sidebar-ring: 0 0% 68%;
+    /* Skeleton */
+    --skeleton-base: 0 0% 33.5%;
+    --skeleton-highlight: 0 0% 44%;
   }
+}
+
+/* Apply opacity-based borders in dark mode */
+.dark {
+  --border: hsl(0 0% 100% / 0.1);
+  --input: hsl(0 0% 100% / 0.17);
+  --sidebar-border: hsl(0 0% 100% / 0.11);
 }
 
 * {
