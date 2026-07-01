@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '@/store/app'
 import { useThemeStore } from '@/store/theme'
 import { useSearchStore } from '@/store/search'
 import { Button } from '@/components/ui/button'
@@ -13,21 +12,23 @@ import { MOTION_TRANSITION } from '@/lib/motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
   LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings,
-  Github, PanelLeftClose, PanelLeft, X,
+  Github, PanelLeft, X,
 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider, TooltipProvider as Provider } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { SearchBox } from '@/components/search-box'
 import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-import { ThemeQuickSwitcher } from '@/components/theme-quick-switcher'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { CommandMenu } from '@/components/command-menu'
 import { SkipToMain } from '@/components/skip-to-main'
-import { SidebarRail } from '@/components/sidebar-rail'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { Palette } from 'lucide-react'
 
-type NavItem = { to: string; labelKey: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }
+type NavItem = { to: string; labelKey: string; icon: React.ComponentType<{ className?: string }> }
 type NavGroupDef = { titleKey: string; items: NavItem[] }
+
+const SIDEBAR_WIDTH = '13rem'
+const SIDEBAR_WIDTH_ICON = '2.75rem'
 
 const navGroups: NavGroupDef[] = [
   {
@@ -58,218 +59,252 @@ const navGroups: NavGroupDef[] = [
 export default function MainLayout() {
   const { t } = useTranslation()
   const location = useLocation()
-  const navigate = useNavigate()
   const { contentLayout, sidebarMode } = useThemeStore()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const { isOpen: commandOpen, setOpen: setCommandOpen } = useSearchStore()
   const reducedMotion = useReducedMotion()
 
-  const toggleCollapse = () => {
+  const toggleSidebar = () => {
     const next = !collapsed
     setCollapsed(next)
     localStorage.setItem('sidebar_collapsed', String(next))
   }
 
-  // Ctrl+B toggles sidebar (matching New API)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
         e.preventDefault()
-        toggleCollapse()
+        toggleSidebar()
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [collapsed])
 
-  const activeLabel = (() => {
-    for (const g of navGroups) for (const item of g.items) {
-      if (location.pathname === item.to || location.pathname.startsWith(item.to + '/')) return t(item.labelKey)
-    }
-    return t('nav.dashboard')
-  })()
+  const isFloating = sidebarMode === 'floating'
+  const sidebarWidth = collapsed ? SIDEBAR_WIDTH_ICON : SIDEBAR_WIDTH
+
+  const renderNavLink = (item: NavItem, isMobile: boolean) => {
+    const Icon = item.icon
+    const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        onClick={() => isMobile && setMobileOpen(false)}
+        data-active={active}
+        className={cn(
+          'flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm transition-colors',
+          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
+          !active && 'text-sidebar-foreground',
+          collapsed && !isMobile && 'h-8 w-8 justify-center p-2'
+        )}
+      >
+        <Icon className="size-4 shrink-0" />
+        {(!collapsed || isMobile) && (
+          <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
+        )}
+      </NavLink>
+    )
+  }
 
   const motionProps = reducedMotion
     ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 1 } }
     : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0 } }
 
-  const sidebarAnim = reducedMotion
-    ? { animate: { width: collapsed ? 64 : 240 } }
-    : { animate: { width: collapsed ? 64 : 240 }, transition: MOTION_TRANSITION }
-
-  const isFloating = sidebarMode === 'floating'
-
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <RouteProgress />
       <SkipToMain />
-      <Provider>
+      <TooltipProvider delayDuration={0}>
       <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
-      {/* ===== Header ===== */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-xl z-30">
-        <div className="flex items-center gap-3">
-          <button className="md:hidden" onClick={() => setMobileOpen(true)}>
-            <PanelLeft className="h-5 w-5 text-muted-foreground" />
-          </button>
-          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Github className="h-5 w-5 text-primary shrink-0" />
-            <span className="hidden text-sm font-bold tracking-tight sm:block">{t('common.appName')}</span>
-          </a>
-        </div>
+      {/* ===== Header (matching New API: transparent, SidebarTrigger first) ===== */}
+      <header className="sticky top-0 z-40 flex h-12 w-full shrink-0 items-center gap-1.5 px-2 sm:gap-2 sm:px-3">
+        {/* Sidebar Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          onClick={() => collapsed ? toggleSidebar() : (window.innerWidth < 768 ? setMobileOpen(true) : toggleSidebar())}
+        >
+          <PanelLeft className="size-4" />
+        </Button>
 
-        <div className="flex items-center gap-1.5">
-          {/* Search */}
+        {/* Brand */}
+        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Github className="size-5 shrink-0" />
+          <span className="hidden text-sm font-bold tracking-tight sm:block">{t('common.appName')}</span>
+        </a>
+
+        {/* Right cluster */}
+        <div className="ms-auto flex items-center gap-1 sm:gap-2">
           <div className="hidden md:block">
             <SearchBox />
           </div>
-
-          <h1 className="mx-2 hidden text-sm font-medium text-muted-foreground lg:block">{activeLabel}</h1>
-
-          {/* Language */}
-          <LanguageSwitcher />
-
-          {/* Notifications */}
           <NotificationPopover />
-
-          {/* Theme */}
-          <ThemeQuickSwitcher onOpenDrawer={() => setDrawerOpen(true)} />
-
-          {/* Collapse toggle (desktop only) */}
-          <Button variant="ghost" size="icon" onClick={toggleCollapse} className="hidden md:flex">
-            {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          <LanguageSwitcher />
+          <Button variant="ghost" size="icon" className="size-8" onClick={() => setDrawerOpen(true)}>
+            <Palette className="size-4" />
           </Button>
-
-          {/* Profile */}
           <ProfileDropdown />
         </div>
       </header>
 
       {/* ===== Body ===== */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sidebar */}
-        <motion.aside
-          {...sidebarAnim}
+      <div className="flex min-h-0 w-full flex-1">
+        {/* Desktop Sidebar (matching New API sidebar.tsx pattern) */}
+        <div
           className={cn(
-            'layout-sidebar relative hidden shrink-0 flex-col overflow-hidden border-r bg-card/30 backdrop-blur-xl md:flex',
-            isFloating && 'my-2 ml-2 rounded-lg border shadow-sm'
+            'group peer relative hidden shrink-0 text-sidebar-foreground md:block',
           )}
+          data-state={collapsed ? 'collapsed' : 'expanded'}
+          data-collapsible={collapsed ? 'icon' : ''}
+          data-variant={isFloating ? 'floating' : 'sidebar'}
+          data-side="left"
         >
-          <nav className="flex-1 overflow-y-auto p-2">
-            {navGroups.map((group) => (
-              <div key={group.titleKey} className="mb-4">
-                {!collapsed && (
-                  <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-                    {t(group.titleKey)}
-                  </p>
-                )}
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const Icon = item.icon
-                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                    const linkContent = (
-                      <NavLink to={item.to} className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/50">
-                        <Icon className="h-4 w-4 shrink-0" style={{ color: active ? 'hsl(var(--primary))' : undefined }} />
-                        <AnimatePresence>
-                          {!collapsed && (
-                            <motion.span
-                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                              className="truncate whitespace-nowrap"
-                              style={{ color: active ? 'hsl(var(--primary))' : undefined }}
-                            >{t(item.labelKey)}</motion.span>
+          {/* Gap placeholder */}
+          <div
+            className="relative bg-transparent transition-[width] duration-200 ease-linear"
+            style={{ width: sidebarWidth }}
+          />
+          {/* Fixed sidebar container */}
+          <div
+            className={cn(
+              'fixed bottom-0 left-0 top-12 z-10 hidden flex-col transition-[width] duration-200 ease-linear md:flex',
+              isFloating && 'p-2'
+            )}
+            style={{ width: sidebarWidth }}
+          >
+            <div
+              className={cn(
+                'flex size-full flex-col bg-sidebar',
+                isFloating && 'rounded-lg shadow-sm ring-1 ring-sidebar-border',
+                !isFloating && !collapsed && 'border-r border-sidebar-border',
+              )}
+            >
+              {/* Sidebar content */}
+              <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto py-2">
+                {navGroups.map((group) => (
+                  <div key={group.titleKey} className="relative flex w-full min-w-0 flex-col p-2">
+                    {/* Group label */}
+                    <div
+                      className={cn(
+                        'flex h-8 shrink-0 items-center rounded-md px-2 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70',
+                        'transition-[margin,opacity] duration-200 ease-linear',
+                        collapsed && 'pointer-events-none -mt-8 opacity-0'
+                      )}
+                    >
+                      {t(group.titleKey)}
+                    </div>
+                    {/* Menu items */}
+                    <ul className="flex w-full min-w-0 flex-col gap-0">
+                      {group.items.map((item) => (
+                        <li key={item.to} className="group/menu-item relative">
+                          {collapsed ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {renderNavLink(item, false)}
+                              </TooltipTrigger>
+                              <TooltipContent side="right" align="center">
+                                {t(item.labelKey)}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            renderNavLink(item, false)
                           )}
-                        </AnimatePresence>
-                      </NavLink>
-                    )
-                    return (
-                      <div key={item.to} className="relative group">
-                        {active && (
-                          <motion.div
-                            layoutId="sidebar-active"
-                            className="absolute inset-0 rounded-lg bg-primary/10"
-                            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                          />
-                        )}
-                        {collapsed ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                            <TooltipContent side="right">{t(item.labelKey)}</TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          linkContent
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
-            ))}
-          </nav>
 
-          {/* Deploy time badge */}
-          {!collapsed && (
-            <div className="shrink-0 border-t px-3 py-2">
-              <p className="text-[10px] font-mono text-muted-foreground/40">
-                {t('settings.deployTime')}: {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-              </p>
+              {/* Footer: deploy time */}
+              {!collapsed && (
+                <div className="shrink-0 border-t border-sidebar-border p-2">
+                  <p className="px-2 text-[10px] font-mono text-sidebar-foreground/40">
+                    {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              )}
+
+              {/* Sidebar Rail (invisible toggle bar at the edge) */}
+              <button
+                data-sidebar="rail"
+                aria-label="Toggle Sidebar"
+                tabIndex={-1}
+                onClick={toggleSidebar}
+                title="Toggle Sidebar"
+                className={cn(
+                  'absolute inset-y-0 right-0 z-20 hidden w-4 cursor-pointer transition-all ease-linear sm:flex',
+                  'after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] after:-translate-x-1/2',
+                  'after:bg-transparent after:transition-colors hover:after:bg-sidebar-border'
+                )}
+              />
             </div>
-          )}
-
-          {/* Sidebar Rail */}
-          <SidebarRail onToggle={toggleCollapse} />
-        </motion.aside>
+          </div>
+        </div>
 
         {/* Mobile sidebar drawer */}
         <AnimatePresence>
           {mobileOpen && (
             <div className="fixed inset-0 z-50 md:hidden">
-              <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              <motion.div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setMobileOpen(false)} />
-              <motion.div className="absolute left-0 top-0 h-full w-64 border-r bg-card shadow-2xl"
+                onClick={() => setMobileOpen(false)}
+              />
+              <motion.div
+                className="absolute left-0 top-0 h-full w-[17rem] bg-sidebar text-sidebar-foreground shadow-2xl"
                 initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-                transition={MOTION_TRANSITION}>
-                <div className="flex h-14 items-center justify-between border-b px-4">
+                transition={MOTION_TRANSITION}
+              >
+                <div className="flex h-12 items-center justify-between border-b border-sidebar-border px-3">
                   <div className="flex items-center gap-2">
-                    <Github className="h-5 w-5 text-primary" />
+                    <Github className="size-5" />
                     <span className="text-sm font-bold">{t('common.appName')}</span>
                   </div>
-                  <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                  <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground">
+                    <X className="size-5" />
+                  </button>
                 </div>
-                <nav className="p-2">
+                <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-auto py-2">
                   {navGroups.map((group) => (
-                    <div key={group.titleKey} className="mb-4">
-                      <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t(group.titleKey)}</p>
-                      <div className="space-y-0.5">
-                        {group.items.map((item) => {
-                          const Icon = item.icon
-                          const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
-                          return (
-                            <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                              className={cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                              )}>
-                              <Icon className="h-4 w-4 shrink-0" /> {t(item.labelKey)}
-                            </NavLink>
-                          )
-                        })}
+                    <div key={group.titleKey} className="relative flex w-full min-w-0 flex-col p-2">
+                      <div className="flex h-8 shrink-0 items-center rounded-md px-2 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/70">
+                        {t(group.titleKey)}
                       </div>
+                      <ul className="flex w-full min-w-0 flex-col gap-0">
+                        {group.items.map((item) => (
+                          <li key={item.to} className="group/menu-item relative">
+                            {renderNavLink(item, true)}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
-                </nav>
+                </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* Main content */}
-        <div className={cn('layout-main relative flex-1 overflow-auto', isFloating && 'm-2')}>
+        {/* Main content (SidebarInset equivalent) */}
+        <main
+          className={cn(
+            'relative flex w-full flex-1 flex-col overflow-auto bg-background',
+            isFloating && 'md:m-2 md:ml-0 md:rounded-xl md:shadow-sm',
+            contentLayout === 'centered' && 'mx-auto max-w-[1280px]'
+          )}
+        >
           {/* Top glow */}
           <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-32 bg-gradient-to-b from-primary/5 to-transparent" />
 
-          <main id="main-content" className={cn('relative z-10 p-6', contentLayout === 'centered' && 'mx-auto max-w-[1280px]')}>
+          <div id="main-content" className="relative z-10 flex-1 p-6">
             <ErrorBoundary>
               <AnimatePresence mode="wait">
                 <motion.div key={location.pathname} {...motionProps} transition={MOTION_TRANSITION}>
@@ -277,12 +312,12 @@ export default function MainLayout() {
                 </motion.div>
               </AnimatePresence>
             </ErrorBoundary>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
 
       <ThemeDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      </Provider>
+      </TooltipProvider>
     </div>
   )
 }

@@ -1,9 +1,7 @@
 import * as React from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Kbd } from '@/components/ui/kbd'
+import { Button } from '@/components/ui/button'
 import { useSearchStore } from '@/store/search'
 import { cn } from '@/lib/utils'
 
@@ -13,7 +11,6 @@ interface SearchBoxProps {
 
 const SearchBox = ({ className }: SearchBoxProps) => {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { setOpen } = useSearchStore()
 
   React.useEffect(() => {
@@ -28,18 +25,23 @@ const SearchBox = ({ className }: SearchBoxProps) => {
   }, [setOpen])
 
   return (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
+    <Button
+      variant="outline"
       className={cn(
-        'flex h-9 w-full max-w-xs items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent',
+        'group relative h-8 w-full flex-1 justify-start rounded-md bg-muted/25 text-sm font-normal text-muted-foreground shadow-none hover:bg-accent',
+        'sm:w-40 sm:pe-12 md:flex-none lg:w-52 xl:w-64',
         className
       )}
+      onClick={() => setOpen(true)}
+      aria-label={t('common.search')}
     >
-      <Search className="h-4 w-4 shrink-0" />
-      <span className="flex-1 text-left">{t('common.search')}...</span>
-      <Kbd>⌘K</Kbd>
-    </button>
+      <Search className="absolute left-1.5 top-1/2 -translate-y-1/2" size={16} aria-hidden="true" />
+      <span className="ml-4">{t('common.search')}</span>
+      <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium select-none group-hover:bg-accent sm:flex">
+        <span className="text-xs">⌘</span>
+        K
+      </kbd>
+    </Button>
   )
 }
 
