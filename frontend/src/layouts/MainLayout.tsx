@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard }
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string } }
 type NavGroupDef = { title: string; items: NavItem[] }
 
 const navGroups: NavGroupDef[] = [
