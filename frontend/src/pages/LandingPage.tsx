@@ -64,7 +64,7 @@ function Counter({ end, suffix = '', duration = 1600 }: { end: number; suffix?: 
 // ===== Hero terminal demo =====
 function HeroTerminalDemo() {
   return (
-    <div className="w-full max-w-lg rounded-xl border border-border/40 bg-card shadow-2xl overflow-hidden">
+    <div className="w-full rounded-xl border border-border/40 bg-card shadow-2xl overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border/40 bg-muted/30 px-4 py-3">
         <div className="h-3.5 w-3.5 rounded-full bg-red-400/70" />
         <div className="h-3.5 w-3.5 rounded-full bg-yellow-400/70" />
@@ -72,31 +72,45 @@ function HeroTerminalDemo() {
         <span className="ml-2 text-xs font-medium text-muted-foreground">GAM Console</span>
       </div>
       <div className="space-y-3 p-5">
+        {/* Stat row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: '账户', value: '12', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { label: '正常', value: '10', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
+            { label: '仓库', value: '48', icon: Folder, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+          ].map((s) => { const Icon = s.icon; return (
+            <div key={s.label} className={`flex items-center gap-2 rounded-lg ${s.bg} p-3`}>
+              <Icon className={`h-4 w-4 ${s.color}`} />
+              <div>
+                <div className="text-lg font-bold leading-none">{s.value}</div>
+                <div className="text-[10px] text-muted-foreground">{s.label}</div>
+              </div>
+            </div>
+          )})}
+        </div>
+
+        {/* Account rows */}
         {[
-          { label: 'weige2008', note: '主账户', status: 'active', color: 'text-green-500', bg: 'bg-green-500/10' },
-          { label: 'Akilaea', note: 'CDK 节点', status: 'banned', color: 'text-red-500', bg: 'bg-red-500/10' },
-          { label: 'xbox-cn', note: '自动注册', status: 'active', color: 'text-green-500', bg: 'bg-green-500/10' },
+          { status: '正常', color: 'text-green-500', bg: 'bg-green-500/10', progress: 85 },
+          { status: '封禁', color: 'text-red-500', bg: 'bg-red-500/10', progress: 20 },
+          { status: '正常', color: 'text-green-500', bg: 'bg-green-500/10', progress: 70 },
         ].map((row, i) => (
           <div key={i} className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/15 p-3 transition-colors hover:bg-muted/30">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-bold text-white shadow-md">
-              {row.label[0].toUpperCase()}
-            </div>
-            <div className="flex-1 space-y-1.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-xs font-bold text-white shadow" />
+            <div className="flex-1 space-y-2">
+              <div className="h-2.5 w-3/5 rounded bg-muted" />
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{row.label}</span>
-                <span className="text-[10px] text-muted-foreground">{row.note}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${row.bg} ${row.color}`}>{row.status.toUpperCase()}</span>
+                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${row.bg} ${row.color}`}>{row.status}</span>
                 <div className="h-1 flex-1 rounded-full bg-muted">
-                  <div className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${75 - i * 15}%` }} />
+                  <div className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style={{ width: `${row.progress}%` }} />
                 </div>
               </div>
             </div>
           </div>
         ))}
-        {/* Mini chart */}
-        <div className="flex items-end gap-1.5 rounded-lg border border-border/30 bg-muted/15 p-3" style={{ height: 64 }}>
+
+        {/* Chart */}
+        <div className="flex items-end gap-1.5 rounded-lg border border-border/30 bg-muted/15 p-3" style={{ height: 60 }}>
           {[40, 65, 30, 80, 55, 70, 45, 60, 35, 75].map((h, i) => (
             <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-500/50 to-purple-500/50 transition-all duration-300 hover:from-blue-500/70 hover:to-purple-500/70" style={{ height: `${h}%` }} />
           ))}
@@ -241,9 +255,9 @@ export default function LandingPage() {
           WebkitMaskImage: 'radial-gradient(ellipse 60% 50% at 50% 30%, black 20%, transparent 100%)',
         }} />
 
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-12">
           {/* Left */}
-          <div className="flex flex-col items-start text-left lg:col-span-6">
+          <div className="flex flex-col items-start text-left">
             {/* Pill badge */}
             <motion.div
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
@@ -309,7 +323,7 @@ export default function LandingPage() {
           {/* Right: Terminal Demo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.32 }}
-            className="flex w-full justify-center lg:col-span-6"
+            className="flex w-full justify-center"
           >
             <div className="mt-8 lg:mt-0">
               <HeroTerminalDemo />
