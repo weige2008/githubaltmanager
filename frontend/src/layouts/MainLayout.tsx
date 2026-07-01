@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/store/app'
+import { useThemeStore } from '@/store/theme'
 import { Button } from '@/components/ui/button'
 import { RouteProgress } from '@/components/RouteProgress'
+import { ThemeDrawer } from '@/components/ThemeDrawer'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings, LogOut, Moon, Sun, Github, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings, LogOut, Palette, Github, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
 const navItems = [
@@ -19,10 +21,12 @@ const navItems = [
 ]
 
 export default function MainLayout() {
-  const { theme, toggleTheme, logout } = useAppStore()
+  const { logout } = useAppStore()
+  const themeStore = useThemeStore()
   const location = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const toggleCollapse = () => {
     const next = !collapsed
@@ -111,9 +115,10 @@ export default function MainLayout() {
           <h1 className="text-lg font-semibold">
             {navItems.find((n) => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label || '控制台'}
           </h1>
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(true)}>
+            <Palette className="h-5 w-5" />
           </Button>
+          <Button variant="ghost" size="icon" onClick={toggleCollapse}>
         </header>
 
         <main className="flex-1 overflow-auto p-6">
@@ -130,6 +135,8 @@ export default function MainLayout() {
           </AnimatePresence>
         </main>
       </div>
+
+      <ThemeDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   )
 }

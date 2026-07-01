@@ -5,16 +5,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import App from './App'
 import './index.css'
+import './styles/theme-presets.css'
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30000, retry: 1 },
-  },
+  defaultOptions: { queries: { staleTime: 30000, retry: 1 } },
 })
 
-// Init theme
-const theme = localStorage.getItem('gam_theme') || 'dark'
-document.documentElement.classList.toggle('dark', theme === 'dark')
+// Init theme system before render
+import { useThemeStore } from './store/theme'
+useThemeStore.getState().applyToDOM()
+
+// Listen for system theme changes
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const cfg = useThemeStore.getState()
+    if (cfg.mode === 'system') cfg.applyToDOM()
+  })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

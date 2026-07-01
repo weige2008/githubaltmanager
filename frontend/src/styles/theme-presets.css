@@ -1,0 +1,278 @@
+/* ============================================================
+ * Theme Presets — ported from New API (QuantumNous/new-api)
+ * oklch values converted to hsl for Tailwind v3 compatibility
+ * Applied via data attributes on <body>:
+ *   data-theme-preset="rose-garden"
+ *   data-theme-radius="lg"
+ *   data-theme-scale="sm"
+ *   data-theme-font="serif"
+ *   data-theme-content-layout="centered"
+ * ============================================================ */
+
+/* ── Underground ── */
+[data-theme-preset='underground'] {
+  --primary: 153 49% 42%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 153 49% 42%;
+  --chart-1: 153 49% 42%;
+  --chart-2: 337 31% 53%;
+  --chart-3: 159 30% 76%;
+  --chart-4: 333 22% 70%;
+  --chart-5: 159 10% 88%;
+  --radius: 0.5rem;
+}
+.dark [data-theme-preset='underground'] {
+  --primary: 155 29% 55%;
+  --primary-foreground: 207 27% 11%;
+  --ring: 155 29% 55%;
+  --chart-1: 155 29% 55%;
+  --chart-2: 334 30% 60%;
+  --chart-3: 155 26% 67%;
+  --chart-4: 334 17% 65%;
+  --chart-5: 156 25% 71%;
+}
+
+/* ── Rose Garden ── */
+[data-theme-preset='rose-garden'] {
+  --primary: 12 80% 44%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 12 80% 44%;
+  --chart-1: 12 80% 44%;
+  --chart-2: 5 30% 77%;
+  --chart-3: 8 62% 67%;
+  --chart-4: 5 35% 77%;
+  --chart-5: 5 13% 89%;
+  --radius: 1rem;
+}
+.dark [data-theme-preset='rose-garden'] {
+  --primary: 10 75% 48%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 10 75% 48%;
+  --chart-1: 10 75% 48%;
+  --chart-2: 4 26% 81%;
+  --chart-3: 8 62% 67%;
+  --chart-4: 5 35% 77%;
+  --chart-5: 5 13% 89%;
+}
+
+/* ── Lake View ── */
+[data-theme-preset='lake-view'] {
+  --primary: 163 38% 63%;
+  --primary-foreground: 0 0% 0%;
+  --ring: 163 38% 63%;
+  --chart-1: 163 38% 63%;
+  --chart-2: 201 28% 53%;
+  --chart-3: 165 30% 73%;
+  --chart-4: 192 25% 76%;
+  --chart-5: 163 16% 88%;
+  --radius: 0.75rem;
+}
+.dark [data-theme-preset='lake-view'] {
+  --primary: 163 38% 63%;
+  --primary-foreground: 0 0% 0%;
+  --ring: 163 38% 63%;
+  --chart-1: 163 38% 63%;
+  --chart-2: 201 28% 53%;
+  --chart-3: 165 30% 73%;
+  --chart-4: 192 25% 76%;
+  --chart-5: 163 16% 88%;
+}
+
+/* ── Sunset Glow ── */
+[data-theme-preset='sunset-glow'] {
+  --primary: 25 56% 48%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 25 56% 48%;
+  --chart-1: 25 56% 48%;
+  --chart-2: 42 38% 75%;
+  --chart-3: 18 42% 71%;
+  --chart-4: 44 24% 84%;
+  --chart-5: 17 11% 89%;
+  --radius: 1rem;
+}
+.dark [data-theme-preset='sunset-glow'] {
+  --primary: 24 53% 53%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 24 53% 53%;
+  --chart-1: 24 53% 53%;
+  --chart-2: 42 38% 75%;
+  --chart-3: 18 42% 71%;
+  --chart-4: 44 24% 84%;
+  --chart-5: 17 11% 89%;
+}
+
+/* ── Forest Whisper ── */
+[data-theme-preset='forest-whisper'] {
+  --primary: 182 31% 41%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 182 31% 41%;
+  --chart-1: 182 31% 41%;
+  --chart-2: 250 15% 45%;
+  --chart-3: 178 28% 69%;
+  --chart-4: 245 10% 67%;
+  --chart-5: 177 16% 88%;
+  --radius: 0.5rem;
+}
+.dark [data-theme-preset='forest-whisper'] {
+  --primary: 180 33% 54%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 180 33% 54%;
+  --chart-1: 180 33% 54%;
+  --chart-2: 247 12% 60%;
+  --chart-3: 178 28% 69%;
+  --chart-4: 245 10% 67%;
+  --chart-5: 177 16% 88%;
+}
+
+/* ── Ocean Breeze ── */
+[data-theme-preset='ocean-breeze'] {
+  --primary: 263 52% 52%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 263 52% 52%;
+  --chart-1: 263 52% 52%;
+  --chart-2: 277 48% 56%;
+  --chart-3: 252 23% 78%;
+  --chart-4: 275 21% 76%;
+  --chart-5: 256 8% 88%;
+  --radius: 0.3rem;
+}
+.dark [data-theme-preset='ocean-breeze'] {
+  --primary: 260 44% 59%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 260 44% 59%;
+  --chart-1: 260 44% 59%;
+  --chart-2: 277 48% 56%;
+  --chart-3: 252 23% 78%;
+  --chart-4: 275 21% 76%;
+  --chart-5: 256 8% 88%;
+}
+
+/* ── Lavender Dream ── */
+[data-theme-preset='lavender-dream'] {
+  --primary: 307 43% 53%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 307 43% 53%;
+  --chart-1: 307 43% 53%;
+  --chart-2: 201 17% 77%;
+  --chart-3: 310 24% 79%;
+  --chart-4: 198 15% 84%;
+  --chart-5: 310 7% 91%;
+  --radius: 1rem;
+}
+.dark [data-theme-preset='lavender-dream'] {
+  --primary: 308 36% 57%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 308 36% 57%;
+  --chart-1: 308 36% 57%;
+  --chart-2: 201 17% 77%;
+  --chart-3: 310 24% 79%;
+  --chart-4: 198 15% 84%;
+  --chart-5: 310 7% 91%;
+}
+
+/* ── Simple Large-font ── */
+[data-theme-preset='simple-large'] {
+  --background: 0 0% 99%;
+  --foreground: 0 0% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 15%;
+  --primary: 0 0% 22%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 93%;
+  --secondary-foreground: 0 0% 15%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 36%;
+  --accent: 0 0% 91%;
+  --accent-foreground: 0 0% 15%;
+  --destructive: 28 60% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 82%;
+  --input: 0 0% 82%;
+  --ring: 0 0% 22%;
+  --radius: 0.5rem;
+}
+.dark [data-theme-preset='simple-large'] {
+  --background: 0 0% 21%;
+  --foreground: 0 0% 97%;
+  --card: 0 0% 27%;
+  --card-foreground: 0 0% 97%;
+  --primary: 0 0% 94%;
+  --primary-foreground: 0 0% 15%;
+  --secondary: 0 0% 32%;
+  --secondary-foreground: 0 0% 97%;
+  --muted: 0 0% 32%;
+  --muted-foreground: 0 0% 82%;
+  --accent: 0 0% 36%;
+  --accent-foreground: 0 0% 98%;
+  --border: 0 0% 18%;
+  --input: 0 0% 24%;
+  --ring: 0 0% 94%;
+}
+
+/* ── Semantic surface bridge ── */
+/* Auto-derive card/muted/border from primary for color presets */
+[data-theme-preset]:not([data-theme-preset='default']):not([data-theme-preset='simple-large']) {
+  --card: color-mix(in srgb, hsl(var(--primary)) 4%, hsl(var(--background)));
+  --muted: color-mix(in srgb, hsl(var(--primary)) 7%, hsl(var(--background)));
+  --accent: color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--background)));
+  --border: color-mix(in srgb, hsl(var(--primary)) 20%, hsl(var(--background)));
+  --input: color-mix(in srgb, hsl(var(--primary)) 22%, hsl(var(--background)));
+}
+.dark [data-theme-preset]:not([data-theme-preset='default']):not([data-theme-preset='simple-large']) {
+  --card: color-mix(in srgb, hsl(var(--primary)) 9%, hsl(var(--background)));
+  --muted: color-mix(in srgb, hsl(var(--primary)) 13%, hsl(var(--background)));
+  --accent: color-mix(in srgb, hsl(var(--primary)) 18%, hsl(var(--background)));
+  --border: color-mix(in srgb, hsl(var(--primary)) 25%, hsl(var(--background)));
+  --input: color-mix(in srgb, hsl(var(--primary)) 29%, hsl(var(--background)));
+}
+
+/* ── Font axis ── */
+[data-theme-font='serif'] {
+  --font-body: Georgia, 'Times New Roman', serif;
+}
+[data-theme-font='sans'] {
+  --font-body: Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* ── Border radius ── */
+[data-theme-radius='none'] { --radius: 0rem; }
+[data-theme-radius='sm'] { --radius: 0.3rem; }
+[data-theme-radius='md'] { --radius: 0.5rem; }
+[data-theme-radius='lg'] { --radius: 0.75rem; }
+[data-theme-radius='xl'] { --radius: 1rem; }
+
+/* ── Density scale ── */
+[data-theme-scale='sm'] {
+  --text-xs: 0.7rem; --text-sm: 0.78rem; --text-base: 0.88rem;
+  --text-lg: 1rem; --text-xl: 1.13rem; --text-2xl: 1.38rem; --text-3xl: 1.7rem;
+  --spacing-scale: 0.85;
+}
+[data-theme-scale='lg'] {
+  --text-xs: 0.84rem; --text-sm: 0.95rem; --text-base: 1.08rem;
+  --text-lg: 1.2rem; --text-xl: 1.35rem; --text-2xl: 1.65rem; --text-3xl: 2rem;
+  --spacing-scale: 1.1;
+}
+[data-theme-scale='xl'] {
+  --text-xs: 0.9rem; --text-sm: 1rem; --text-base: 1.13rem;
+  --text-lg: 1.25rem; --text-xl: 1.45rem; --text-2xl: 1.75rem; --text-3xl: 2.15rem;
+  --spacing-scale: 1.15;
+}
+
+/* ── Content layout ── */
+@media (min-width: 1280px) {
+  [data-theme-content-layout='centered'] .main-content > * {
+    max-width: 1280px;
+    margin-inline: auto;
+    width: 100%;
+  }
+}
+
+/* ── Sidebar mode ── */
+[data-sidebar-mode='floating'] .layout-sidebar {
+  margin: 12px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+}
+[data-sidebar-mode='floating'] .layout-main {
+  margin-right: 12px;
+}
