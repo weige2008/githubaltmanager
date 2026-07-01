@@ -305,6 +305,7 @@
     "confirmPassword": "Confirm Password",
     "passwordChanged": "Password changed",
     "version": "Version",
+    "deployTime": "Deploy Time",
     "clearCache": "Clear Cache",
     "clearCacheSuccess": "Cache cleared",
     "interval30min": "Every 30 minutes",

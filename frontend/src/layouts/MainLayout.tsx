@@ -195,6 +195,15 @@ export default function MainLayout() {
             ))}
           </nav>
 
+          {/* Deploy time badge */}
+          {!collapsed && (
+            <div className="shrink-0 border-t px-3 py-2">
+              <p className="text-[10px] font-mono text-muted-foreground/40">
+                {t('settings.deployTime')}: {new Date(__BUILD_TIME__).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          )}
+
           {/* Sidebar Rail */}
           <SidebarRail />
         </motion.aside>

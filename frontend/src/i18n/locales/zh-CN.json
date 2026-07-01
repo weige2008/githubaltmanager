@@ -305,6 +305,7 @@
     "confirmPassword": "确认新密码",
     "passwordChanged": "密码已修改",
     "version": "版本",
+    "deployTime": "部署时间",
     "clearCache": "清除缓存",
     "clearCacheSuccess": "缓存已清除",
     "interval30min": "每 30 分钟",

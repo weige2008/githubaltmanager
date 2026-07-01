@@ -6,6 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Clock, Lock, Info, Settings as SettingsIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { zhCN, enUS } from 'date-fns/locale'
+
+function formatDeployTime(iso: string): string {
+  try {
+    const d = new Date(iso)
+    const lang = document.documentElement.lang
+    return format(d, 'yyyy-MM-dd HH:mm:ss', { locale: lang === 'en-US' ? enUS : zhCN })
+  } catch {
+    return iso
+  }
+}
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
@@ -181,6 +193,11 @@ export default function SettingsPage() {
               <div>{t('settings.aboutProject')}: {t('settings.aboutProjectValue')}</div>
               <div>{t('settings.aboutTechStack')}: {t('settings.aboutTechStackValue')}</div>
               <div>{t('settings.aboutEncryption')}: {t('settings.aboutEncryptionValue')}</div>
+              <Separator className="my-3" />
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{t('settings.deployTime')}: {formatDeployTime(__BUILD_TIME__)}</span>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
