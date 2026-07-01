@@ -6,14 +6,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
-import { Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Plus, Play, Trash2, Power } from 'lucide-react'
+import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Plus, Play, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHeader } from '@/components/page-header'
+import { LoadingState } from '@/components/ui/loading-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { useTranslation } from 'react-i18next'
 
 const intervals = [
-  { label: '每 30 分钟', value: 30 }, { label: '每 1 小时', value: 60 }, { label: '每 3 小时', value: 180 },
-  { label: '每 6 小时', value: 360 }, { label: '每 12 小时', value: 720 }, { label: '每 24 小时', value: 1440 },
-  { label: '每 3 天', value: 4320 }, { label: '每 7 天', value: 10080 },
+  { value: 5, labelKey: 'tasks.interval5min' },
+  { value: 15, labelKey: 'tasks.interval15min' },
+  { value: 30, labelKey: 'tasks.interval30min' },
+  { value: 60, labelKey: 'tasks.interval1hour' },
+  { value: 360, labelKey: 'tasks.interval6hour' },
+  { value: 720, labelKey: 'tasks.interval12hour' },
+  { value: 1440, labelKey: 'tasks.interval24hour' },
 ]
 
 function toCron(min: number): string {
@@ -32,63 +44,132 @@ function fromCron(cron: string): number {
 }
 
 export default function TasksPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { data: tasks } = useQuery({ queryKey: ['tasks'], queryFn: taskApi.list })
+  const { data: tasks, isLoading, isError, refetch } = useQuery({ queryKey: ['tasks'], queryFn: taskApi.list })
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
   const [open, setOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
   const [form, setForm] = useState({ account_id: 0, repository_id: 0, workflow_filename: '', ref: 'main', interval: 1440, inputs_json: '' })
 
   const createMut = useMutation({
     mutationFn: () => taskApi.create({ account_id: form.account_id, repository_id: form.repository_id, workflow_filename: form.workflow_filename, ref: form.ref, cron_expr: toCron(form.interval), inputs_json: form.inputs_json, enabled: true }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); toast.success('已创建'); setOpen(false) },
-    onError: () => toast.error('创建失败'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); toast.success(t('common.create')); setOpen(false) },
+    onError: () => toast.error(t('common.error')),
   })
 
   const toggleMut = useMutation({ mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => taskApi.toggle(id, enabled), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }) })
-  const runMut = useMutation({ mutationFn: (id: number) => taskApi.runNow(id), onSuccess: () => toast.success('已触发') })
-  const delMut = useMutation({ mutationFn: (id: number) => taskApi.remove(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); toast.success('已删除') } })
+  const runMut = useMutation({ mutationFn: (id: number) => taskApi.runNow(id), onSuccess: () => toast.success(t('common.refresh')) })
+  const delMut = useMutation({ mutationFn: (id: number) => taskApi.remove(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); toast.success(t('common.delete')) } })
+
+  const openCreate = () => { setForm({ account_id: 0, repository_id: 0, workflow_filename: '', ref: 'main', interval: 1440, inputs_json: '' }); setOpen(true) }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between"><Button className="gap-2" onClick={() => { setForm({ account_id: 0, repository_id: 0, workflow_filename: '', ref: 'main', interval: 1440, inputs_json: '' }); setOpen(true) }}><Plus className="h-4 w-4" /> 新建任务</Button></div>
+      <PageHeader
+        title={t('tasks.title')}
+        description={t('tasks.description')}
+        actions={<Button className="gap-2" onClick={openCreate}><Plus className="h-4 w-4" /> {t('tasks.create')}</Button>}
+      />
+
       <Card><CardContent className="p-0">
-        {tasks && tasks.length > 0 ? (
-          <Table><THead><TR><TH>仓库/Workflow</TH><TH>间隔</TH><TH>状态</TH><TH>下次执行</TH><TH className="text-right">操作</TH></TR></THead>
-            <TBody>{tasks.map((t: Task) => (
-              <TR key={t.id}>
-                <TD><div className="font-medium text-sm">{t.owner_repo}</div><div className="text-xs text-muted-foreground">{t.workflow_filename} @ {t.ref}</div></TD>
-                <TD><Badge variant="secondary">{intervals.find((i) => i.value === fromCron(t.cron_expr))?.label || t.cron_expr}</Badge></TD>
-                <TD><Badge variant={t.enabled ? 'success' : 'secondary'}>{t.enabled ? '启用' : '禁用'}</Badge></TD>
-                <TD className="text-sm">{t.next_run_at ? new Date(t.next_run_at).toLocaleString() : '—'}</TD>
-                <TD><div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => toggleMut.mutate({ id: t.id, enabled: !t.enabled })}><Power className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => runMut.mutate(t.id)}><Play className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm('删除?')) delMut.mutate(t.id) }}><Trash2 className="h-4 w-4" /></Button>
-                </div></TD>
-              </TR>))}</TBody></Table>
-        ) : <div className="p-8 text-center text-muted-foreground">暂无定时任务</div>}
+        {isLoading ? (
+          <LoadingState />
+        ) : isError ? (
+          <ErrorState retry={refetch} />
+        ) : tasks && tasks.length > 0 ? (
+          <Table>
+            <THead>
+              <TR>
+                <TH>{t('tasks.taskName')}</TH>
+                <TH>{t('tasks.interval')}</TH>
+                <TH>{t('common.status')}</TH>
+                <TH>{t('tasks.nextRun')}</TH>
+                <TH className="text-right">{t('common.actions')}</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {tasks.map((task: Task) => {
+                const iv = intervals.find((i) => i.value === fromCron(task.cron_expr))
+                return (
+                  <TR key={task.id}>
+                    <TD>
+                      <div className="font-medium text-sm">{task.owner_repo}</div>
+                      <div className="text-xs text-muted-foreground">{task.workflow_filename} @ {task.ref}</div>
+                    </TD>
+                    <TD><Badge variant="secondary">{iv ? t(iv.labelKey) : task.cron_expr}</Badge></TD>
+                    <TD><Badge variant={task.enabled ? 'success' : 'secondary'}>{task.enabled ? t('tasks.enabled') : t('tasks.disabled')}</Badge></TD>
+                    <TD className="text-sm">{task.next_run_at ? new Date(task.next_run_at).toLocaleString() : '—'}</TD>
+                    <TD>
+                      <div className="flex items-center justify-end gap-2">
+                        <Switch checked={task.enabled} onCheckedChange={(checked) => toggleMut.mutate({ id: task.id, enabled: checked })} />
+                        <Button variant="ghost" size="sm" onClick={() => runMut.mutate(task.id)}><Play className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleteId(task.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TD>
+                  </TR>
+                )
+              })}
+            </TBody>
+          </Table>
+        ) : (
+          <EmptyState
+            title={t('tasks.noTasks')}
+            description={t('tasks.noTasksDescription')}
+            action={<Button className="gap-2" onClick={openCreate}><Plus className="h-4 w-4" /> {t('tasks.create')}</Button>}
+          />
+        )}
       </CardContent></Card>
 
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>新建定时任务</DialogTitle>
+        <DialogTitle>{t('tasks.create')}</DialogTitle>
         <div className="space-y-3">
-          <div><label className="text-sm font-medium">账户</label>
-            <select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.account_id} onChange={(e) => setForm({ ...form, account_id: Number(e.target.value) })}>
-              <option value={0}>选择账户</option>{accounts?.map((a) => <option key={a.id} value={a.id}>{a.note?.trim() ? `${a.note}(${a.github_login})` : a.github_login}</option>)}
-            </select></div>
-          <div><label className="text-sm font-medium">仓库 ID</label>
-            <Input type="number" className="mt-1" value={form.repository_id} onChange={(e) => setForm({ ...form, repository_id: Number(e.target.value) })} placeholder="输入仓库 ID" /></div>
-          <div><label className="text-sm font-medium">Workflow 文件名</label>
-            <Input className="mt-1" value={form.workflow_filename} onChange={(e) => setForm({ ...form, workflow_filename: e.target.value })} placeholder="deploy.yml" /></div>
-          <div><label className="text-sm font-medium">分支</label>
-            <Input className="mt-1" value={form.ref} onChange={(e) => setForm({ ...form, ref: e.target.value })} placeholder="main" /></div>
-          <div><label className="text-sm font-medium">执行间隔</label>
-            <select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.interval} onChange={(e) => setForm({ ...form, interval: Number(e.target.value) })}>
-              {intervals.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
-            </select></div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('tasks.account')}</label>
+            <Select value={form.account_id ? String(form.account_id) : ''} onValueChange={(v) => setForm({ ...form, account_id: Number(v) })}>
+              <SelectTrigger><SelectValue placeholder={t('tasks.account')} /></SelectTrigger>
+              <SelectContent>
+                {accounts?.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.note?.trim() ? `${a.note}(${a.github_login})` : a.github_login}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('common.name')}</label>
+            <Input type="number" value={form.repository_id} onChange={(e) => setForm({ ...form, repository_id: Number(e.target.value) })} placeholder={t('common.name')} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('repos.fileName')}</label>
+            <Input value={form.workflow_filename} onChange={(e) => setForm({ ...form, workflow_filename: e.target.value })} placeholder="deploy.yml" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('repos.filePath')}</label>
+            <Input value={form.ref} onChange={(e) => setForm({ ...form, ref: e.target.value })} placeholder="main" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('tasks.interval')}</label>
+            <Select value={String(form.interval)} onValueChange={(v) => setForm({ ...form, interval: Number(v) })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {intervals.map((i) => <SelectItem key={i.value} value={String(i.value)}>{t(i.labelKey)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>取消</Button><Button onClick={() => createMut.mutate()}>创建</Button></DialogFooter>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={() => createMut.mutate()}>{t('common.create')}</Button>
+        </DialogFooter>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        title={t('common.delete')}
+        description={t('tasks.deleteConfirm')}
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => { if (deleteId !== null) delMut.mutate(deleteId); setDeleteId(null) }}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   )
 }

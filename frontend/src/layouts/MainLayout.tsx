@@ -1,54 +1,69 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store/app'
+import { useThemeStore } from '@/store/theme'
 import { Button } from '@/components/ui/button'
 import { RouteProgress } from '@/components/RouteProgress'
 import { ThemeDrawer } from '@/components/ThemeDrawer'
 import { cn } from '@/lib/utils'
+import { MOTION_TRANSITION, PAGE_TRANSITION } from '@/lib/motion'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
-  LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings, LogOut,
-  Palette, Github, PanelLeftClose, PanelLeft, X,
+  LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings,
+  Github, PanelLeftClose, PanelLeft, X,
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider, TooltipProvider as Provider } from '@/components/ui/tooltip'
+import { SearchBox } from '@/components/search-box'
+import { NotificationPopover } from '@/components/notification-popover'
+import { ProfileDropdown } from '@/components/profile-dropdown'
+import { ThemeQuickSwitcher } from '@/components/theme-quick-switcher'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { CommandMenu } from '@/components/command-menu'
+import { SkipToMain } from '@/components/skip-to-main'
+import { SidebarRail } from '@/components/sidebar-rail'
+import { ErrorBoundary } from '@/components/error-boundary'
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string } }
-type NavGroupDef = { title: string; items: NavItem[] }
+type NavItem = { to: string; labelKey: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }
+type NavGroupDef = { titleKey: string; items: NavItem[] }
 
 const navGroups: NavGroupDef[] = [
   {
-    title: '概览',
-    items: [{ to: '/dashboard', label: '仪表盘', icon: LayoutDashboard }],
+    titleKey: 'nav.overview',
+    items: [{ to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard }],
   },
   {
-    title: '管理',
+    titleKey: 'nav.management',
     items: [
-      { to: '/accounts', label: '账户管理', icon: Users },
-      { to: '/repos', label: '仓库浏览', icon: FolderGit2 },
+      { to: '/accounts', labelKey: 'nav.accounts', icon: Users },
+      { to: '/repos', labelKey: 'nav.repos', icon: FolderGit2 },
     ],
   },
   {
-    title: '自动化',
+    titleKey: 'nav.automation',
     items: [
-      { to: '/tasks', label: '定时任务', icon: Clock },
-      { to: '/batch', label: '批量操作', icon: Layers },
-      { to: '/automation', label: '自动化日志', icon: Timer },
+      { to: '/tasks', labelKey: 'nav.tasks', icon: Clock },
+      { to: '/batch', labelKey: 'nav.batch', icon: Layers },
+      { to: '/automation', labelKey: 'nav.automationLogs', icon: Timer },
     ],
   },
   {
-    title: '系统',
-    items: [{ to: '/settings', label: '设置', icon: Settings }],
+    titleKey: 'nav.system',
+    items: [{ to: '/settings', labelKey: 'nav.settings', icon: Settings }],
   },
 ]
 
 export default function MainLayout() {
-  const { logout } = useAppStore()
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
+  const { contentLayout, sidebarMode } = useThemeStore()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [profileHover, setProfileHover] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+  const reducedMotion = useReducedMotion()
 
   const toggleCollapse = () => {
     const next = !collapsed
@@ -56,20 +71,31 @@ export default function MainLayout() {
     localStorage.setItem('sidebar_collapsed', String(next))
   }
 
-  const handleLogout = () => { logout(); navigate('/login'); toast.success('已退出登录') }
-
   const activeLabel = (() => {
     for (const g of navGroups) for (const item of g.items) {
-      if (location.pathname === item.to || location.pathname.startsWith(item.to + '/')) return item.label
+      if (location.pathname === item.to || location.pathname.startsWith(item.to + '/')) return t(item.labelKey)
     }
-    return '控制台'
+    return t('nav.dashboard')
   })()
+
+  const motionProps = reducedMotion
+    ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 1 } }
+    : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0 } }
+
+  const sidebarAnim = reducedMotion
+    ? { animate: { width: collapsed ? 64 : 240 } }
+    : { animate: { width: collapsed ? 64 : 240 }, transition: MOTION_TRANSITION }
+
+  const isFloating = sidebarMode === 'floating'
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <RouteProgress />
+      <SkipToMain />
+      <Provider>
+      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
-      {/* ===== Header (full width, above sidebar — matches New API) ===== */}
+      {/* ===== Header ===== */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-xl z-30">
         <div className="flex items-center gap-3">
           <button className="md:hidden" onClick={() => setMobileOpen(true)}>
@@ -77,68 +103,73 @@ export default function MainLayout() {
           </button>
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Github className="h-5 w-5 text-primary shrink-0" />
-            <span className="hidden text-sm font-bold tracking-tight sm:block">GitHub 管理器</span>
+            <span className="hidden text-sm font-bold tracking-tight sm:block">{t('common.appName')}</span>
           </a>
         </div>
 
-        <div className="flex items-center gap-1">
-          <h1 className="mr-2 hidden text-sm font-medium text-muted-foreground md:block">{activeLabel}</h1>
+        <div className="flex items-center gap-1.5">
+          {/* Search */}
+          <div className="hidden md:block">
+            <SearchBox />
+          </div>
 
-          {/* Theme settings */}
-          <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(true)}>
-            <Palette className="h-5 w-5" />
-          </Button>
+          <h1 className="mx-2 hidden text-sm font-medium text-muted-foreground lg:block">{activeLabel}</h1>
+
+          {/* Language */}
+          <LanguageSwitcher />
+
+          {/* Notifications */}
+          <NotificationPopover />
+
+          {/* Theme */}
+          <ThemeQuickSwitcher onOpenDrawer={() => setDrawerOpen(true)} />
 
           {/* Collapse toggle (desktop only) */}
           <Button variant="ghost" size="icon" onClick={toggleCollapse} className="hidden md:flex">
             {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           </Button>
 
-          {/* Profile dropdown (matches New API's profile-dropdown.tsx) */}
-          <div className="relative" onMouseEnter={() => setProfileHover(true)} onMouseLeave={() => setProfileHover(false)}>
-            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-xs font-bold text-white shadow-sm">
-              A
-            </button>
-            <AnimatePresence>
-              {profileHover && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-card p-1 shadow-lg"
-                >
-                  <button onClick={() => navigate('/settings')} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors">
-                    <Settings className="h-4 w-4 text-muted-foreground" /> 设置
-                  </button>
-                  <button onClick={handleLogout} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors">
-                    <LogOut className="h-4 w-4" /> 退出登录
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Profile */}
+          <ProfileDropdown />
         </div>
       </header>
 
-      {/* ===== Body (sidebar + main) ===== */}
+      {/* ===== Body ===== */}
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <motion.aside
-          animate={{ width: collapsed ? 64 : 240 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden shrink-0 flex-col overflow-hidden border-r bg-card/30 backdrop-blur-xl md:flex"
+          {...sidebarAnim}
+          className={cn(
+            'layout-sidebar relative hidden shrink-0 flex-col overflow-hidden border-r bg-card/30 backdrop-blur-xl md:flex',
+            isFloating && 'my-2 ml-2 rounded-lg border shadow-sm'
+          )}
         >
           <nav className="flex-1 overflow-y-auto p-2">
             {navGroups.map((group) => (
-              <div key={group.title} className="mb-4">
+              <div key={group.titleKey} className="mb-4">
                 {!collapsed && (
                   <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-                    {group.title}
+                    {t(group.titleKey)}
                   </p>
                 )}
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon
                     const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+                    const linkContent = (
+                      <NavLink to={item.to} className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/50">
+                        <Icon className="h-4 w-4 shrink-0" style={{ color: active ? 'hsl(var(--primary))' : undefined }} />
+                        <AnimatePresence>
+                          {!collapsed && (
+                            <motion.span
+                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                              className="truncate whitespace-nowrap"
+                              style={{ color: active ? 'hsl(var(--primary))' : undefined }}
+                            >{t(item.labelKey)}</motion.span>
+                          )}
+                        </AnimatePresence>
+                      </NavLink>
+                    )
                     return (
                       <div key={item.to} className="relative group">
                         {active && (
@@ -148,22 +179,14 @@ export default function MainLayout() {
                             transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                           />
                         )}
-                        <NavLink
-                          to={item.to}
-                          title={collapsed ? item.label : undefined}
-                          className="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent/50"
-                        >
-                          <Icon className="h-4 w-4 shrink-0" style={{ color: active ? 'hsl(var(--primary))' : undefined }} />
-                          <AnimatePresence>
-                            {!collapsed && (
-                              <motion.span
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="truncate whitespace-nowrap"
-                                style={{ color: active ? 'hsl(var(--primary))' : undefined }}
-                              >{item.label}</motion.span>
-                            )}
-                          </AnimatePresence>
-                        </NavLink>
+                        {collapsed ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                            <TooltipContent side="right">{t(item.labelKey)}</TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          linkContent
+                        )}
                       </div>
                     )
                   })}
@@ -171,6 +194,9 @@ export default function MainLayout() {
               </div>
             ))}
           </nav>
+
+          {/* Sidebar Rail */}
+          <SidebarRail />
         </motion.aside>
 
         {/* Mobile sidebar drawer */}
@@ -182,18 +208,18 @@ export default function MainLayout() {
                 onClick={() => setMobileOpen(false)} />
               <motion.div className="absolute left-0 top-0 h-full w-64 border-r bg-card shadow-2xl"
                 initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+                transition={MOTION_TRANSITION}>
                 <div className="flex h-14 items-center justify-between border-b px-4">
                   <div className="flex items-center gap-2">
                     <Github className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-bold">GitHub 管理器</span>
+                    <span className="text-sm font-bold">{t('common.appName')}</span>
                   </div>
                   <button onClick={() => setMobileOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
                 </div>
                 <nav className="p-2">
                   {navGroups.map((group) => (
-                    <div key={group.title} className="mb-4">
-                      <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">{group.title}</p>
+                    <div key={group.titleKey} className="mb-4">
+                      <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t(group.titleKey)}</p>
                       <div className="space-y-0.5">
                         {group.items.map((item) => {
                           const Icon = item.icon
@@ -203,16 +229,13 @@ export default function MainLayout() {
                               className={cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                 active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                               )}>
-                              <Icon className="h-4 w-4 shrink-0" /> {item.label}
+                              <Icon className="h-4 w-4 shrink-0" /> {t(item.labelKey)}
                             </NavLink>
                           )
                         })}
                       </div>
                     </div>
                   ))}
-                  <button onClick={handleLogout} className="mt-4 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent">
-                    <LogOut className="h-4 w-4" /> 退出登录
-                  </button>
                 </nav>
               </motion.div>
             </div>
@@ -220,27 +243,24 @@ export default function MainLayout() {
         </AnimatePresence>
 
         {/* Main content */}
-        <div className="relative flex-1 overflow-auto">
-          {/* Top glow (matches New API's glow.tsx) */}
+        <div className={cn('layout-main relative flex-1 overflow-auto', isFloating && 'm-2')}>
+          {/* Top glow */}
           <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-32 bg-gradient-to-b from-primary/5 to-transparent" />
 
-          <main className="relative z-10 p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
+          <main id="main-content" className={cn('relative z-10 p-6', contentLayout === 'centered' && 'mx-auto max-w-[1280px]')}>
+            <ErrorBoundary>
+              <AnimatePresence mode="wait">
+                <motion.div key={location.pathname} {...motionProps} transition={MOTION_TRANSITION}>
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
+            </ErrorBoundary>
           </main>
         </div>
       </div>
 
       <ThemeDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      </Provider>
     </div>
   )
 }

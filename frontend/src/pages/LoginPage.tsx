@@ -4,11 +4,14 @@ import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Github, Lock, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { setToken } = useAppStore()
   const [initialized, setInitialized] = useState(false)
@@ -47,22 +50,22 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Github className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">GitHub 管理器</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.welcome')}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {initialized ? '请输入主密码登录' : '首次使用，请设置主密码'}
+            {initialized ? t('auth.loginDescription') : '首次使用，请设置主密码'}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">主密码</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            <label className="text-sm font-medium">{t('auth.password')}</label>
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="请输入主密码" />
+              placeholder={t('auth.passwordPlaceholder')} />
           </div>
           {!initialized && (
             <div className="space-y-2">
               <label className="text-sm font-medium">确认密码</label>
-              <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
+              <PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)}
                 placeholder="再次输入主密码" />
             </div>
           )}
@@ -73,7 +76,7 @@ export default function LoginPage() {
             </div>
           )}
           <Button className="w-full" size="lg" disabled={loading} onClick={handleSubmit}>
-            {loading ? '处理中...' : initialized ? '登 录' : '完成初始化'}
+            {loading ? t('auth.loggingIn') : initialized ? t('auth.loginButton') : '完成初始化'}
           </Button>
           <Button variant="ghost" className="w-full gap-2" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" /> 返回主页

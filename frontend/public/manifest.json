@@ -1,0 +1,16 @@
+{
+  "name": "GitHub 账户管理器",
+  "short_name": "GitHub Manager",
+  "description": "安全高效的 GitHub 账户管理工具",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

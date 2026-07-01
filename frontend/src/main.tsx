@@ -1,14 +1,30 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import App from './App'
 import './index.css'
 import './styles/theme-presets.css'
+import './i18n/config'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
+import { handleServerError } from './lib/handle-error'
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30000, retry: 1 } },
+  defaultOptions: {
+    queries: { staleTime: 30000, retry: 1, refetchOnWindowFocus: false },
+    mutations: { onError: (error) => handleServerError(error) },
+  },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      if ((error as { response?: { status?: number } })?.response?.status === 401) {
+        handleServerError(error)
+      }
+    },
+  }),
 })
 
 // Init theme system before render

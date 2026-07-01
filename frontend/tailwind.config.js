@@ -54,13 +54,17 @@ export default {
         'fade-in': 'fadeIn 0.3s ease-out',
         'fade-in-up': 'fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1)',
         'slide-in-right': 'slideInRight 0.3s ease-out',
+        'accordion-down': 'accordionDown 0.2s ease-out',
+        'accordion-up': 'accordionUp 0.2s ease-out',
       },
       keyframes: {
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         fadeInUp: { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         slideInRight: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+        accordionDown: { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
+        accordionUp: { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 }

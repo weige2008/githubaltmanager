@@ -1,73 +1,74 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { statsApi, accountApi } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
+import { LoadingState } from '@/components/ui/loading-state'
+import { ErrorState } from '@/components/ui/error-state'
+import { PageHeader } from '@/components/page-header'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
-import { Users, CheckCircle, AlertTriangle, Clock, FolderGit2, Zap, ArrowRight, TrendingUp } from 'lucide-react'
+import { Users, CheckCircle, FolderGit2, Zap, ArrowRight, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }
 const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } } }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const { data: stats, isLoading } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
+  const { data: stats, isLoading, isError, refetch } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
 
+  if (isLoading) return <LoadingState />
+  if (isError) return <ErrorState retry={refetch} />
+
   const cards = [
-    { label: '账户总数', value: stats?.total ?? 0, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: '正常', value: stats?.active ?? 0, icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
-    { label: '封禁/异常', value: (stats?.banned ?? 0) + (stats?.error ?? 0), icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
-    { label: '定时任务', value: stats?.tasks_enabled ?? 0, icon: Clock, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: t('dashboard.totalAccounts'), value: stats?.total ?? 0, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: t('dashboard.totalRepos'), value: stats?.repos ?? 0, icon: FolderGit2, color: 'text-green-500', bg: 'bg-green-500/10' },
+    { label: t('dashboard.totalTasks'), value: stats?.tasks ?? 0, icon: CheckCircle, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: t('dashboard.autoTasks'), value: stats?.tasks_enabled ?? 0, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ]
 
   const pieData = [
-    { name: '正常', value: stats?.active ?? 0, color: '#22c55e' },
-    { name: '封禁', value: stats?.banned ?? 0, color: '#ef4444' },
-    { name: '异常', value: stats?.error ?? 0, color: '#f59e0b' },
-    { name: '未知', value: stats?.unknown ?? 0, color: '#a3a3a3' },
+    { name: t('dashboard.activeAccounts'), value: stats?.active ?? 0, color: '#22c55e' },
+    { name: t('dashboard.inactiveAccounts'), value: (stats?.banned ?? 0) + (stats?.error ?? 0) + (stats?.unknown ?? 0), color: '#a3a3a3' },
   ].filter((d) => d.value > 0)
 
   const barData = [
-    { name: '仓库', value: stats?.repos ?? 0, fill: '#3b82f6' },
+    { name: t('dashboard.totalRepos'), value: stats?.repos ?? 0, fill: '#3b82f6' },
     { name: 'Workflow', value: stats?.workflows ?? 0, fill: '#8b5cf6' },
-    { name: '任务', value: stats?.tasks ?? 0, fill: '#f59e0b' },
+    { name: t('dashboard.totalTasks'), value: stats?.tasks ?? 0, fill: '#f59e0b' },
   ]
 
   const actions = [
-    { label: '导入账户', to: '/accounts', icon: Users },
-    { label: '浏览仓库', to: '/repos', icon: FolderGit2 },
-    { label: '定时任务', to: '/tasks', icon: Clock },
-    { label: '批量操作', to: '/batch', icon: Zap },
+    { label: t('nav.accounts'), to: '/accounts', icon: Users },
+    { label: t('nav.repos'), to: '/repos', icon: FolderGit2 },
+    { label: t('nav.tasks'), to: '/tasks', icon: CheckCircle },
+    { label: t('nav.batch'), to: '/batch', icon: Zap },
   ]
 
   return (
-    <motion.div className="space-y-6" initial="hidden" animate="visible" variants={stagger}>
-      {/* Stat cards */}
+    <div className="space-y-6">
+      <PageHeader title={t('dashboard.title')} description={t('dashboard.description')} />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)
-          : cards.map((c) => { const Icon = c.icon; return (
-            <motion.div key={c.label} variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 300 }}>
-              <Card><CardContent className="flex items-center gap-4 p-5">
-                <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', c.bg)}><Icon className={cn('h-6 w-6', c.color)} /></div>
-                <div>
-                  <div className="text-3xl font-bold"><AnimatedNumber value={c.value} /></div>
-                  <div className="text-sm text-muted-foreground">{c.label}</div>
-                </div>
-              </CardContent></Card>
-            </motion.div>
-          )})}
+        {cards.map((c) => { const Icon = c.icon; return (
+          <motion.div key={c.label} initial="hidden" animate="visible" variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 300 }}>
+            <Card><CardContent className="flex items-center gap-4 p-5">
+              <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', c.bg)}><Icon className={cn('h-6 w-6', c.color)} /></div>
+              <div>
+                <div className="text-3xl font-bold"><AnimatedNumber value={c.value} /></div>
+                <div className="text-sm text-muted-foreground">{c.label}</div>
+              </div>
+            </CardContent></Card>
+          </motion.div>
+        )})}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Pie chart */}
-        <motion.div variants={fadeUp}>
-          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4" /> 账户状态分布</CardTitle></CardHeader>
+        <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4" /> {t('dashboard.accountDistribution')}</CardTitle></CardHeader>
             <CardContent className="h-64">
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -78,14 +79,13 @@ export default function DashboardPage() {
                     <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">暂无数据</div>}
+              ) : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('dashboard.noChartData')}</div>}
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Bar chart */}
-        <motion.div variants={fadeUp}>
-          <Card><CardHeader><CardTitle className="text-base">数据概览</CardTitle></CardHeader>
+        <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+          <Card><CardHeader><CardTitle className="text-base">{t('dashboard.repoActivity')}</CardTitle></CardHeader>
             <CardContent className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData}>
@@ -99,9 +99,8 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
 
-        {/* Quick actions */}
-        <motion.div variants={fadeUp}>
-          <Card><CardHeader><CardTitle className="text-base">快捷操作</CardTitle></CardHeader>
+        <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+          <Card><CardHeader><CardTitle className="text-base">{t('common.actions')}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {actions.map((a) => { const Icon = a.icon; return (
                 <button key={a.to} onClick={() => navigate(a.to)}
@@ -116,10 +115,9 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Account list */}
       {accounts && accounts.length > 0 && (
-        <motion.div variants={fadeUp}>
-          <Card><CardHeader><CardTitle className="text-base">账户列表</CardTitle></CardHeader>
+        <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+          <Card><CardHeader><CardTitle className="text-base">{t('nav.accounts')}</CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {accounts.slice(0, 9).map((acc) => (
@@ -136,6 +134,6 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   )
 }
