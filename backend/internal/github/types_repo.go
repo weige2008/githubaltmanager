@@ -323,7 +323,7 @@ func (c *Client) CreateSecret(owner, repo, name, value string) (int, error) {
 	}
 
 	p := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, name)
-	code, err := c.PutJSON(p, payload, nil)
+	code, err = c.PutJSON(p, payload, nil)
 	if err != nil {
 		return code, fmt.Errorf("PUT secret %s -> %w", name, err)
 	}
