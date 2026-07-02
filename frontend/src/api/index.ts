@@ -119,11 +119,20 @@ export const taskApi = {
   runNow: (id: number) => http.post<unknown, { ok: boolean }>(`/tasks/${id}/run`),
 }
 
+export interface TemplateFile {
+  path: string
+  content: string
+}
+
 export const batchApi = {
   createWorkflows: (data: { repo_ids: number[]; filename: string; content: string; commit_message: string }) =>
     http.post<unknown, any>('/batch/create-workflows', data),
   dispatch: (data: { repo_ids: number[]; filename: string; ref?: string }) =>
     http.post<unknown, any>('/batch/dispatch', data),
+  fetchTemplate: (data: { account_id: number; owner: string; repo: string; ref?: string }) =>
+    http.post<unknown, { files: TemplateFile[]; count: number }>('/batch/fetch-template', data),
+  createRepos: (data: { account_ids: number[]; repo_name: string; description?: string; private: boolean; files: TemplateFile[] }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/create-repos', data),
 }
 
 export interface Stats {

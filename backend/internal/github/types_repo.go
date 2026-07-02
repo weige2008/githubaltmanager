@@ -223,3 +223,53 @@ func (c *Client) ListWorkflowRuns(owner, repo string, perPage int) (struct {
 
 // 避免未使用 import
 var _ = json.Marshal
+
+// CreateRepoPayload 创建仓库请求
+type CreateRepoPayload struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Private     bool   `json:"private"`
+	AutoInit    bool   `json:"auto_init"`
+}
+
+// CreateRepo 为当前 token 用户创建仓库
+func (c *Client) CreateRepo(payload CreateRepoPayload) (*Repo, int, error) {
+	var repo Repo
+	code, err := c.PostJSON("/user/repos", payload, &repo)
+	return &repo, code, err
+}
+
+// TreeEntry Git tree 条目
+type TreeEntry struct {
+	Path string `json:"path"`
+	Mode string `json:"mode"`
+	Type string `json:"type"` // blob / tree
+	SHA  string `json:"sha"`
+	Size int    `json:"size"`
+}
+
+// TreeResult Git tree 递归结果
+type TreeResult struct {
+	SHA       string      `json:"sha"`
+	Tree      []TreeEntry `json:"tree"`
+	Truncated bool        `json:"truncated"`
+}
+
+// GetTreeRecursive 获取仓库完整文件树（递归）
+func (c *Client) GetTreeRecursive(owner, repo, ref string) (*TreeResult, int, error) {
+	if ref == "" {
+		ref = "HEAD"
+	}
+	p := fmt.Sprintf("/repos/%s/%s/git/trees/%s?recursive=1", owner, repo, ref)
+	var tree TreeResult
+	code, err := c.Get(p, &tree)
+	return &tree, code, err
+}
+
+// GetBlob 获取文件 blob 内容（base64）
+func (c *Client) GetBlob(owner, repo, sha string) (*FileContent, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/git/blobs/%s", owner, repo, sha)
+	var fc FileContent
+	code, err := c.Get(p, &fc)
+	return &fc, code, err
+}

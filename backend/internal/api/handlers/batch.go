@@ -21,13 +21,15 @@ func RegisterBatchRoutes(g *gin.RouterGroup, c *service.Container) {
 	{
 		grp.POST("/create-workflows", h.CreateWorkflows)
 		grp.POST("/dispatch", h.Dispatch)
+		grp.POST("/create-repos", h.CreateRepos)
+		grp.POST("/fetch-template", h.FetchTemplate)
 	}
 }
 
 type BatchCreateWorkflowsPayload struct {
 	RepoIDs       []uint `json:"repo_ids" binding:"required"`
 	Filename      string `json:"filename" binding:"required"`
-	Content       string `json:"content" binding:"required"` // base64
+	Content       string `json:"content" binding:"required"`
 	CommitMessage string `json:"commit_message"`
 	Branch        string `json:"branch"`
 }
@@ -76,6 +78,54 @@ func (h *BatchHandler) Dispatch(c *gin.Context) {
 			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
 		} else {
 			success = append(success, gin.H{"repo_id": rid})
+		}
+	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+type FetchTemplatePayload struct {
+	AccountID uint   `json:"account_id" binding:"required"`
+	Owner     string `json:"owner" binding:"required"`
+	Repo      string `json:"repo" binding:"required"`
+	Ref       string `json:"ref"`
+}
+
+func (h *BatchHandler) FetchTemplate(c *gin.Context) {
+	var p FetchTemplatePayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	files, err := h.s.FetchTemplateFiles(h.c, p.AccountID, p.Owner, p.Repo, p.Ref)
+	if err != nil {
+		resp.Internal(c, "获取模板文件失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, gin.H{"files": files, "count": len(files)})
+}
+
+type BatchCreateReposPayload struct {
+	AccountIDs  []uint                     `json:"account_ids" binding:"required"`
+	RepoName    string                     `json:"repo_name" binding:"required"`
+	Description string                     `json:"description"`
+	Private     bool                       `json:"private"`
+	Files       []service.TemplateFile     `json:"files"`
+}
+
+func (h *BatchHandler) CreateRepos(c *gin.Context) {
+	var p BatchCreateReposPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	success := []gin.H{}
+	failed := []gin.H{}
+	for _, aid := range p.AccountIDs {
+		repo, err := h.s.CreateRepoForAccount(h.c, aid, p.RepoName, p.Description, p.Private, p.Files)
+		if err != nil {
+			failed = append(failed, gin.H{"account_id": aid, "error": err.Error()})
+		} else {
+			success = append(success, gin.H{"account_id": aid, "repo": repo.FullName})
 		}
 	}
 	resp.OK(c, gin.H{"success": success, "failed": failed})

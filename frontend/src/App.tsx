@@ -9,6 +9,7 @@ import AccountDetailPage from './pages/AccountDetailPage'
 import ReposPage from './pages/ReposPage'
 import TasksPage from './pages/TasksPage'
 import BatchPage from './pages/BatchPage'
+import BatchRepoPage from './pages/BatchRepoPage'
 import AutomationPage from './pages/AutomationPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/repos" element={<ReposPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/batch" element={<BatchPage />} />
+        <Route path="/batch-repos" element={<BatchRepoPage />} />
         <Route path="/automation" element={<AutomationPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

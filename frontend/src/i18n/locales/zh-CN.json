@@ -60,6 +60,7 @@
     "repos": "仓库浏览",
     "tasks": "定时任务",
     "batch": "批量操作",
+    "batchRepos": "批量建仓",
     "automationLogs": "自动化日志",
     "settings": "设置"
   },

@@ -60,6 +60,7 @@
     "repos": "Repositories",
     "tasks": "Scheduled Tasks",
     "batch": "Batch Operations",
+    "batchRepos": "Batch Create Repos",
     "automationLogs": "Automation Logs",
     "settings": "Settings"
   },

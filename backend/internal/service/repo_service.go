@@ -497,3 +497,84 @@ func parseWorkflowInputs(yamlContent string) []WorkflowInputParam {
 	flush()
 	return params
 }
+
+// TemplateFile 模板文件
+type TemplateFile struct {
+	Path    string `json:"path"`
+	Content string `json:"content"` // base64
+}
+
+// FetchTemplateFiles 从源仓库读取所有文件
+func (s *RepoService) FetchTemplateFiles(c *Container, accountID uint, owner, repo, ref string) ([]TemplateFile, error) {
+	ghc, _, err := s.GetClient(c, accountID)
+	if err != nil {
+		return nil, err
+	}
+	tree, code, err := ghc.GetTreeRecursive(owner, repo, ref)
+	if err != nil {
+		return nil, fmt.Errorf("获取文件树失败: %w (code=%d)", err, code)
+	}
+	if tree.Truncated {
+		return nil, fmt.Errorf("源仓库文件过多，tree 被截断")
+	}
+	var files []TemplateFile
+	for _, entry := range tree.Tree {
+		if entry.Type != "blob" {
+			continue
+		}
+		if entry.Size > 1024*1024 {
+			continue
+		}
+		fc, _, err := ghc.GetFile(owner, repo, entry.Path, ref)
+		if err != nil {
+			continue
+		}
+		files = append(files, TemplateFile{Path: entry.Path, Content: fc.Content})
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("源仓库没有可读取的文件")
+	}
+	return files, nil
+}
+
+// CreateRepoForAccount 为指定账户创建仓库并推送文件
+func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoName, description string, private bool, files []TemplateFile) (*github.Repo, error) {
+	ghc, acc, err := s.GetClient(c, accountID)
+	if err != nil {
+		return nil, err
+	}
+	repo, code, err := ghc.CreateRepo(github.CreateRepoPayload{
+		Name:        repoName,
+		Description: description,
+		Private:     private,
+		AutoInit:    true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("创建仓库失败: %w (code=%d)", err, code)
+	}
+	time.Sleep(2 * time.Second)
+	failedFiles := []string{}
+	for _, f := range files {
+		_, _, fErr := ghc.CreateOrUpdateFile(acc.GithubLogin, repoName, f.Path, github.UpdateFilePayload{
+			Message: "Initial commit: " + f.Path,
+			Content: f.Content,
+		})
+		if fErr != nil {
+			failedFiles = append(failedFiles, f.Path)
+		}
+	}
+	if len(failedFiles) > 0 {
+		return repo, fmt.Errorf("仓库已创建，但 %d 个文件推送失败: %s", len(failedFiles), strings.Join(failedFiles, ", "))
+	}
+	model := &model.Repository{
+		AccountID:     accountID,
+		GithubID:      repo.ID,
+		OwnerLogin:    acc.GithubLogin,
+		Name:          repo.Name,
+		FullName:      acc.GithubLogin + "/" + repo.Name,
+		Private:       repo.Private,
+		DefaultBranch: repo.DefaultBranch,
+	}
+	s.DB.Where("github_id = ?", repo.ID).Assign(model).FirstOrCreate(model)
+	return repo, nil
+}
