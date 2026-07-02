@@ -194,7 +194,7 @@ export default function BatchRepoPage() {
                       placeholder="https://github.com/owner/repo"
                       className="flex-1"
                     />
-                    <Button onClick={handleFetchTemplate} disabled={fetchTemplateMut.isPending || !cloneUrl || accountIds.length === 0}>
+                    <Button onClick={handleFetchTemplate} disabled={fetchTemplateMut.isPending || !cloneUrl.trim()}>
                       {fetchTemplateMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                       获取文件
                     </Button>
