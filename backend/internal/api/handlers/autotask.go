@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/config"
+	"githubaltmanager/internal/model"
 	"githubaltmanager/internal/service"
 )
 
@@ -32,12 +33,24 @@ func RegisterAutoTaskRoutes(g *gin.RouterGroup, c *service.Container) {
 }
 
 func (h *AutoTaskHandler) Get(c *gin.Context) {
-	cfg, err := h.s.GetAutoTaskConfig()
-	if err != nil {
-		resp.Internal(c, "read config failed", err)
+	var cfg model.AppConfig
+	if err := h.c.DB.First(&cfg, 1).Error; err != nil {
+		resp.OK(c, gin.H{
+			"auto_check_enabled":  false,
+			"auto_check_interval": 30,
+			"auto_sync_enabled":   true,
+			"auto_sync_interval":  30,
+		})
 		return
 	}
-	resp.OK(c, cfg)
+	resp.OK(c, gin.H{
+		"auto_check_enabled":  cfg.AutoCheckEnabled,
+		"auto_check_interval": cfg.AutoCheckInterval,
+		"auto_sync_enabled":   cfg.AutoSyncEnabled,
+		"auto_sync_interval":  cfg.AutoSyncInterval,
+		"auto_check_last_at":  cfg.AutoCheckLastAt,
+		"auto_sync_last_at":   cfg.AutoSyncLastAt,
+	})
 }
 
 func (h *AutoTaskHandler) Update(c *gin.Context) {

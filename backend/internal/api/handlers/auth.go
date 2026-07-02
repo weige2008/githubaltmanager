@@ -12,6 +12,7 @@ import (
 	"githubaltmanager/internal/model"
 	"githubaltmanager/internal/service"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type AuthHandler struct {
@@ -23,7 +24,7 @@ func NewAuthHandler(c *service.Container) *AuthHandler { return &AuthHandler{c: 
 // Status GET /api/auth/status
 func (h *AuthHandler) Status(c *gin.Context) {
 	var cfg model.AppConfig
-	err := h.c.DB.First(&cfg, 1).Error
+	err := h.c.DB.Session(&gorm.Session{Logger: logger.Noop}).First(&cfg, 1).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		resp.OK(c, gin.H{"isInitialized": false})
 		return
@@ -48,7 +49,7 @@ func (h *AuthHandler) Setup(c *gin.Context) {
 	}
 
 	var cfg model.AppConfig
-	err := h.c.DB.First(&cfg, 1).Error
+	err := h.c.DB.Session(&gorm.Session{Logger: logger.Noop}).First(&cfg, 1).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		resp.Internal(c, "读取配置失败", err)
 		return

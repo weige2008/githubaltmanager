@@ -161,6 +161,8 @@ export interface AutoTaskConfig {
   auto_check_interval: number
   auto_sync_enabled: boolean
   auto_sync_interval: number
+  auto_check_last_at?: string | null
+  auto_sync_last_at?: string | null
 }
 
 export interface AutoTaskLog {
