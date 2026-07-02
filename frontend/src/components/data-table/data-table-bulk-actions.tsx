@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { RowSelectionState } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 
@@ -12,13 +13,14 @@ interface DataTableBulkActionsProps {
 const DataTableBulkActions = ({
   rowSelection, onClearSelection, children, className,
 }: DataTableBulkActionsProps) => {
+  const { t } = useTranslation()
   const count = Object.keys(rowSelection).length
   if (count === 0) return null
 
   return (
     <div className={cn('flex items-center gap-2 rounded-md border bg-muted/50 px-4 py-2', className)}>
       <span className="text-sm font-medium">
-        已选 {count} 项
+        {t('ui.selected', { count })}
       </span>
       <div className="ml-2 flex items-center gap-2">
         {children}
@@ -27,7 +29,7 @@ const DataTableBulkActions = ({
         onClick={onClearSelection}
         className="ml-auto text-sm text-muted-foreground hover:text-foreground"
       >
-        取消选择
+        {t('ui.clearSelection')}
       </button>
     </div>
   )

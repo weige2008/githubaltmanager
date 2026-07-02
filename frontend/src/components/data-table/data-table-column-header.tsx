@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 import type { Column } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,8 @@ interface DataTableColumnHeaderProps<TData, TValue>
 function DataTableColumnHeader<TData, TValue>({
   column, title, className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
+  const { t } = useTranslation()
+
   if (!column.getCanSort()) {
     return <div className={cn(className)}>{title}</div>
   }
@@ -36,15 +39,15 @@ function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
             <ArrowUp className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-            升序
+            {t('ui.ascending')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
             <ArrowDown className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-            降序
+            {t('ui.descending')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            隐藏此列
+            {t('ui.hideColumn')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

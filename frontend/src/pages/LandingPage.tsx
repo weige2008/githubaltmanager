@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
 import { useThemeStore } from '@/store/theme'
@@ -64,6 +65,7 @@ function Counter({ end, suffix = '', duration = 1600 }: { end: number; suffix?: 
 
 // ===== Hero terminal demo =====
 function HeroTerminalDemo() {
+  const { t } = useTranslation()
   return (
     <div className="w-full rounded-xl border border-border/40 bg-card shadow-2xl overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border/40 bg-muted/30 px-4 py-3">
@@ -76,9 +78,9 @@ function HeroTerminalDemo() {
         {/* Stat row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: '账户', value: '12', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-            { label: '正常', value: '10', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
-            { label: '仓库', value: '48', icon: Folder, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+            { label: t('accounts.title'), value: '12', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { label: 'Active', value: '10', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
+            { label: t('nav.repos'), value: '48', icon: Folder, color: 'text-purple-500', bg: 'bg-purple-500/10' },
           ].map((s) => { const Icon = s.icon; return (
             <div key={s.label} className={`flex items-center gap-2 rounded-lg ${s.bg} p-3`}>
               <Icon className={`h-4 w-4 ${s.color}`} />
@@ -92,9 +94,9 @@ function HeroTerminalDemo() {
 
         {/* Account rows */}
         {[
-          { status: '正常', color: 'text-green-500', bg: 'bg-green-500/10', progress: 85 },
-          { status: '封禁', color: 'text-red-500', bg: 'bg-red-500/10', progress: 20 },
-          { status: '正常', color: 'text-green-500', bg: 'bg-green-500/10', progress: 70 },
+          { status: 'Active', color: 'text-green-500', bg: 'bg-green-500/10', progress: 85 },
+          { status: 'Banned', color: 'text-red-500', bg: 'bg-red-500/10', progress: 20 },
+          { status: 'Active', color: 'text-green-500', bg: 'bg-green-500/10', progress: 70 },
         ].map((row, i) => (
           <div key={i} className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/15 p-3 transition-colors hover:bg-muted/30">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-xs font-bold text-white shadow" />
@@ -122,6 +124,7 @@ function HeroTerminalDemo() {
 }
 
 export default function LandingPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { token } = useAppStore()
   const { mode, setMode } = useThemeStore()
@@ -142,16 +145,16 @@ export default function LandingPage() {
   const isDark = mode === 'dark' || (mode === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   const stats = [
-    { end: 50, suffix: '+', label: 'GitHub API 接口覆盖' },
-    { end: 5, suffix: '', label: '跨平台支持' },
-    { end: 33, suffix: '', label: 'REST API 端点' },
-    { end: 256, suffix: '-bit', label: 'AES 加密强度' },
+    { end: 50, suffix: '+', label: t('landing.stats.api') },
+    { end: 5, suffix: '', label: t('landing.stats.platforms') },
+    { end: 33, suffix: '', label: t('landing.stats.endpoints') },
+    { end: 256, suffix: '-bit', label: t('landing.stats.encryption') },
   ]
 
   const bentoFeatures = [
     {
-      num: '01', title: '闪电同步', span: 'md:col-span-2', icon: <Zap className="size-4 text-blue-400" />,
-      desc: '并发拉取所有仓库和 Action workflow，8 个 goroutine 并行加速',
+      num: '01', title: t('landing.features.sync.title'), span: 'md:col-span-2', icon: <Zap className="size-4 text-blue-400" />,
+      desc: t('landing.features.sync.desc'),
       visual: (
         <div className="mt-4 grid grid-cols-3 gap-2">
           {['Repo Sync', 'Status Check', 'Action Scan', 'File Edit', 'Batch Ops', 'Auto Trigger'].map((n) => (
@@ -161,8 +164,8 @@ export default function LandingPage() {
       ),
     },
     {
-      num: '02', title: '安全加密', span: 'md:col-span-1', icon: <Shield className="size-4 text-emerald-400" />,
-      desc: 'AES-256-GCM 加密存储，Argon2id 密钥派生',
+      num: '02', title: t('landing.features.crypto.title'), span: 'md:col-span-1', icon: <Shield className="size-4 text-emerald-400" />,
+      desc: t('landing.features.crypto.desc'),
       visual: (
         <div className="mt-4 flex items-center justify-center">
           <div className="relative">
@@ -177,8 +180,8 @@ export default function LandingPage() {
       ),
     },
     {
-      num: '03', title: '智能检测', span: 'md:col-span-1', icon: <Eye className="size-4 text-violet-400" />,
-      desc: '多方案并发检测封禁状态',
+      num: '03', title: t('landing.features.detect.title'), span: 'md:col-span-1', icon: <Eye className="size-4 text-violet-400" />,
+      desc: t('landing.features.detect.desc'),
       visual: (
         <div className="mt-4 space-y-2">
           {['API /user', 'Web Profile', 'Token Verify'].map((s, i) => (
@@ -192,8 +195,8 @@ export default function LandingPage() {
       ),
     },
     {
-      num: '04', title: '自动化引擎', span: 'md:col-span-2', icon: <Workflow className="size-4 text-amber-400" />,
-      desc: '自动检测、自动同步、定时触发，无需人工干预',
+      num: '04', title: t('landing.features.auto.title'), span: 'md:col-span-2', icon: <Workflow className="size-4 text-amber-400" />,
+      desc: t('landing.features.auto.desc'),
       visual: (
         <div className="mt-4 flex items-center gap-3">
           <div className="flex -space-x-2">
@@ -202,7 +205,7 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Server className="size-3.5 text-blue-500" /> 全天候运行
+            <Server className="size-3.5 text-blue-500" /> {t('landing.features.alwaysOn')}
           </div>
         </div>
       ),
@@ -210,16 +213,16 @@ export default function LandingPage() {
   ]
 
   const additionalFeatures = [
-    { icon: <TrendingUp className="size-5" strokeWidth={1.5} />, title: '数据可视化', desc: 'Recharts 图表实时展示状态分布' },
-    { icon: <FolderGit2 className="size-5" strokeWidth={1.5} />, title: '仓库浏览', desc: '在线文件树 + 代码编辑器' },
-    { icon: <Layers className="size-5" strokeWidth={1.5} />, title: '批量操作', desc: '多仓库一键创建/触发' },
-    { icon: <Github className="size-5" strokeWidth={1.5} />, title: '开源免费', desc: 'MIT License，自部署' },
+    { icon: <TrendingUp className="size-5" strokeWidth={1.5} />, title: t('landing.more.viz'), desc: t('landing.more.vizDesc') },
+    { icon: <FolderGit2 className="size-5" strokeWidth={1.5} />, title: t('landing.more.repos'), desc: t('landing.more.reposDesc') },
+    { icon: <Layers className="size-5" strokeWidth={1.5} />, title: t('landing.more.batch'), desc: t('landing.more.batchDesc') },
+    { icon: <Github className="size-5" strokeWidth={1.5} />, title: t('landing.more.openSource'), desc: t('landing.more.openSourceDesc') },
   ]
 
   const steps = [
-    { num: '1', title: '导入 Token', desc: '粘贴 GitHub Token，系统自动验证并加密存储', icon: <KeyRound className="size-6" strokeWidth={1.5} /> },
-    { num: '2', title: '检测与同步', desc: '多方案检测封禁状态，自动同步所有仓库', icon: <Settings className="size-6" strokeWidth={1.5} /> },
-    { num: '3', title: '定时执行', desc: '设置间隔自动触发 Action，查看执行日志', icon: <Activity className="size-6" strokeWidth={1.5} /> },
+    { num: '1', title: t('landing.steps.step1Title'), desc: t('landing.steps.step1Desc'), icon: <KeyRound className="size-6" strokeWidth={1.5} /> },
+    { num: '2', title: t('landing.steps.step2Title'), desc: t('landing.steps.step2Desc'), icon: <Settings className="size-6" strokeWidth={1.5} /> },
+    { num: '3', title: t('landing.steps.step3Title'), desc: t('landing.steps.step3Desc'), icon: <Activity className="size-6" strokeWidth={1.5} /> },
   ]
 
   return (
@@ -245,15 +248,15 @@ export default function LandingPage() {
             <div className="flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105">
               <Github className="size-full rounded-lg" />
             </div>
-            <span className="text-sm font-semibold tracking-tight">GitHub 管理器</span>
+            <span className="text-sm font-semibold tracking-tight">{t('landing.brand')}</span>
           </a>
 
           {/* Center links (desktop) */}
           <div className="hidden items-center gap-0.5 sm:flex">
-            <a href="/" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground">主页</a>
-            <button onClick={() => navigate('/dashboard')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">控制台</button>
-            <button onClick={() => navigate('/automation')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">自动化</button>
-            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">文档</a>
+            <a href="/" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground">{t('landing.nav.home')}</a>
+            <button onClick={() => navigate('/dashboard')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.console')}</button>
+            <button onClick={() => navigate('/automation')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.automation')}</button>
+            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.docs')}</a>
           </div>
 
           {/* Right actions */}
@@ -266,7 +269,7 @@ export default function LandingPage() {
             </a>
             <div className="mx-1 hidden h-4 w-px bg-border/40 sm:block" />
             <button onClick={goEnter} className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
-              {token ? '控制台' : '登录'}
+              {token ? t('landing.nav.console') : t('landing.nav.login')}
               <ArrowRight className="size-3" />
             </button>
           </div>
@@ -303,17 +306,17 @@ export default function LandingPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
                 <span className="relative inline-flex size-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
               </span>
-              GitHub 账户管理中枢
+              {t('landing.hero.badge')}
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.06 }}
               className="text-[clamp(2.25rem,4.5vw,3.25rem)] leading-[1.15] font-bold tracking-tight"
             >
-              安全管理你的
+              {t('landing.hero.title1')}
               <br />
               <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent">
-                GitHub 账户
+                {t('landing.hero.title2')}
               </span>
             </motion.h1>
 
@@ -321,7 +324,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.12 }}
               className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-[15px]"
             >
-              Token 加密导入、封禁检测、仓库浏览、Action 定时执行与批量创建——全部装进一个 18MB 的可执行文件，开箱即用。
+              {t('landing.hero.subtitle')}
             </motion.p>
 
             <motion.div
@@ -329,11 +332,11 @@ export default function LandingPage() {
               className="mt-8 flex flex-wrap items-center gap-3"
             >
               <Button className="group h-11 rounded-lg px-5" onClick={goEnter}>
-                {token ? '进入控制台' : '开始使用'}
+                {token ? t('landing.hero.enterConsole') : t('landing.hero.getStarted')}
                 <ArrowRight className="ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Button>
               <Button variant="outline" className="h-11 rounded-lg border-border/50 px-5" onClick={() => window.open('https://github.com/weige2008/githubaltmanager', '_blank')}>
-                <BookOpen className="mr-1.5 size-4 text-muted-foreground" /> 文档
+                <BookOpen className="mr-1.5 size-4 text-muted-foreground" /> {t('landing.hero.docs')}
               </Button>
             </motion.div>
 
@@ -343,8 +346,8 @@ export default function LandingPage() {
               className="mt-10 w-full max-w-xl"
             >
               <div className="mb-4 flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/50">技术栈</span>
-                <p className="text-xs leading-relaxed text-muted-foreground/60">React + Tailwind + Go + Gin + GORM + SQLite，单文件部署</p>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/50">{t('landing.hero.techStack')}</span>
+                <p className="text-xs leading-relaxed text-muted-foreground/60">{t('landing.hero.techStackDesc')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {['Linux', 'Windows', 'macOS', 'ARM64'].map((n) => (
@@ -388,11 +391,11 @@ export default function LandingPage() {
       <section className="relative z-10 px-6 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <FadeUp className="mb-16 max-w-lg">
-            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">核心功能</p>
+            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">{t('landing.features.eyebrow')}</p>
             <h2 className="text-2xl leading-tight font-bold tracking-tight md:text-3xl">
-              为效率而生
+              {t('landing.features.title')}
               <br />
-              <span className="text-muted-foreground">从导入到自动化</span>
+              <span className="text-muted-foreground">{t('landing.features.subtitle')}</span>
             </h2>
           </FadeUp>
 
@@ -430,8 +433,8 @@ export default function LandingPage() {
       <section className="relative z-10 border-t border-border/40 px-6 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <FadeUp className="mb-16 text-center md:mb-20">
-            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">使用流程</p>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">三步上手</h2>
+            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">{t('landing.steps.eyebrow')}</p>
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{t('landing.steps.title')}</h2>
           </FadeUp>
 
           <div className="grid gap-8 md:grid-cols-3 md:gap-12">
@@ -463,20 +466,20 @@ export default function LandingPage() {
         }} />
         <FadeUp className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl leading-tight font-bold tracking-tight md:text-4xl">
-            准备好接管你的
+            {t('landing.cta.title1')}
             <br />
-            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent">GitHub 账户了吗？</span>
+            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent">{t('landing.cta.title2')}</span>
           </h2>
           <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
-            立即体验系统级原生质感的账户管理中枢
+            {t('landing.cta.subtitle')}
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Button className="group rounded-lg" onClick={goEnter}>
-              {token ? '进入控制台' : '开始使用'}
+              {token ? t('landing.hero.enterConsole') : t('landing.hero.getStarted')}
               <ArrowRight className="ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Button>
             <Button variant="outline" className="rounded-lg border-border/50" onClick={() => window.open('https://github.com/weige2008/githubaltmanager/releases', '_blank')}>
-              下载
+              {t('landing.cta.download')}
             </Button>
           </div>
         </FadeUp>
@@ -487,23 +490,23 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
             <div>
-              <h4 className="mb-3 text-sm font-semibold">项目</h4>
+              <h4 className="mb-3 text-sm font-semibold">{t('landing.footer.project')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a></li>
                 <li><a href="https://github.com/weige2008/githubaltmanager/releases" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Releases</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager/issues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">问题反馈</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager/issues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('landing.footer.feedback')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="mb-3 text-sm font-semibold">文档</h4>
+              <h4 className="mb-3 text-sm font-semibold">{t('landing.footer.docs')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="https://github.com/weige2008/githubaltmanager#快速开始" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">快速开始</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager#docker" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docker 部署</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager#配置项" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">配置项</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#快速开始" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('landing.footer.quickStart')}</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#docker" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('landing.footer.docker')}</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#配置项" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t('landing.footer.config')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="mb-3 text-sm font-semibold">技术栈</h4>
+              <h4 className="mb-3 text-sm font-semibold">{t('landing.footer.techStack')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>React 19 + Tailwind + Radix UI</li>
                 <li>Go + Gin + GORM + SQLite</li>
@@ -511,7 +514,7 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <h4 className="mb-3 text-sm font-semibold">关于</h4>
+              <h4 className="mb-3 text-sm font-semibold">{t('landing.footer.about')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">MIT License</li>
                 <li className="flex items-center gap-1.5 font-mono text-xs">

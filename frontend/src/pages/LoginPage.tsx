@@ -25,17 +25,17 @@ export default function LoginPage() {
 
   const handleSubmit = async () => {
     if (!password) return
-    if (!initialized && password !== confirm) { toast.error('两次密码不一致'); return }
-    if (!initialized && password.length < 8) { toast.error('密码至少 8 位'); return }
+    if (!initialized && password !== confirm) { toast.error(t('auth.passwordMismatch')); return }
+    if (!initialized && password.length < 8) { toast.error(t('auth.passwordTooShort')); return }
     setLoading(true)
     try {
       const fn = initialized ? authApi.login : authApi.setup
       const res = await fn(password)
       setToken(res.token)
-      toast.success(initialized ? '登录成功' : '初始化成功')
+      if (!initialized) toast.success(t('auth.setupSuccess'))
       navigate('/dashboard')
     } catch (e: any) {
-      toast.error(e?.message || '操作失败')
+      toast.error(e?.message || t('common.operationFailed'))
     } finally { setLoading(false) }
   }
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl">{t('auth.welcome')}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {initialized ? t('auth.loginDescription') : '首次使用，请设置主密码'}
+            {initialized ? t('auth.loginDescription') : t('auth.setup')}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -64,22 +64,22 @@ export default function LoginPage() {
           </div>
           {!initialized && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">确认密码</label>
+              <label className="text-sm font-medium">{t('auth.confirmPassword')}</label>
               <PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                placeholder="再次输入主密码" />
+                placeholder={t('auth.confirmPasswordPlaceholder')} />
             </div>
           )}
           {!initialized && (
             <div className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning">
               <Lock className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>主密码用于加密所有 token 和密码，<b>忘记后无法找回</b>。</span>
+              <span>{t('auth.setupHint')}</span>
             </div>
           )}
           <Button className="w-full" size="lg" disabled={loading} onClick={handleSubmit}>
-            {loading ? t('auth.loggingIn') : initialized ? t('auth.loginButton') : '完成初始化'}
+            {loading ? t('auth.loggingIn') : initialized ? t('auth.loginButton') : t('auth.completeSetup')}
           </Button>
           <Button variant="ghost" className="w-full gap-2" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4" /> 返回主页
+            <ArrowLeft className="h-4 w-4" /> {t('auth.backHome')}
           </Button>
         </CardContent>
       </Card>

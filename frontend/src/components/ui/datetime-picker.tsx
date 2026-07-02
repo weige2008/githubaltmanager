@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarIcon } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
@@ -17,7 +18,9 @@ interface DateTimePickerProps {
   disabled?: boolean
 }
 
-const DateTimePicker = ({ value, onChange, placeholder = '选择日期时间', className, disabled }: DateTimePickerProps) => {
+const DateTimePicker = ({ value, onChange, className, disabled, ...rest }: DateTimePickerProps) => {
+  const { t } = useTranslation()
+  const placeholder = rest.placeholder ?? t('ui.selectDateTime')
   const [open, setOpen] = React.useState(false)
   const timeValue = value ? format(value, 'HH:mm') : ''
 
@@ -56,7 +59,7 @@ const DateTimePicker = ({ value, onChange, placeholder = '选择日期时间', c
         />
         <Separator />
         <div className="flex items-center gap-2 p-3">
-          <span className="text-sm text-muted-foreground">时间</span>
+          <span className="text-sm text-muted-foreground">{t('ui.time')}</span>
           <Input
             type="time"
             value={timeValue}
@@ -65,7 +68,7 @@ const DateTimePicker = ({ value, onChange, placeholder = '选择日期时间', c
           />
         </div>
         <div className="flex justify-end p-3 pt-0">
-          <Button size="sm" onClick={() => setOpen(false)}>确定</Button>
+          <Button size="sm" onClick={() => setOpen(false)}>{t('ui.ok')}</Button>
         </div>
       </PopoverContent>
     </Popover>

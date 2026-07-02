@@ -43,9 +43,9 @@ export default function BatchRepoPage() {
       batchApi.fetchTemplate({ account_id: vars.accountId, owner: vars.owner, repo: vars.repo }),
     onSuccess: (data) => {
       setTemplateFiles(data.files)
-      toast.success(`已获取 ${data.count} 个文件`)
+      toast.success(t('batchRepo.fetchSuccess', { count: data.count }))
     },
-    onError: () => toast.error('获取模板失败'),
+    onError: () => toast.error(t('batchRepo.fetchFailed')),
   })
 
   const createReposMut = useMutation({
@@ -72,22 +72,22 @@ export default function BatchRepoPage() {
       const sCount = data.success.length
       const fCount = data.failed.length
       if (fCount === 0) {
-        toast.success(`全部成功：${sCount} 个仓库已创建`)
+        toast.success(t('batchRepo.successMsg', { count: sCount }))
       } else {
-        toast.warning(`完成：${sCount} 成功，${fCount} 失败`)
+        toast.warning(t('batchRepo.partialMsg', { success: sCount, failed: fCount }))
       }
     },
-    onError: () => toast.error('批量创建失败'),
+    onError: () => toast.error(t('batchRepo.failed')),
   })
 
   const handleFetchTemplate = () => {
     const match = cloneUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
     if (!match) {
-      toast.error('请输入正确的仓库 URL，如 https://github.com/owner/repo')
+      toast.error(t('batchRepo.invalidUrl'))
       return
     }
     if (accountIds.length === 0) {
-      toast.error('请先选择至少一个账户')
+      toast.error(t('batchRepo.noAccount'))
       return
     }
     fetchTemplateMut.mutate({ accountId: accountIds[0], owner: match[1], repo: match[2] })
@@ -121,15 +121,15 @@ export default function BatchRepoPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="批量创建仓库" description="为多个账户批量创建仓库，支持从公开仓库克隆或手动添加文件" />
+      <PageHeader title={t('batchRepo.title')} description={t('batchRepo.description')} />
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base">
-              <span>选择账户</span>
+              <span>{t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAll}>
-                {accountIds.length === (accounts?.length || 0) ? '取消全选' : '全选'}
+                {accountIds.length === (accounts?.length || 0) ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
           </CardHeader>
@@ -148,18 +148,18 @@ export default function BatchRepoPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle className="text-base">仓库配置</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('batchRepo.repoConfig')}</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">仓库名称</label>
+                <label className="text-sm font-medium">{t('batchRepo.repoName')}</label>
                 <Input value={repoName} onChange={e => setRepoName(e.target.value)} placeholder="my-repo" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">描述（可选）</label>
+                <label className="text-sm font-medium">{t('batchRepo.descriptionLabel')}</label>
                 <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Repository description" />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-medium">仓库可见性</label>
+                <label className="text-sm font-medium">{t('batchRepo.visibility')}</label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -169,7 +169,7 @@ export default function BatchRepoPage() {
                     }`}
                   >
                     <Lock className="h-4 w-4" />
-                    私有仓库
+                    {t('batchRepo.private')}
                   </button>
                   <button
                     type="button"
@@ -179,7 +179,7 @@ export default function BatchRepoPage() {
                     }`}
                   >
                     <Globe className="h-4 w-4" />
-                    公开仓库
+                    {t('batchRepo.public')}
                   </button>
                 </div>
               </div>
@@ -187,12 +187,12 @@ export default function BatchRepoPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">文件来源</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('batchRepo.fileSource')}</CardTitle></CardHeader>
             <CardContent>
               <Tabs value={sourceMode} onValueChange={(v) => setSourceMode(v as 'clone' | 'manual')}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="clone"><FolderGit2 className="mr-2 h-4 w-4" />从仓库克隆</TabsTrigger>
-                  <TabsTrigger value="manual"><FileCode className="mr-2 h-4 w-4" />手动添加文件</TabsTrigger>
+                  <TabsTrigger value="clone"><FolderGit2 className="mr-2 h-4 w-4" />{t('batchRepo.clone')}</TabsTrigger>
+                  <TabsTrigger value="manual"><FileCode className="mr-2 h-4 w-4" />{t('batchRepo.manual')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="clone" className="space-y-4">
@@ -205,16 +205,16 @@ export default function BatchRepoPage() {
                     />
                     <Button onClick={handleFetchTemplate} disabled={fetchTemplateMut.isPending || !cloneUrl.trim()}>
                       {fetchTemplateMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                      获取文件
+                      {t('batchRepo.fetchFiles')}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    输入公开仓库 URL，将完整复制所有文件（包括 .github/workflows）。使用第一个选中账户的 token 读取。
+                    {t('batchRepo.cloneHint')}
                   </p>
                   {templateFiles.length > 0 && (
                     <div className="rounded-md border">
                       <div className="border-b px-3 py-2 text-sm font-medium">
-                        已获取 {templateFiles.length} 个文件
+                        {t('batchRepo.fetchedFiles', { count: templateFiles.length })}
                       </div>
                       <div className="max-h-[200px] overflow-y-auto p-2">
                         {templateFiles.map((f, i) => (
@@ -247,14 +247,14 @@ export default function BatchRepoPage() {
                       <Textarea
                         value={file.content}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateManualFile(idx, 'content', e.target.value)}
-                        placeholder="文件内容..."
+                        placeholder={t('batchRepo.fileContent')}
                         className="font-mono text-xs"
                         rows={6}
                       />
                     </div>
                   ))}
                   <Button variant="outline" size="sm" onClick={addManualFile}>
-                    <Plus className="mr-2 h-4 w-4" />添加文件
+                    <Plus className="mr-2 h-4 w-4" />{t('batchRepo.addFile')}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -271,7 +271,7 @@ export default function BatchRepoPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                创建仓库后自动设置 Actions secrets（如 TOKEN、API_KEY 等）。值会被加密传输，不会明文存储。
+                {t('batchRepo.secretsHint')}
               </p>
               {secrets.map((secret, idx) => (
                 <div key={idx} className="flex items-center gap-2">
@@ -303,14 +303,14 @@ export default function BatchRepoPage() {
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={addSecret}>
-                <Plus className="mr-2 h-4 w-4" />添加 Secret
+                <Plus className="mr-2 h-4 w-4" />{t('batchRepo.addSecret')}
               </Button>
             </CardContent>
           </Card>
 
           {results && (
             <Alert>
-              <AlertTitle>执行结果</AlertTitle>
+              <AlertTitle>{t('ui.results')}</AlertTitle>
               <AlertDescription>
                 <div className="mt-2 space-y-1">
                   {results.success.map((s, i) => (
@@ -322,7 +322,7 @@ export default function BatchRepoPage() {
                   {results.failed.map((f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <CircleX className="h-4 w-4 text-destructive" />
-                      <span>账户 {f.account_id}: {f.error}</span>
+                      <span>{f.account_id}: {f.error}</span>
                     </div>
                   ))}
                 </div>
@@ -332,7 +332,7 @@ export default function BatchRepoPage() {
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setResults(null); setTemplateFiles([]) }}>
-              重置
+              {t('ui.reset')}
             </Button>
             <Button
               onClick={() => createReposMut.mutate()}
@@ -340,7 +340,7 @@ export default function BatchRepoPage() {
               size="lg"
             >
               {createReposMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
-              为 {accountIds.length} 个账户创建仓库
+              {t('batchRepo.create', { count: accountIds.length })}
             </Button>
           </div>
         </div>

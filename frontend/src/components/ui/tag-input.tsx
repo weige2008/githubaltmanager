@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,9 @@ interface TagInputProps {
   maxTags?: number
 }
 
-const TagInput = ({ value, onChange, placeholder = '输入后按 Enter 添加', className, maxTags }: TagInputProps) => {
+const TagInput = ({ value, onChange, className, maxTags, ...rest }: TagInputProps) => {
+  const { t } = useTranslation()
+  const placeholder = rest.placeholder ?? t('ui.tagPlaceholder')
   const [input, setInput] = React.useState('')
 
   const addTag = () => {

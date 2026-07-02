@@ -454,8 +454,9 @@
     "issueFeedback": "Issues"
   },
   "theme": {
-    "title": "Appearance",
-    "mode": "Theme Mode",
+    "title": "Theme Settings",
+    "subtitle": "Customize appearance and layout to suit your preferences.",
+    "mode": "Theme",
     "modeSystem": "System",
     "modeLight": "Light",
     "modeDark": "Dark",
@@ -471,6 +472,9 @@
     "scaleLg": "Comfortable",
     "scaleXl": "Extra Large",
     "sidebarMode": "Sidebar",
+    "sidebarInset": "Inset",
+    "sidebarFloating": "Floating",
+    "sidebarSidebar": "Sidebar",
     "contentLayout": "Content Width",
     "layoutFull": "Full Width",
     "layoutCentered": "Centered",

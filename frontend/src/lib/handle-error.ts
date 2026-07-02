@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import i18n from '@/i18n/config'
 
 interface ServerError {
   response?: {
@@ -8,36 +9,36 @@ interface ServerError {
   message?: string
 }
 
-export function handleServerError(error: unknown, fallbackMessage = '操作失败'): void {
+export function handleServerError(error: unknown, fallbackMessage?: string): void {
   const err = error as ServerError
 
   if (err?.response?.status === 401) {
-    toast.error('登录已过期，请重新登录')
+    toast.error(i18n.t('common.sessionExpired'))
     localStorage.removeItem('gam_token')
     window.location.href = '/login'
     return
   }
 
   if (err?.response?.status === 403) {
-    toast.error('没有权限执行此操作')
+    toast.error(i18n.t('common.noPermission'))
     return
   }
 
   if (err?.response?.status === 404) {
-    toast.error('请求的资源不存在')
+    toast.error(i18n.t('common.notFound_resource'))
     return
   }
 
   if (err?.response?.status === 500) {
-    toast.error('服务器错误，请稍后重试')
+    toast.error(i18n.t('common.serverError'))
     return
   }
 
-  const message = err?.response?.data?.error || err?.response?.data?.message || err?.message || fallbackMessage
+  const message = err?.response?.data?.error || err?.response?.data?.message || err?.message || fallbackMessage || i18n.t('common.operationFailed')
   toast.error(message)
 }
 
 export function getErrorMessage(error: unknown): string {
   const err = error as ServerError
-  return err?.response?.data?.error || err?.response?.data?.message || err?.message || '未知错误'
+  return err?.response?.data?.error || err?.response?.data?.message || err?.message || i18n.t('common.unknownError')
 }

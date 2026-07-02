@@ -50,8 +50,8 @@ export default function AutomationPage() {
       <Card><CardHeader className="flex-row items-center justify-between">
         <CardTitle>{t('automation.taskStatus')}</CardTitle>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={async () => { try { await autoTaskApi.checkNow(); toast.success(t('automation.checkTriggered')) } catch { toast.error('检测失败') } }}>{t('automation.checkNow')}</Button>
-          <Button variant="outline" size="sm" onClick={async () => { try { await autoTaskApi.syncNow(); toast.success(t('automation.syncTriggered')) } catch { toast.error('同步失败') } }}>{t('automation.syncNow')}</Button>
+          <Button variant="outline" size="sm" onClick={async () => { try { await autoTaskApi.checkNow(); toast.success(t('automation.checkTriggered')) } catch { toast.error(t('settings.triggerFailed')) } }}>{t('automation.checkNow')}</Button>
+          <Button variant="outline" size="sm" onClick={async () => { try { await autoTaskApi.syncNow(); toast.success(t('automation.syncTriggered')) } catch { toast.error(t('settings.triggerFailed')) } }}>{t('automation.syncNow')}</Button>
         </div>
       </CardHeader><CardContent>
         <div className="grid grid-cols-2 gap-4">

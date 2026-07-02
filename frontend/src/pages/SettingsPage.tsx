@@ -31,15 +31,15 @@ function formatDeployTime(iso: string): string {
 }
 
 const intervals = [
-  { value: 5, label: '5 分钟' },
-  { value: 15, label: '15 分钟' },
-  { value: 30, label: '30 分钟' },
-  { value: 60, label: '1 小时' },
-  { value: 180, label: '3 小时' },
-  { value: 360, label: '6 小时' },
-  { value: 720, label: '12 小时' },
-  { value: 1440, label: '24 小时' },
-  { value: 10080, label: '7 天' },
+  { value: 5, labelKey: 'settings.interval5min' },
+  { value: 15, labelKey: 'settings.interval15min' },
+  { value: 30, labelKey: 'settings.interval30min' },
+  { value: 60, labelKey: 'settings.interval1hour' },
+  { value: 180, labelKey: 'settings.interval3hour' },
+  { value: 360, labelKey: 'settings.interval6hour' },
+  { value: 720, labelKey: 'settings.interval12hour' },
+  { value: 1440, labelKey: 'settings.interval24hour' },
+  { value: 10080, labelKey: 'settings.interval7days' },
 ]
 
 const themeModes: { value: ThemeMode; labelKey: string }[] = [
@@ -82,25 +82,25 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['autotask-config'] })
       queryClient.invalidateQueries({ queryKey: ['automation-logs'] })
     },
-    onError: () => toast.error('保存失败'),
+    onError: () => toast.error(t('settings.saveFailed')),
   })
 
   const checkNowMut = useMutation({
     mutationFn: () => autoTaskApi.checkNow(),
     onSuccess: () => {
-      toast.success('检测已触发')
+      toast.success(t('settings.checkTriggered'))
       queryClient.invalidateQueries({ queryKey: ['automation-logs'] })
     },
-    onError: () => toast.error('触发失败'),
+    onError: () => toast.error(t('settings.triggerFailed')),
   })
 
   const syncNowMut = useMutation({
     mutationFn: () => autoTaskApi.syncNow(),
     onSuccess: () => {
-      toast.success('同步已触发')
+      toast.success(t('settings.syncTriggered'))
       queryClient.invalidateQueries({ queryKey: ['automation-logs'] })
     },
-    onError: () => toast.error('触发失败'),
+    onError: () => toast.error(t('settings.triggerFailed')),
   })
 
   const changePwMut = useMutation({
@@ -116,7 +116,7 @@ export default function SettingsPage() {
   }
 
   const formatTime = (iso: string | null | undefined) => {
-    if (!iso) return '从未'
+    if (!iso) return t('settings.never')
     try {
       return format(new Date(iso), 'MM-dd HH:mm:ss', { locale: i18n.language === 'en-US' ? enUS : zhCN })
     } catch {
@@ -150,7 +150,7 @@ export default function SettingsPage() {
                     <CardTitle className="flex items-center justify-between text-base">
                       <span className="flex items-center gap-2">
                         <RefreshCw className="h-4 w-4" />
-                        自动检测封禁状态
+                        {t('settings.autoCheckTitle')}
                       </span>
                       <Switch
                         checked={form.auto_check_enabled}
@@ -161,7 +161,7 @@ export default function SettingsPage() {
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">检测间隔</span>
+                        <span className="text-sm text-muted-foreground">{t('settings.autoCheckIntervalLabel')}</span>
                         <Select
                           value={String(form.auto_check_interval)}
                           onValueChange={(v) => updateForm({ auto_check_interval: Number(v) })}
@@ -169,7 +169,7 @@ export default function SettingsPage() {
                         >
                           <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {intervals.map((i) => <SelectItem key={i.value} value={String(i.value)}>{i.label}</SelectItem>)}
+                            {intervals.map((i) => <SelectItem key={i.value} value={String(i.value)}>{t(i.labelKey)}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -180,13 +180,13 @@ export default function SettingsPage() {
                         disabled={checkNowMut.isPending}
                       >
                         {checkNowMut.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        立即检测
+                        {t('settings.checkNow')}
                       </Button>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>上次检测：{formatTime(config?.auto_check_last_at)}</span>
+                      <span>{t('settings.lastCheck')}：{formatTime(config?.auto_check_last_at)}</span>
                       <Badge variant={form.auto_check_enabled ? 'success' : 'secondary'}>
-                        {form.auto_check_enabled ? '运行中' : '已停止'}
+                        {form.auto_check_enabled ? t('settings.running') : t('settings.stopped')}
                       </Badge>
                     </div>
                   </CardContent>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
                     <CardTitle className="flex items-center justify-between text-base">
                       <span className="flex items-center gap-2">
                         <Database className="h-4 w-4" />
-                        自动同步仓库列表
+                        {t('settings.autoSyncTitle')}
                       </span>
                       <Switch
                         checked={form.auto_sync_enabled}
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">同步间隔</span>
+                        <span className="text-sm text-muted-foreground">{t('settings.autoSyncIntervalLabel')}</span>
                         <Select
                           value={String(form.auto_sync_interval)}
                           onValueChange={(v) => updateForm({ auto_sync_interval: Number(v) })}
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                         >
                           <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {intervals.map((i) => <SelectItem key={i.value} value={String(i.value)}>{i.label}</SelectItem>)}
+                            {intervals.map((i) => <SelectItem key={i.value} value={String(i.value)}>{t(i.labelKey)}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -228,13 +228,13 @@ export default function SettingsPage() {
                         disabled={syncNowMut.isPending}
                       >
                         {syncNowMut.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                        立即同步
+                        {t('settings.syncNow')}
                       </Button>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>上次同步：{formatTime(config?.auto_sync_last_at)}</span>
+                      <span>{t('settings.lastSync')}：{formatTime(config?.auto_sync_last_at)}</span>
                       <Badge variant={form.auto_sync_enabled ? 'success' : 'secondary'}>
-                        {form.auto_sync_enabled ? '运行中' : '已停止'}
+                        {form.auto_sync_enabled ? t('settings.running') : t('settings.stopped')}
                       </Badge>
                     </div>
                   </CardContent>
@@ -292,44 +292,44 @@ export default function SettingsPage() {
         <TabsContent value="about" className="space-y-4">
           {/* 项目信息 */}
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Info className="h-4 w-4" /> 项目信息</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Info className="h-4 w-4" /> {t('settings.projectInfo')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <div className="text-xs text-muted-foreground">版本</div>
+                  <div className="text-xs text-muted-foreground">{t('settings.version')}</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">v{__APP_VERSION__}</div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <div className="text-xs text-muted-foreground">部署时间</div>
+                  <div className="text-xs text-muted-foreground">{t('settings.deployTime')}</div>
                   <div className="mt-0.5 font-mono text-xs font-bold">
                     {(() => { try { return new Date(__BUILD_TIME__).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) } catch { return '—' } })()}
                   </div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <div className="text-xs text-muted-foreground">前端</div>
+                  <div className="text-xs text-muted-foreground">{t('settings.frontend')}</div>
                   <div className="mt-0.5 text-xs font-medium">React 19 + Tailwind</div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <div className="text-xs text-muted-foreground">后端</div>
+                  <div className="text-xs text-muted-foreground">{t('settings.backend')}</div>
                   <div className="mt-0.5 text-xs font-medium">Go + Gin + GORM</div>
                 </div>
               </div>
               <Separator />
               <div className="space-y-1 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2"><span className="font-medium text-foreground">加密方案：</span> AES-256-GCM + Argon2id + NaCl box</div>
-                <div className="flex items-center gap-2"><span className="font-medium text-foreground">数据库：</span> SQLite（纯 Go，零 CGO 依赖）</div>
-                <div className="flex items-center gap-2"><span className="font-medium text-foreground">嵌入方式：</span> go:embed（单二进制，无需 Nginx）</div>
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">{t('settings.encryptionScheme')}：</span> AES-256-GCM + Argon2id + NaCl box</div>
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">{t('settings.databaseType')}：</span> SQLite（纯 Go，零 CGO 依赖）</div>
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">{t('settings.embedMethod')}：</span> go:embed（单二进制，无需 Nginx）</div>
               </div>
               <Separator />
               <div className="flex flex-wrap gap-2">
                 <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
-                  <Github className="h-3.5 w-3.5" /> GitHub 仓库
+                  <Github className="h-3.5 w-3.5" /> {t('settings.githubRepo')}
                 </a>
                 <a href="https://github.com/weige2008/githubaltmanager/releases" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
-                  <Tag className="h-3.5 w-3.5" /> 版本发布
+                  <Tag className="h-3.5 w-3.5" /> {t('settings.releases')}
                 </a>
                 <a href="https://github.com/weige2008/githubaltmanager/issues" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
-                  <AlertCircle className="h-3.5 w-3.5" /> 问题反馈
+                  <AlertCircle className="h-3.5 w-3.5" /> {t('settings.issueFeedback')}
                 </a>
               </div>
             </CardContent>
@@ -337,41 +337,41 @@ export default function SettingsPage() {
 
           {/* 用户须知 */}
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldAlert className="h-4 w-4" /> 用户须知</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldAlert className="h-4 w-4" /> {t('settings.userNotices')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/5 p-3">
                 <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                 <div className="text-sm">
-                  <span className="font-medium">主密码无法找回。</span>
-                  <span className="text-muted-foreground"> 主密码用于加密所有 Token、密码和邮箱。一旦遗忘，所有已加密数据将永久无法解密。请使用密码管理器（如 Bitwarden / 1Password）妥善保存。</span>
+                  <span className="font-medium">{t('settings.masterPasswordWarning')}</span>
+                  <span className="text-muted-foreground"> {t('settings.masterPasswordWarningDesc')}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/5 p-3">
                 <Database className="mt-0.5 h-4 w-4 shrink-0 text-info" />
                 <div className="text-sm">
-                  <span className="font-medium">服务重启后需重新登录。</span>
-                  <span className="text-muted-foreground"> 加密密钥仅在登录时驻留内存，重启后自动清除。定时任务和自动检测在服务重启后可通过 <code className="rounded bg-muted px-1 font-mono text-xs">GAM_MASTER_PASSWORD</code> 环境变量自动解锁。</span>
+                  <span className="font-medium">{t('settings.restartWarning')}</span>
+                  <span className="text-muted-foreground"> {t('settings.restartWarningDesc')}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-lg border border-success/30 bg-success/5 p-3">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <div className="text-sm">
-                  <span className="font-medium">数据库可安全备份。</span>
-                  <span className="text-muted-foreground"> 直接复制 <code className="rounded bg-muted px-1 font-mono text-xs">data/githubaltmanager.db</code> 即可。备份文件包含加密数据，即使泄露，没有主密码也无法解密。</span>
+                  <span className="font-medium">{t('settings.backupSafe')}</span>
+                  <span className="text-muted-foreground"> {t('settings.backupSafeDesc')}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <div className="text-sm">
-                  <span className="font-medium">Token 安全提示。</span>
-                  <span className="text-muted-foreground"> 导入的 GitHub Token 拥有你授予的全部权限。建议使用最小权限原则（仅需 <code className="rounded bg-muted px-1 font-mono text-xs">repo</code> + <code className="rounded bg-muted px-1 font-mono text-xs">workflow</code>），避免授予 <code className="rounded bg-muted px-1 font-mono text-xs">delete_repo</code> 等危险权限。</span>
+                  <span className="font-medium">{t('settings.tokenSecurity')}</span>
+                  <span className="text-muted-foreground"> {t('settings.tokenSecurityDesc')}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3 rounded-lg border p-3">
                 <Activity className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="text-sm">
-                  <span className="font-medium">API 速率限制。</span>
-                  <span className="text-muted-foreground"> GitHub API 每小时限 5000 次请求。批量操作大量账户时请注意间隔。系统会感知 <code className="rounded bg-muted px-1 font-mono text-xs">X-RateLimit-Remaining</code> 响应头。</span>
+                  <span className="font-medium">{t('settings.rateLimit')}</span>
+                  <span className="text-muted-foreground"> {t('settings.rateLimitDesc')}</span>
                 </div>
               </div>
             </CardContent>
@@ -379,22 +379,22 @@ export default function SettingsPage() {
 
           {/* 支持的功能 */}
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Layers className="h-4 w-4" /> 功能列表</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Layers className="h-4 w-4" /> {t('settings.featureList')}</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {[
-                  { icon: Users, label: '账户管理（加密导入/密码存储/封禁检测）' },
-                  { icon: FolderPlus, label: '批量建仓（跨账户克隆文件 + Secrets）' },
-                  { icon: GitBranch, label: '批量工作流（跨账户同名仓库触发）' },
-                  { icon: FolderGit2, label: '仓库浏览（文件树/在线编辑/Workflow扫描）' },
-                  { icon: Clock, label: '定时任务（cron 调度，后端持续运行）' },
-                  { icon: RefreshCw, label: '自动检测/同步（可配置间隔）' },
-                  { icon: Palette, label: '主题系统（10 套预设 + 字体/圆角/密度）' },
-                  { icon: Languages, label: '国际化（中文 + 英文）' },
+                  { icon: Users, labelKey: 'settings.featureAccounts' },
+                  { icon: FolderPlus, labelKey: 'settings.featureBatchRepo' },
+                  { icon: GitBranch, labelKey: 'settings.featureBatchWorkflow' },
+                  { icon: FolderGit2, labelKey: 'settings.featureRepos' },
+                  { icon: Clock, labelKey: 'settings.featureTasks' },
+                  { icon: RefreshCw, labelKey: 'settings.featureAuto' },
+                  { icon: Palette, labelKey: 'settings.featureTheme' },
+                  { icon: Languages, labelKey: 'settings.featureI18n' },
                 ].map((f, i) => (
                   <div key={i} className="flex items-center gap-2 rounded-md border bg-muted/20 p-2">
                     <f.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="text-xs">{f.label}</span>
+                    <span className="text-xs">{t(f.labelKey)}</span>
                   </div>
                 ))}
               </div>
@@ -406,7 +406,7 @@ export default function SettingsPage() {
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <FileText className="h-4 w-4" />
-                <span>开源协议</span>
+                <span>{t('settings.openSourceLicense')}</span>
               </div>
               <Badge variant="outline">MIT License</Badge>
             </CardContent>

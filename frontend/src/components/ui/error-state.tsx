@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,8 +14,12 @@ interface ErrorStateProps {
 }
 
 const ErrorState = ({
-  icon: Icon = AlertTriangle, title = '加载失败', description = '请检查网络连接后重试', retry, className,
+  icon: Icon = AlertTriangle, retry, className, ...rest
 }: ErrorStateProps) => {
+  const { t } = useTranslation()
+  const title = rest.title ?? t('ui.error.title')
+  const description = rest.description ?? t('ui.error.desc')
+
   return (
     <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
@@ -25,7 +30,7 @@ const ErrorState = ({
       {retry && (
         <Button variant="outline" size="sm" className="mt-4" onClick={retry}>
           <RefreshCw className="mr-2 h-4 w-4" />
-          重试
+          {t('common.retry')}
         </Button>
       )}
     </div>

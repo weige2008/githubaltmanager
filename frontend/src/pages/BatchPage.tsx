@@ -127,9 +127,9 @@ export default function BatchPage() {
     }),
     onSuccess: (data) => {
       setResults(data)
-      toast.success(`完成：${data.success?.length || 0} 成功，${data.failed?.length || 0} 失败`)
+      toast.success(t('batchWorkflow.partialMsg', { success: data.success?.length || 0, failed: data.failed?.length || 0 }))
     },
-    onError: (e: any) => toast.error(e?.message || '批量创建失败'),
+    onError: (e: any) => toast.error(e?.message || t('batchWorkflow.createFailed')),
   })
 
   const dispatchMut = useMutation({
@@ -139,9 +139,9 @@ export default function BatchPage() {
     }),
     onSuccess: (data) => {
       setResults(data)
-      toast.success(`完成：${data.success?.length || 0} 成功，${data.failed?.length || 0} 失败`)
+      toast.success(t('batchWorkflow.partialMsg', { success: data.success?.length || 0, failed: data.failed?.length || 0 }))
     },
-    onError: (e: any) => toast.error(e?.message || '批量触发失败'),
+    onError: (e: any) => toast.error(e?.message || t('batchWorkflow.dispatchFailed')),
   })
 
   const canExecute = selectedRepoIds.length > 0 && (mode === 'dispatch' ? !!dispatchFilename.trim() : !!wfFilename.trim())
@@ -152,16 +152,16 @@ export default function BatchPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="批量工作流操作" description="跨多个账户的同名仓库，批量创建或触发同一份 GitHub Actions 工作流" />
+      <PageHeader title={t('batchWorkflow.title')} description={t('batchWorkflow.description')} />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        {/* 左侧：账户选择 */}
+        {/* Left: account selection */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base">
-              <span className="flex items-center gap-2"><Users className="h-4 w-4" /> 选择账户</span>
+              <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
-                {selectedAccounts.length === (accounts?.length || 0) ? '取消全选' : '全选'}
+                {selectedAccounts.length === (accounts?.length || 0) ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
           </CardHeader>
@@ -186,18 +186,18 @@ export default function BatchPage() {
           </CardContent>
         </Card>
 
-        {/* 右侧：仓库匹配 + 操作 */}
+        {/* Right: repo match + operations */}
         <div className="space-y-6">
-          {/* 仓库筛选 */}
+          {/* Repo filter */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <GitBranch className="h-4 w-4" /> 仓库匹配
+                <GitBranch className="h-4 w-4" /> {t('batchWorkflow.repoMatch')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {selectedAccounts.length === 0 ? (
-                <EmptyState icon={Users} title="请先选择账户" description="在左侧选择需要操作的账户，然后筛选同名仓库" />
+                <EmptyState icon={Users} title={t('batchWorkflow.selectAccountFirst')} description={t('batchWorkflow.selectAccountHint')} />
               ) : reposLoading ? (
                 <LoadingState variant="skeleton" skeletonRows={3} />
               ) : (
@@ -208,18 +208,18 @@ export default function BatchPage() {
                       <Input
                         value={repoName}
                         onChange={(e) => { setRepoName(e.target.value); setSelectedRepoIds([]); setResults(null) }}
-                        placeholder="输入仓库名称（如 keep-alive）"
+                        placeholder={t('batchWorkflow.repoNamePlaceholder')}
                         className="pl-9"
                       />
                     </div>
                     <Button variant="outline" size="sm" onClick={selectAllMatched}>
-                      全选匹配
+                      {t('batchWorkflow.selectAllMatched')}
                     </Button>
                   </div>
 
                   {availableRepoNames.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-xs text-muted-foreground">跨账户同名仓库：</span>
+                      <span className="text-xs text-muted-foreground">{t('batchWorkflow.crossAccountRepos')}</span>
                       {availableRepoNames.map((name) => (
                         <button
                           key={name}
@@ -235,11 +235,11 @@ export default function BatchPage() {
                   )}
 
                   <p className="text-sm text-muted-foreground">
-                    共匹配 <span className="font-bold text-foreground">{matchedRepos.length}</span> 个仓库，
-                    已选 <span className="font-bold text-primary">{selectedRepoIds.length}</span> 个
+                    {t('batchWorkflow.matchedCount', { count: matchedRepos.length })}
+                    ，{t('batchWorkflow.selectedCount', { count: selectedRepoIds.length })}
                   </p>
 
-                  {/* 匹配结果表 */}
+                  {/* Matched results table */}
                   {matchedRepos.length > 0 && (
                     <div className="max-h-[300px] overflow-y-auto rounded-md border">
                       {matchedRepos.map((r) => {
@@ -259,7 +259,7 @@ export default function BatchPage() {
                             <span className="text-sm font-medium">{r.accountLogin}</span>
                             <span className="text-sm text-muted-foreground">/</span>
                             <span className="flex-1 truncate text-sm font-mono">{r.name}</span>
-                            {r.private && <Badge variant="warning" className="text-xs">私有</Badge>}
+                            {r.private && <Badge variant="warning" className="text-xs">{t('ui.private')}</Badge>}
                             {r.fork && <Badge variant="secondary" className="text-xs">Fork</Badge>}
                           </label>
                         )
@@ -271,24 +271,24 @@ export default function BatchPage() {
             </CardContent>
           </Card>
 
-          {/* 工作流操作 */}
+          {/* Workflow operations */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <FileCode className="h-4 w-4" /> 工作流操作
+                <FileCode className="h-4 w-4" /> {t('batchWorkflow.workflowOps')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs value={mode} onValueChange={(v) => setMode(v as 'create' | 'dispatch')}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="create"><FileCode className="mr-2 h-4 w-4" />创建/覆盖工作流</TabsTrigger>
-                  <TabsTrigger value="dispatch"><Play className="mr-2 h-4 w-4" />触发工作流</TabsTrigger>
+                  <TabsTrigger value="create"><FileCode className="mr-2 h-4 w-4" />{t('batchWorkflow.createWorkflow')}</TabsTrigger>
+                  <TabsTrigger value="dispatch"><Play className="mr-2 h-4 w-4" />{t('batchWorkflow.dispatchWorkflow')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="create" className="space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">工作流文件名</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.workflowFilename')}</label>
                       <Input value={wfFilename} onChange={(e) => setWfFilename(e.target.value)} placeholder="keepalive.yml" className="font-mono text-sm" />
                     </div>
                     <div className="space-y-1.5">
@@ -297,7 +297,7 @@ export default function BatchPage() {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">工作流内容（YAML）</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.workflowContent')}</label>
                     <Textarea
                       value={wfContent}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWfContent(e.target.value)}
@@ -309,22 +309,22 @@ export default function BatchPage() {
 
                 <TabsContent value="dispatch" className="space-y-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">要触发的工作流文件名</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.dispatchFilename')}</label>
                     <Input value={dispatchFilename} onChange={(e) => setDispatchFilename(e.target.value)} placeholder="keepalive.yml" className="font-mono text-sm" />
                   </div>
                   <Alert>
-                    <AlertDescription>
-                      将对选中的 {selectedRepoIds.length} 个仓库发送 <code className="rounded bg-muted px-1 font-mono">workflow_dispatch</code> 请求。
-                      确保工作流文件中包含 <code className="rounded bg-muted px-1 font-mono">on: workflow_dispatch</code> 触发器。
+                    <AlertDescription className="space-y-1">
+                      <p>{t('batchWorkflow.dispatchHint')}</p>
+                      <p>{t('batchWorkflow.dispatchHint2')}</p>
                     </AlertDescription>
                   </Alert>
                 </TabsContent>
               </Tabs>
 
-              {/* 执行结果 */}
+              {/* Execution results */}
               {results && (
                 <Alert className="mt-4">
-                  <AlertTitle>执行结果</AlertTitle>
+                  <AlertTitle>{t('ui.results')}</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto">
                       {results.success.map((s, i) => (
@@ -344,10 +344,10 @@ export default function BatchPage() {
                 </Alert>
               )}
 
-              {/* 执行按钮 */}
+              {/* Execute buttons */}
               <div className="mt-4 flex justify-end gap-2">
                 <Button variant="outline" onClick={() => { setResults(null); setSelectedRepoIds([]) }}>
-                  重置
+                  {t('ui.reset')}
                 </Button>
                 <Button
                   size="lg"
@@ -355,11 +355,11 @@ export default function BatchPage() {
                   onClick={() => mode === 'create' ? createMut.mutate() : dispatchMut.mutate()}
                 >
                   {isExecuting ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 执行中...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('batchWorkflow.executing')}</>
                   ) : mode === 'create' ? (
-                    <><FileCode className="mr-2 h-4 w-4" /> 为 {selectedRepoIds.length} 个仓库创建工作流</>
+                    <><FileCode className="mr-2 h-4 w-4" /> {t('batchWorkflow.createForN', { count: selectedRepoIds.length })}</>
                   ) : (
-                    <><Play className="mr-2 h-4 w-4" /> 触发 {selectedRepoIds.length} 个仓库的工作流</>
+                    <><Play className="mr-2 h-4 w-4" /> {t('batchWorkflow.dispatchForN', { count: selectedRepoIds.length })}</>
                   )}
                 </Button>
               </div>

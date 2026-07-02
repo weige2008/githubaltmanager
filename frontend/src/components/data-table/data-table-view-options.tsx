@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal } from 'lucide-react'
 import type { Table } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
@@ -9,16 +10,17 @@ interface DataTableViewOptionsProps<TData> {
 }
 
 function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
+  const { t } = useTranslation()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto hidden h-8 lg:flex">
           <SlidersHorizontal className="mr-2 h-4 w-4" />
-          视图
+          {t('ui.view')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[150px]">
-        <DropdownMenuLabel>切换列</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('ui.toggleColumns')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table
           .getAllColumns()

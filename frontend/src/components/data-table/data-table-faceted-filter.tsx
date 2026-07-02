@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, PlusCircle } from 'lucide-react'
 import type { Column } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
 function DataTableFacetedFilter<TData, TValue>({
   column, title, options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
+  const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
   const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as string[] | undefined)
@@ -49,7 +51,7 @@ function DataTableFacetedFilter<TData, TValue>({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
-            <CommandEmpty>无结果</CommandEmpty>
+            <CommandEmpty>{t('ui.noResults')}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value)
@@ -74,7 +76,7 @@ function DataTableFacetedFilter<TData, TValue>({
                 <Separator />
                 <CommandGroup>
                   <CommandItem onSelect={() => column?.setFilterValue(undefined)} className="justify-center text-center">
-                    清除筛选
+                    {t('ui.clearFilter')}
                   </CommandItem>
                 </CommandGroup>
               </>

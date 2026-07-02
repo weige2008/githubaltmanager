@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useThemeStore, PRESETS, RADIUS_OPTIONS, SCALE_OPTIONS, type ThemeMode, type ThemePreset, type ThemeFont, type ThemeRadius, type ThemeScale, type ContentLayout, type SidebarMode } from '@/store/theme'
 import { Button } from '@/components/ui/button'
@@ -41,12 +41,13 @@ function OptionCard({ active, onClick, children, className }: { active: boolean;
 }
 
 export function ThemeDrawer({ open, onClose }: Props) {
-  const t = useThemeStore()
+  const { t } = useTranslation()
+  const ts = useThemeStore()
 
-  const themeModes: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-    { value: 'system', label: '系统', icon: <Monitor className="size-4" /> },
-    { value: 'light', label: '浅色', icon: <Sun className="size-4" /> },
-    { value: 'dark', label: '深色', icon: <Moon className="size-4" /> },
+  const themeModes: { value: ThemeMode; labelKey: string; icon: React.ReactNode }[] = [
+    { value: 'system', labelKey: 'theme.modeSystem', icon: <Monitor className="size-4" /> },
+    { value: 'light', labelKey: 'theme.modeLight', icon: <Sun className="size-4" /> },
+    { value: 'dark', labelKey: 'theme.modeDark', icon: <Moon className="size-4" /> },
   ]
 
   const fonts: { value: ThemeFont; label: string }[] = [
@@ -55,10 +56,10 @@ export function ThemeDrawer({ open, onClose }: Props) {
     { value: 'serif', label: 'Serif' },
   ]
 
-  const sidebarModes: { value: SidebarMode; label: string }[] = [
-    { value: 'inset', label: '内嵌' },
-    { value: 'floating', label: '浮动' },
-    { value: 'sidebar', label: '侧边栏' },
+  const sidebarModes: { value: SidebarMode; labelKey: string }[] = [
+    { value: 'inset', labelKey: 'theme.sidebarInset' },
+    { value: 'floating', labelKey: 'theme.sidebarFloating' },
+    { value: 'sidebar', labelKey: 'theme.sidebarSidebar' },
   ]
 
   return (
@@ -79,8 +80,8 @@ export function ThemeDrawer({ open, onClose }: Props) {
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card/95 px-6 py-4 backdrop-blur">
               <div>
-                <h2 className="text-lg font-semibold">主题设置</h2>
-                <p className="text-xs text-muted-foreground">调整外观和布局以适应您的偏好。</p>
+                <h2 className="text-lg font-semibold">{t('theme.title')}</h2>
+                <p className="text-xs text-muted-foreground">{t('theme.subtitle')}</p>
               </div>
               <button onClick={onClose} className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
                 <X className="size-5" />
@@ -90,12 +91,12 @@ export function ThemeDrawer({ open, onClose }: Props) {
             <div className="space-y-8 px-6 py-6">
               {/* Theme Mode */}
               <div>
-                <SectionTitle title="主题" onReset={t.mode !== 'dark' ? () => t.setMode('dark') : undefined} />
+                <SectionTitle title={t('theme.mode')} onReset={ts.mode !== 'dark' ? () => ts.setMode('dark') : undefined} />
                 <div className="grid grid-cols-3 gap-3">
                   {themeModes.map((m) => (
-                    <OptionCard key={m.value} active={t.mode === m.value} onClick={() => t.setMode(m.value)}>
+                    <OptionCard key={m.value} active={ts.mode === m.value} onClick={() => ts.setMode(m.value)}>
                       <div className="flex h-16 items-center justify-center gap-2 text-sm font-medium">
-                        {m.icon} {m.label}
+                        {m.icon} {t(m.labelKey)}
                       </div>
                     </OptionCard>
                   ))}
@@ -104,10 +105,10 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Color Preset */}
               <div>
-                <SectionTitle title="颜色预设" onReset={t.preset !== 'default' ? () => t.setPreset('default') : undefined} />
+                <SectionTitle title={t('theme.preset')} onReset={ts.preset !== 'default' ? () => ts.setPreset('default') : undefined} />
                 <div className="grid grid-cols-4 gap-3">
                   {PRESETS.map((p) => (
-                    <OptionCard key={p.value} active={t.preset === p.value} onClick={() => t.setPreset(p.value)}>
+                    <OptionCard key={p.value} active={ts.preset === p.value} onClick={() => ts.setPreset(p.value)}>
                       <div className="h-12" style={{ background: `linear-gradient(135deg, ${p.swatches[0]}, ${p.swatches[1]})` }} />
                       <div className="truncate py-1 text-center text-[10px]">{p.label}</div>
                     </OptionCard>
@@ -117,10 +118,10 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Font */}
               <div>
-                <SectionTitle title="字体" onReset={t.font !== 'default' ? () => t.setFont('default') : undefined} />
+                <SectionTitle title={t('theme.font')} onReset={ts.font !== 'default' ? () => ts.setFont('default') : undefined} />
                 <div className="grid grid-cols-3 gap-3">
                   {fonts.map((f) => (
-                    <OptionCard key={f.value} active={t.font === f.value} onClick={() => t.setFont(f.value)}>
+                    <OptionCard key={f.value} active={ts.font === f.value} onClick={() => ts.setFont(f.value)}>
                       <div className="flex h-12 items-center justify-center text-lg font-medium" style={f.value === 'serif' ? { fontFamily: 'Georgia, serif' } : undefined}>
                         Aa
                       </div>
@@ -132,10 +133,10 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Radius */}
               <div>
-                <SectionTitle title="圆角" onReset={t.radius !== 'default' ? () => t.setRadius('default') : undefined} />
+                <SectionTitle title={t('theme.radius')} onReset={ts.radius !== 'default' ? () => ts.setRadius('default') : undefined} />
                 <div className="grid grid-cols-6 gap-2">
                   {RADIUS_OPTIONS.map((r) => (
-                    <OptionCard key={r.value} active={t.radius === r.value} onClick={() => t.setRadius(r.value)}>
+                    <OptionCard key={r.value} active={ts.radius === r.value} onClick={() => ts.setRadius(r.value)}>
                       <div className="flex h-12 items-center justify-center text-xs">{r.label}</div>
                     </OptionCard>
                   ))}
@@ -144,10 +145,10 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Scale */}
               <div>
-                <SectionTitle title="密度" onReset={t.scale !== 'default' ? () => t.setScale('default') : undefined} />
+                <SectionTitle title={t('theme.scale')} onReset={ts.scale !== 'default' ? () => ts.setScale('default') : undefined} />
                 <div className="grid grid-cols-4 gap-3">
                   {SCALE_OPTIONS.map((s) => (
-                    <OptionCard key={s.value} active={t.scale === s.value} onClick={() => t.setScale(s.value)}>
+                    <OptionCard key={s.value} active={ts.scale === s.value} onClick={() => ts.setScale(s.value)}>
                       <div className="flex h-12 items-center justify-center text-xs">{s.label}</div>
                     </OptionCard>
                   ))}
@@ -156,11 +157,11 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Sidebar Mode */}
               <div>
-                <SectionTitle title="侧边栏" onReset={t.sidebarMode !== 'inset' ? () => t.setSidebarMode('inset') : undefined} />
+                <SectionTitle title={t('theme.sidebarMode')} onReset={ts.sidebarMode !== 'inset' ? () => ts.setSidebarMode('inset') : undefined} />
                 <div className="grid grid-cols-3 gap-3">
                   {sidebarModes.map((s) => (
-                    <OptionCard key={s.value} active={t.sidebarMode === s.value} onClick={() => t.setSidebarMode(s.value)}>
-                      <div className="flex h-14 items-center justify-center text-xs">{s.label}</div>
+                    <OptionCard key={s.value} active={ts.sidebarMode === s.value} onClick={() => ts.setSidebarMode(s.value)}>
+                      <div className="flex h-14 items-center justify-center text-xs">{t(s.labelKey)}</div>
                     </OptionCard>
                   ))}
                 </div>
@@ -168,13 +169,13 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
               {/* Content Layout */}
               <div>
-                <SectionTitle title="内容宽度" onReset={t.contentLayout !== 'full' ? () => t.setContentLayout('full') : undefined} />
+                <SectionTitle title={t('theme.contentLayout')} onReset={ts.contentLayout !== 'full' ? () => ts.setContentLayout('full') : undefined} />
                 <div className="grid grid-cols-2 gap-3">
-                  <OptionCard active={t.contentLayout === 'full'} onClick={() => t.setContentLayout('full')}>
-                    <div className="flex h-12 items-center justify-center text-xs">全宽</div>
+                  <OptionCard active={ts.contentLayout === 'full'} onClick={() => ts.setContentLayout('full')}>
+                    <div className="flex h-12 items-center justify-center text-xs">{t('theme.layoutFull')}</div>
                   </OptionCard>
-                  <OptionCard active={t.contentLayout === 'centered'} onClick={() => t.setContentLayout('centered')}>
-                    <div className="flex h-12 items-center justify-center text-xs">居中</div>
+                  <OptionCard active={ts.contentLayout === 'centered'} onClick={() => ts.setContentLayout('centered')}>
+                    <div className="flex h-12 items-center justify-center text-xs">{t('theme.layoutCentered')}</div>
                   </OptionCard>
                 </div>
               </div>
@@ -182,8 +183,8 @@ export function ThemeDrawer({ open, onClose }: Props) {
 
             {/* Footer */}
             <div className="sticky bottom-0 border-t bg-card/95 px-6 py-4 backdrop-blur">
-              <Button variant="destructive" className="w-full gap-2" onClick={() => t.reset()}>
-                <RotateCcw className="size-4" /> 重置所有设置
+              <Button variant="destructive" className="w-full gap-2" onClick={() => ts.reset()}>
+                <RotateCcw className="size-4" /> {t('theme.resetAll')}
               </Button>
             </div>
           </motion.div>

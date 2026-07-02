@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
@@ -18,9 +19,14 @@ interface ConfirmDialogProps {
 }
 
 const ConfirmDialog = ({
-  open, onConfirm, onCancel, title = '确认操作', description = '此操作不可撤销，确定要继续吗？',
-  confirmText = '确认', cancelText = '取消', variant = 'destructive', children,
+  open, onConfirm, onCancel, variant = 'destructive', children, ...rest
 }: ConfirmDialogProps) => {
+  const { t } = useTranslation()
+  const title = rest.title ?? t('ui.confirm.title')
+  const description = rest.description ?? t('ui.confirm.desc')
+  const confirmText = rest.confirmText ?? t('common.confirm')
+  const cancelText = rest.cancelText ?? t('common.cancel')
+
   const handleOpenChange = (v: boolean) => {
     if (!v) onCancel?.()
   }

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -42,9 +43,11 @@ interface DataTableProps<TData, TValue> {
 function DataTable<TData, TValue>({
   columns, data, isLoading, isError, error, onRetry,
   enableSelection, rowSelection, onRowSelectionChange, onRowClick,
-  emptyTitle = '暂无数据', emptyDescription, emptyAction,
-  toolbar, pagination, className,
+  emptyDescription, emptyAction,
+  toolbar, pagination, className, ...rest
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation()
+  const emptyTitle = rest.emptyTitle ?? t('common.noData')
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

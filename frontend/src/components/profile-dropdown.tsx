@@ -42,7 +42,7 @@ const ProfileDropdown = ({ className }: ProfileDropdownProps) => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">Admin</p>
-            <p className="text-xs leading-none text-muted-foreground">管理员</p>
+            <p className="text-xs leading-none text-muted-foreground">{t('ui.admin')}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

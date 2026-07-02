@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -13,8 +14,12 @@ interface LoadingStateProps {
 }
 
 const LoadingState = ({
-  title = '加载中...', description, className, variant = 'spinner', skeletonRows = 3, skeletonClassName,
+  className, variant = 'spinner', skeletonRows = 3, skeletonClassName, ...rest
 }: LoadingStateProps) => {
+  const { t } = useTranslation()
+  const title = rest.title ?? t('common.loading')
+  const description = rest.description
+
   if (variant === 'skeleton') {
     return (
       <div className={cn('space-y-3', className)}>

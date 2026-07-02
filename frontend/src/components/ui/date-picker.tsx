@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarIcon } from 'lucide-react'
 import { type DayPickerProps } from 'react-day-picker'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -16,7 +17,9 @@ interface DatePickerProps extends Omit<DayPickerProps, 'mode'> {
   disabled?: boolean
 }
 
-const DatePicker = ({ value, onChange, placeholder = '选择日期', className, disabled, ...props }: DatePickerProps) => {
+const DatePicker = ({ value, onChange, className, disabled, ...props }: DatePickerProps) => {
+  const { t } = useTranslation()
+  const placeholder = props.placeholder ?? t('ui.selectDate')
   const [open, setOpen] = React.useState(false)
   return (
     <Popover open={open} onOpenChange={setOpen}>

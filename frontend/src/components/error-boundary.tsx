@@ -1,6 +1,6 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ErrorState } from '@/components/ui/error-state'
-import { Button } from '@/components/ui/button'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -11,6 +11,19 @@ interface ErrorBoundaryProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   resetKey?: string
+}
+
+const ErrorBoundaryFallback = ({ message }: { message?: string }) => {
+  const { t } = useTranslation()
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <ErrorState
+        title={t('ui.pageError')}
+        description={message || t('ui.unknownError')}
+        retry={() => window.location.reload()}
+      />
+    </div>
+  )
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -36,16 +49,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
-
-      return (
-        <div className="flex min-h-[400px] items-center justify-center">
-          <ErrorState
-            title="页面出错了"
-            description={this.state.error?.message || '发生未知错误'}
-            retry={() => window.location.reload()}
-          />
-        </div>
-      )
+      return <ErrorBoundaryFallback message={this.state.error?.message} />
     }
 
     return this.props.children

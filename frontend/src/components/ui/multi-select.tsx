@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +21,9 @@ interface MultiSelectProps {
   disabled?: boolean
 }
 
-const MultiSelect = ({ options, value, onChange, placeholder = '选择...', className, disabled }: MultiSelectProps) => {
+const MultiSelect = ({ options, value, onChange, className, disabled, ...rest }: MultiSelectProps) => {
+  const { t } = useTranslation()
+  const placeholder = rest.placeholder ?? t('ui.selectPlaceholder')
   const [open, setOpen] = React.useState(false)
 
   const handleToggle = (val: string) => {
@@ -49,7 +52,7 @@ const MultiSelect = ({ options, value, onChange, placeholder = '选择...', clas
             ) : selectedLabels.length <= 2 ? (
               selectedLabels.map((s) => <Badge key={s.value} variant="secondary" className="mr-1">{s.label}</Badge>)
             ) : (
-              <Badge variant="secondary">{selectedLabels.length} 项已选</Badge>
+              <Badge variant="secondary">{t('ui.itemsSelected', { count: selectedLabels.length })}</Badge>
             )}
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
@@ -57,9 +60,9 @@ const MultiSelect = ({ options, value, onChange, placeholder = '选择...', clas
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="搜索..." />
+          <CommandInput placeholder={t('ui.search')} />
           <CommandList>
-            <CommandEmpty>无结果</CommandEmpty>
+            <CommandEmpty>{t('ui.noResults')}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem key={option.value} onSelect={() => handleToggle(option.value)}>

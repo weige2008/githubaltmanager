@@ -32,14 +32,14 @@ const CommandMenu = ({ open, onOpenChange }: CommandMenuProps) => {
         <CommandList>
           <CommandEmpty>{t('common.noData')}</CommandEmpty>
 
-          <CommandGroup heading="主页">
+          <CommandGroup heading={t('landing.nav.home')}>
             <CommandItem onSelect={() => runCommand(() => navigate('/'))}>
               <Home className="mr-2 h-4 w-4" />
-              <span>主页</span>
+              <span>{t('landing.nav.home')}</span>
             </CommandItem>
           </CommandGroup>
 
-          <CommandGroup heading="控制台">
+          <CommandGroup heading={t('landing.nav.console')}>
             <CommandItem onSelect={() => runCommand(() => navigate('/dashboard'))}>
               <div className="flex size-4 items-center justify-center">
                 <ArrowRight className="size-2 text-muted-foreground/80" />
@@ -60,7 +60,7 @@ const CommandMenu = ({ open, onOpenChange }: CommandMenuProps) => {
             </CommandItem>
           </CommandGroup>
 
-          <CommandGroup heading="自动化">
+          <CommandGroup heading={t('landing.nav.automation')}>
             <CommandItem onSelect={() => runCommand(() => navigate('/tasks'))}>
               <div className="flex size-4 items-center justify-center">
                 <ArrowRight className="size-2 text-muted-foreground/80" />
@@ -81,7 +81,7 @@ const CommandMenu = ({ open, onOpenChange }: CommandMenuProps) => {
             </CommandItem>
           </CommandGroup>
 
-          <CommandGroup heading="系统">
+          <CommandGroup heading={t('nav.system')}>
             <CommandItem onSelect={() => runCommand(() => navigate('/settings'))}>
               <div className="flex size-4 items-center justify-center">
                 <ArrowRight className="size-2 text-muted-foreground/80" />
