@@ -26,7 +26,7 @@ function CommandDialog({ children, className, ...props }: CommandDialogProps) {
         <DialogDescription>Search for a command to run...</DialogDescription>
       </DialogHeader>
       <DialogContent
-        className={cn('top-1/3 !max-w-none translate-y-0 overflow-hidden p-0 sm:max-w-none', className)}
+        className={cn('top-1/3 translate-y-0 overflow-hidden p-0', className)}
         showCloseButton={false}
       >
         {children}
