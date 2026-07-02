@@ -6,14 +6,13 @@ import { PageHeader } from '@/components/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Github, FileCode, Plus, Trash2, Download, FolderGit2, CircleCheck, CircleX, Loader2 } from 'lucide-react'
+import { Github, FileCode, Plus, Trash2, Download, FolderGit2, CircleCheck, CircleX, Loader2, Lock, Globe } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ManualFile {
@@ -150,9 +149,30 @@ export default function BatchRepoPage() {
                 <label className="text-sm font-medium">描述（可选）</label>
                 <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Repository description" />
               </div>
-              <div className="flex items-center gap-3 sm:col-span-2">
-                <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
-                <label className="text-sm font-medium">私有仓库</label>
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-sm font-medium">仓库可见性</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(true)}
+                    className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                      isPrivate ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent'
+                    }`}
+                  >
+                    <Lock className="h-4 w-4" />
+                    私有仓库
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(false)}
+                    className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                      !isPrivate ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent'
+                    }`}
+                  >
+                    <Globe className="h-4 w-4" />
+                    公开仓库
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>
