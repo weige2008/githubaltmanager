@@ -12,7 +12,6 @@ import (
 	"githubaltmanager/internal/model"
 	"githubaltmanager/internal/service"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type AuthHandler struct {
@@ -24,13 +23,13 @@ func NewAuthHandler(c *service.Container) *AuthHandler { return &AuthHandler{c: 
 // Status GET /api/auth/status
 func (h *AuthHandler) Status(c *gin.Context) {
 	var cfg model.AppConfig
-	err := h.c.DB.Session(&gorm.Session{Logger: logger.Noop}).First(&cfg, 1).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		resp.OK(c, gin.H{"isInitialized": false})
+	result := h.c.DB.Where("id = 1").Limit(1).Find(&cfg)
+	if result.Error != nil {
+		resp.Internal(c, "查询配置失败", result.Error)
 		return
 	}
-	if err != nil {
-		resp.Internal(c, "查询配置失败", err)
+	if result.RowsAffected == 0 {
+		resp.OK(c, gin.H{"isInitialized": false})
 		return
 	}
 	resp.OK(c, gin.H{"isInitialized": cfg.IsInitialized})
@@ -49,12 +48,12 @@ func (h *AuthHandler) Setup(c *gin.Context) {
 	}
 
 	var cfg model.AppConfig
-	err := h.c.DB.Session(&gorm.Session{Logger: logger.Noop}).First(&cfg, 1).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		resp.Internal(c, "读取配置失败", err)
+	result := h.c.DB.Where("id = 1").Limit(1).Find(&cfg)
+	if result.Error != nil {
+		resp.Internal(c, "读取配置失败", result.Error)
 		return
 	}
-	if err == nil && cfg.IsInitialized {
+	if result.RowsAffected > 0 && cfg.IsInitialized {
 		resp.BadRequest(c, "系统已初始化，请直接登录")
 		return
 	}

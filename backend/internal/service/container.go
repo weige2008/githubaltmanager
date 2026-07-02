@@ -11,7 +11,6 @@ import (
 	"githubaltmanager/internal/model"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // Container 是依赖注入容器，持有 db / cfg，供 handler 调用
@@ -55,8 +54,8 @@ func (c *Container) RunDueTasks() {
 
 func (c *Container) GetAutoConfig() (checkEnabled bool, checkInterval int, syncEnabled bool, syncInterval int) {
 	var cfg model.AppConfig
-	result := c.DB.Session(&gorm.Session{Logger: logger.Noop}).Where("id = 1").First(&cfg)
-	if result.Error != nil {
+	result := c.DB.Where("id = 1").Limit(1).Find(&cfg)
+	if result.Error != nil || result.RowsAffected == 0 {
 		return false, 30, true, 30
 	}
 	return cfg.AutoCheckEnabled, cfg.AutoCheckInterval, cfg.AutoSyncEnabled, cfg.AutoSyncInterval
