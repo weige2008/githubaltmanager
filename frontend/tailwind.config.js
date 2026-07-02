@@ -86,6 +86,17 @@ export default {
         serif: ['"Lora"', '"Source Serif Pro"', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', '"Cascadia Code"', 'monospace'],
       },
+      fontSize: {
+        'xs': ['var(--text-xs, 0.75rem)', { lineHeight: '1rem' }],
+        'sm': ['var(--text-sm, 0.875rem)', { lineHeight: '1.25rem' }],
+        'base': ['var(--text-base, 1rem)', { lineHeight: '1.5rem' }],
+        'lg': ['var(--text-lg, 1.125rem)', { lineHeight: '1.75rem' }],
+        'xl': ['var(--text-xl, 1.25rem)', { lineHeight: '1.75rem' }],
+        '2xl': ['var(--text-2xl, 1.5rem)', { lineHeight: '2rem' }],
+        '3xl': ['var(--text-3xl, 1.875rem)', { lineHeight: '2.25rem' }],
+        '4xl': ['var(--text-4xl, 2.25rem)', { lineHeight: '2.5rem' }],
+        '5xl': ['var(--text-5xl, 3rem)', { lineHeight: '1' }],
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'fade-in-up': 'fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1)',
