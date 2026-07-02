@@ -297,7 +297,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border bg-muted/30 p-3">
                   <div className="text-xs text-muted-foreground">版本</div>
-                  <div className="mt-0.5 font-mono text-sm font-bold">v2.2.3</div>
+                  <div className="mt-0.5 font-mono text-sm font-bold">v{__APP_VERSION__}</div>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
                   <div className="text-xs text-muted-foreground">部署时间</div>

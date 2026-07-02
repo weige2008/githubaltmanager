@@ -1,0 +1,79 @@
+name: Release Build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm install --no-fund --no-audit
+          npm run build
+
+      - name: Embed frontend
+        run: |
+          rm -rf backend/internal/web/dist
+          mkdir -p backend/internal/web/dist
+          cp -r frontend/dist/. backend/internal/web/dist/
+
+      - name: Build binaries
+        working-directory: backend
+        run: |
+          go mod tidy
+          LDFLAGS="-s -w"
+          mkdir -p /tmp/release
+          for target in linux/amd64 linux/arm64 windows/amd64 darwin/amd64 darwin/arm64; do
+            GOOS="${target%%/*}"
+            GOARCH="${target##*/}"
+            suffix=""
+            [ "$GOOS" = "windows" ] && suffix=".exe"
+            out="/tmp/release/githubaltmanager-$GOOS-$GOARCH$suffix"
+            echo "Building $GOOS/$GOARCH..."
+            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="$LDFLAGS" -trimpath -o "$out" ./cmd/server
+            echo "  $(du -h "$out" | cut -f1) $(basename "$out")"
+          done
+
+      - name: Generate checksums
+        run: |
+          cd /tmp/release
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            /tmp/release/githubaltmanager-linux-amd64
+            /tmp/release/githubaltmanager-linux-arm64
+            /tmp/release/githubaltmanager-windows-amd64.exe
+            /tmp/release/githubaltmanager-darwin-amd64
+            /tmp/release/githubaltmanager-darwin-arm64
+            /tmp/release/SHA256SUMS.txt
+
+      - name: Upload artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: /tmp/release/
