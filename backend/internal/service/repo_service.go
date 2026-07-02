@@ -577,13 +577,13 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 		if sec.Name == "" {
 			continue
 		}
-		_, sErr := ghc.CreateSecret(acc.GithubLogin, repoName, sec.Name, sec.Value)
+		sc, sErr := ghc.CreateSecret(acc.GithubLogin, repoName, sec.Name, sec.Value)
 		if sErr != nil {
-			failedSecrets = append(failedSecrets, sec.Name)
+			failedSecrets = append(failedSecrets, fmt.Sprintf("%s (HTTP %d: %s)", sec.Name, sc, sErr.Error()))
 		}
 	}
 	if len(failedSecrets) > 0 {
-		return repo, fmt.Errorf("仓库已创建，但 %d 个 secret 设置失败: %s", len(failedSecrets), strings.Join(failedSecrets, ", "))
+		return repo, fmt.Errorf("仓库已创建，但 %d 个 secret 设置失败: %s", len(failedSecrets), strings.Join(failedSecrets, "; "))
 	}
 	model := &model.Repository{
 		AccountID:     accountID,
