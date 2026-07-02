@@ -329,9 +329,9 @@
     "aboutProject": "项目",
     "aboutTechStack": "技术栈",
     "aboutEncryption": "加密",
-    "aboutProjectValue": "GitHub 账户管理器 v2.0",
-    "aboutTechStackValue": "React + Tailwind + shadcn/ui / Go + Gin + GORM",
-    "aboutEncryptionValue": "AES-256-GCM + Argon2id"
+    "aboutProjectValue": "GitHub Alt Manager v2.2",
+    "aboutTechStackValue": "React 19 + Tailwind v3 + Radix UI / Go + Gin + GORM",
+    "aboutEncryptionValue": "AES-256-GCM + Argon2id + NaCl"
   },
   "theme": {
     "title": "外观设置",
