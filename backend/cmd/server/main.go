@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"log"
 	"net/http"
@@ -16,7 +17,35 @@ import (
 	"githubaltmanager/internal/store"
 )
 
+// loadDotEnv reads .env file in the current directory and sets env vars
+func loadDotEnv() {
+	f, err := os.Open(".env")
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+		for i := 0; i < len(line); i++ {
+			if line[i] == '=' {
+				key := line[:i]
+				val := line[i+1:]
+				if os.Getenv(key) == "" {
+					os.Setenv(key, val)
+				}
+				break
+			}
+		}
+	}
+}
+
 func main() {
+	loadDotEnv()
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("load config: %v", err)
