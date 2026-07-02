@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
+import { useThemeStore } from '@/store/theme'
 import { Button } from '@/components/ui/button'
 import {
   Lock, Shield, Zap, Clock, Folder, Layers, Terminal, Activity, MemoryStick,
   Cpu, CheckCircle, ArrowRight, BookOpen, Github, KeyRound, FolderGit2, Settings,
-  TrendingUp, Eye, Workflow, Server,
+  TrendingUp, Eye, Workflow, Server, Sun, Moon,
 } from 'lucide-react'
 
 // ===== Scroll-triggered fade up animation =====
@@ -122,17 +123,23 @@ function HeroTerminalDemo() {
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { token, theme, toggleTheme } = useAppStore()
+  const { token } = useAppStore()
+  const { mode, setMode } = useThemeStore()
   const [initialized, setInitialized] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const { scrollY } = useScroll()
 
-  useMotionValueEvent(scrollY, 'change', (latest) => { setScrolled(latest > 60) })
+  useMotionValueEvent(scrollY, 'change', (latest) => { if ((latest > 60) !== scrolled) setScrolled(latest > 60) })
 
   useEffect(() => { authApi.status().then((d) => setInitialized(d.isInitialized)).catch(() => {}) }, [])
-  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark') }, [theme])
 
   const goEnter = () => navigate(token ? '/dashboard' : '/login')
+  const cycleTheme = () => {
+    if (mode === 'light') setMode('dark')
+    else if (mode === 'dark') setMode('system')
+    else setMode('light')
+  }
+  const isDark = mode === 'dark' || (mode === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   const stats = [
     { end: 50, suffix: '+', label: 'GitHub API 接口覆盖' },
@@ -251,8 +258,8 @@ export default function LandingPage() {
 
           {/* Right actions */}
           <div className="flex items-center gap-1.5">
-            <button onClick={toggleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
-              {theme === 'dark' ? <span className="text-sm">☀️</span> : <span className="text-sm">🌙</span>}
+            <button onClick={cycleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
               <Github className="size-4" />
@@ -482,38 +489,41 @@ export default function LandingPage() {
             <div>
               <h4 className="mb-3 text-sm font-semibold">项目</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="https://github.com/weige2008/githubaltmanager" className="hover:text-foreground">GitHub</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager/releases" className="hover:text-foreground">Releases</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" className="hover:text-foreground">README</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager/releases" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Releases</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager/issues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">问题反馈</a></li>
               </ul>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">文档</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md#-快速部署" className="hover:text-foreground">快速部署</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md#-使用指南" className="hover:text-foreground">使用指南</a></li>
-                <li><a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md#-配置项" className="hover:text-foreground">配置项</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#快速开始" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">快速开始</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#docker" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docker 部署</a></li>
+                <li><a href="https://github.com/weige2008/githubaltmanager#配置项" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">配置项</a></li>
               </ul>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">技术栈</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>React 19 + Tailwind</li>
-                <li>Go + Gin + GORM</li>
-                <li>AES-256-GCM + Argon2id</li>
+                <li>React 19 + Tailwind + Radix UI</li>
+                <li>Go + Gin + GORM + SQLite</li>
+                <li>AES-256-GCM + Argon2id + NaCl</li>
               </ul>
             </div>
             <div>
               <h4 className="mb-3 text-sm font-semibold">关于</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>MIT License</li>
-                <li>v2.0.0</li>
+                <li className="flex items-center gap-2">MIT License</li>
+                <li className="flex items-center gap-1.5 font-mono text-xs">
+                  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+                  v{__APP_VERSION__}
+                </li>
               </ul>
             </div>
           </div>
           <div className="mt-8 flex items-center justify-between border-t border-border/40 pt-6">
-            <span className="text-xs text-muted-foreground">© 2026 weige2008. All Rights Reserved.</span>
-            <a href="https://github.com/weige2008/githubaltmanager" className="text-muted-foreground hover:text-foreground">
+            <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} GitHub Alt Manager · MIT License</span>
+            <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-foreground">
               <Github className="size-5" />
             </a>
           </div>
