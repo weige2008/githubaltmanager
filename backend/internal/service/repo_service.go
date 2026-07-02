@@ -296,6 +296,9 @@ func (s *RepoService) CreateWorkflow(c *Container, repoID uint, filename, conten
 	if !strings.HasSuffix(filename, ".yml") && !strings.HasSuffix(filename, ".yaml") {
 		return "", errors.New("文件名必须以 .yml 或 .yaml 结尾")
 	}
+	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") || strings.Contains(filename, "..") {
+		return "", errors.New("文件名不能包含路径分隔符或 .. ")
+	}
 	path := ".github/workflows/" + filename
 	_, err := s.UpdateFile(c, repoID, path, content, commitMessage, branch)
 	if err != nil {

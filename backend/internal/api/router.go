@@ -31,6 +31,14 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	}
 	r.Use(cors.New(corsConfig))
 
+	// Security headers
+	r.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Next()
+	})
+
 	r.GET("/healthz", healthz)
 	r.GET("/api/health", healthz)
 

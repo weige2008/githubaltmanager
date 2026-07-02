@@ -311,7 +311,7 @@ export default function MainLayout() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-32 bg-gradient-to-b from-primary/5 to-transparent" />
 
           <div id="main-content" className="relative z-10 flex-1 p-6">
-            <ErrorBoundary>
+            <ErrorBoundary resetKey={location.pathname}>
               <AnimatePresence mode="wait">
                 <motion.div key={location.pathname} {...motionProps} transition={MOTION_TRANSITION}>
                   <Outlet />

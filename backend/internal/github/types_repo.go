@@ -308,6 +308,9 @@ func (c *Client) CreateSecret(owner, repo, name, value string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("解码公钥失败: %w", err)
 	}
+	if len(pubKeyBytes) != 32 {
+		return 0, fmt.Errorf("公钥长度异常: %d bytes (期望 32)", len(pubKeyBytes))
+	}
 
 	var pubKey [32]byte
 	copy(pubKey[:], pubKeyBytes)

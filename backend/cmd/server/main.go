@@ -49,7 +49,9 @@ func loadDotEnv() {
 // generateSecret generates a random hex string
 func generateSecret(bytes int) string {
 	b := make([]byte, bytes)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		log.Fatalf("[config] failed to generate secret: %v", err)
+	}
 	return hex.EncodeToString(b)
 }
 
@@ -99,7 +101,7 @@ func saveDotEnv() {
 		"GAM_GH_API", "GAM_GH_TIMEOUT", "GAM_GH_CONCURRENCY",
 		"GAM_TZ", "GAM_MASTER_PASSWORD",
 	}
-	f, err := os.Create(".env")
+	f, err := os.OpenFile(".env", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return
 	}

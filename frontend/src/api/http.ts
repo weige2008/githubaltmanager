@@ -15,7 +15,7 @@ http.interceptors.response.use(
     const data = error.response?.data
     if (status === 401) {
       const url = error.config?.url || ''
-      if (!url.includes('/auth/login') && !url.includes('/auth/setup')) {
+      if (!url.includes('/auth/login') && !url.includes('/auth/setup') && !url.includes('/auth/status')) {
         localStorage.removeItem('gam_token')
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login'

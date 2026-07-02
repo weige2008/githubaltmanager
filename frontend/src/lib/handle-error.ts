@@ -13,7 +13,7 @@ export function handleServerError(error: unknown, fallbackMessage = '操作失�
 
   if (err?.response?.status === 401) {
     toast.error('登录已过期，请重新登录')
-    localStorage.removeItem('token')
+    localStorage.removeItem('gam_token')
     window.location.href = '/login'
     return
   }

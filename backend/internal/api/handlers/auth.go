@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -48,6 +49,10 @@ func (h *AuthHandler) Setup(c *gin.Context) {
 
 	var cfg model.AppConfig
 	err := h.c.DB.First(&cfg, 1).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		resp.Internal(c, "读取配置失败", err)
+		return
+	}
 	if err == nil && cfg.IsInitialized {
 		resp.BadRequest(c, "系统已初始化，请直接登录")
 		return
@@ -202,35 +207,50 @@ func reencryptAccounts(db *gorm.DB, oldKey, newKey []byte) error {
 	if err := db.Find(&accs).Error; err != nil {
 		return err
 	}
+	var failedLogins []string
 	for i := range accs {
 		a := &accs[i]
 		updates := map[string]any{}
+		expectedFields := 0
+		actualFields := 0
 		if a.TokenEnc != "" {
+			expectedFields++
 			if pt, err := crypto.Decrypt(oldKey, a.TokenEnc); err == nil {
 				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
 					updates["token_enc"] = nc
+					actualFields++
 				}
 			}
 		}
 		if a.PasswordEnc != "" {
+			expectedFields++
 			if pt, err := crypto.Decrypt(oldKey, a.PasswordEnc); err == nil {
 				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
 					updates["password_enc"] = nc
+					actualFields++
 				}
 			}
 		}
 		if a.RecoveryEmail != "" {
+			expectedFields++
 			if pt, err := crypto.Decrypt(oldKey, a.RecoveryEmail); err == nil {
 				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
 					updates["recovery_email"] = nc
+					actualFields++
 				}
 			}
+		}
+		if expectedFields > 0 && actualFields < expectedFields {
+			failedLogins = append(failedLogins, a.GithubLogin)
 		}
 		if len(updates) > 0 {
 			if err := db.Model(a).Updates(updates).Error; err != nil {
 				return err
 			}
 		}
+	}
+	if len(failedLogins) > 0 {
+		return fmt.Errorf("以下账户重新加密失败，请检查数据完整性: %s", strings.Join(failedLogins, ", "))
 	}
 	return nil
 }

@@ -6,6 +6,8 @@ import (
 	"githubaltmanager/internal/service"
 )
 
+const MAX_BATCH_SIZE = 100
+
 type BatchHandler struct {
 	c *service.Container
 	s *service.RepoService
@@ -40,6 +42,10 @@ func (h *BatchHandler) CreateWorkflows(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+		return
+	}
 	msg := p.CommitMessage
 	if msg == "" {
 		msg = "Batch create workflow " + p.Filename
@@ -68,6 +74,10 @@ func (h *BatchHandler) Dispatch(c *gin.Context) {
 	var p BatchDispatchPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
 		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
 		return
 	}
 	success := []gin.H{}
@@ -117,6 +127,10 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 	var p BatchCreateReposPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
 		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.AccountIDs) == 0 || len(p.AccountIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "account_ids 数量必须在 1-100 之间", nil)
 		return
 	}
 	success := []gin.H{}

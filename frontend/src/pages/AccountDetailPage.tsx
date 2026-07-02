@@ -44,9 +44,9 @@ export default function AccountDetailPage() {
     catch { toast.error(t('accounts.syncFailed'), { id: 'sync' }) }
   }
 
-  if (isLoading || !acc) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
-
   if (isError) return <ErrorState retry={refetch} />
+
+  if (isLoading || !acc) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
 
   const accountName = acc.note?.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login
 
@@ -89,7 +89,7 @@ export default function AccountDetailPage() {
                     <button onClick={revealSecrets} className="text-primary">{secretsVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
                     {secretsVisible && secrets?.token && <CopyButton value={secrets.token} variant="ghost" size="icon" className="h-3.5 w-3.5 p-0 text-primary" onCopy={() => toast.success(t('accounts.tokenCopied'))} />}
                   </span>
-                  <code className="text-xs">{secretsVisible && secrets ? secrets.token.slice(0, 20) + '...' : '••••••••'}</code>
+                  <code className="text-xs">{secretsVisible && secrets ? '••••' + secrets.token.slice(-4) : '••••••••'}</code>
                 </div>
                 <div>
                   <span className="flex items-center text-muted-foreground">{t('accounts.password')}
