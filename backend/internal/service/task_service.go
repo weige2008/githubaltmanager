@@ -55,7 +55,7 @@ func (s *TaskService) Update(id uint, updates map[string]any) (*model.ScheduledT
 	if err := s.DB.First(&t, id).Error; err != nil {
 		return nil, err
 	}
-	if v, ok := updates["cron_expr"]; ok || updates["enabled"] != nil {
+	if _, ok := updates["cron_expr"]; ok || updates["enabled"] != nil {
 		if err := s.UpdateNextRun(&t); err != nil {
 			return nil, err
 		}
@@ -164,8 +164,7 @@ func (s *TaskService) RunNow(c *Container, id uint) error {
 // nextRunTime 计算 cron 表达式的下次触发时间
 // 使用 robfig/cron 解析（5 段表达式：分 时 日 月 周）
 func nextRunTime(expr string) (time.Time, error) {
-	parser := newCronParser()
-	sched, err := parser.Parse(expr)
+	sched, err := cronParser.Parse(expr)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid cron '%s': %w", expr, err)
 	}
