@@ -1,11 +1,14 @@
 package github
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/nacl/box"
 )
 
 // Repo GitHub 仓库
@@ -272,4 +275,53 @@ func (c *Client) GetBlob(owner, repo, sha string) (*FileContent, int, error) {
 	var fc FileContent
 	code, err := c.Get(p, &fc)
 	return &fc, code, err
+}
+
+// RepoPublicKey 仓库 Actions 公钥（用于加密 secrets）
+type RepoPublicKey struct {
+	KeyID string `json:"key_id"`
+	Key   string `json:"key"` // base64 encoded
+}
+
+// GetRepoPublicKey 获取仓库的 Actions 公钥
+func (c *Client) GetRepoPublicKey(owner, repo string) (*RepoPublicKey, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/secrets/public-key", owner, repo)
+	var pk RepoPublicKey
+	code, err := c.Get(p, &pk)
+	return &pk, code, err
+}
+
+// SecretPayload 创建/更新 secret 请求体
+type SecretPayload struct {
+	EncryptedValue string `json:"encrypted_value"`
+	KeyID          string `json:"key_id"`
+}
+
+// CreateSecret 创建或更新仓库 secret（自动加密）
+func (c *Client) CreateSecret(owner, repo, name, value string) (int, error) {
+	pk, code, err := c.GetRepoPublicKey(owner, repo)
+	if err != nil {
+		return code, fmt.Errorf("获取公钥失败: %w", err)
+	}
+
+	pubKeyBytes, err := base64.StdEncoding.DecodeString(pk.Key)
+	if err != nil {
+		return 0, fmt.Errorf("解码公钥失败: %w", err)
+	}
+
+	var pubKey [32]byte
+	copy(pubKey[:], pubKeyBytes)
+
+	encrypted, err := box.SealAnonymous(nil, []byte(value), &pubKey, nil)
+	if err != nil {
+		return 0, fmt.Errorf("加密 secret 失败: %w", err)
+	}
+
+	payload := SecretPayload{
+		EncryptedValue: base64.StdEncoding.EncodeToString(encrypted),
+		KeyID:          pk.KeyID,
+	}
+
+	p := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, name)
+	return c.PutJSON(p, payload, nil)
 }

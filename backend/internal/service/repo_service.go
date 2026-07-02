@@ -504,6 +504,12 @@ type TemplateFile struct {
 	Content string `json:"content"` // base64
 }
 
+// SecretEntry secret 键值对
+type SecretEntry struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 // FetchTemplateFiles 从源仓库读取所有文件
 func (s *RepoService) FetchTemplateFiles(c *Container, accountID uint, owner, repo, ref string) ([]TemplateFile, error) {
 	ghc, _, err := s.GetClient(c, accountID)
@@ -537,8 +543,8 @@ func (s *RepoService) FetchTemplateFiles(c *Container, accountID uint, owner, re
 	return files, nil
 }
 
-// CreateRepoForAccount 为指定账户创建仓库并推送文件
-func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoName, description string, private bool, files []TemplateFile) (*github.Repo, error) {
+// CreateRepoForAccount 为指定账户创建仓库并推送文件和 secrets
+func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoName, description string, private bool, files []TemplateFile, secrets []SecretEntry) (*github.Repo, error) {
 	ghc, acc, err := s.GetClient(c, accountID)
 	if err != nil {
 		return nil, err
@@ -565,6 +571,19 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 	}
 	if len(failedFiles) > 0 {
 		return repo, fmt.Errorf("仓库已创建，但 %d 个文件推送失败: %s", len(failedFiles), strings.Join(failedFiles, ", "))
+	}
+	failedSecrets := []string{}
+	for _, sec := range secrets {
+		if sec.Name == "" {
+			continue
+		}
+		_, sErr := ghc.CreateSecret(acc.GithubLogin, repoName, sec.Name, sec.Value)
+		if sErr != nil {
+			failedSecrets = append(failedSecrets, sec.Name)
+		}
+	}
+	if len(failedSecrets) > 0 {
+		return repo, fmt.Errorf("仓库已创建，但 %d 个 secret 设置失败: %s", len(failedSecrets), strings.Join(failedSecrets, ", "))
 	}
 	model := &model.Repository{
 		AccountID:     accountID,

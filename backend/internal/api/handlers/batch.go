@@ -110,6 +110,7 @@ type BatchCreateReposPayload struct {
 	Description string                     `json:"description"`
 	Private     bool                       `json:"private"`
 	Files       []service.TemplateFile     `json:"files"`
+	Secrets     []service.SecretEntry      `json:"secrets"`
 }
 
 func (h *BatchHandler) CreateRepos(c *gin.Context) {
@@ -121,7 +122,7 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 	success := []gin.H{}
 	failed := []gin.H{}
 	for _, aid := range p.AccountIDs {
-		repo, err := h.s.CreateRepoForAccount(h.c, aid, p.RepoName, p.Description, p.Private, p.Files)
+		repo, err := h.s.CreateRepoForAccount(h.c, aid, p.RepoName, p.Description, p.Private, p.Files, p.Secrets)
 		if err != nil {
 			failed = append(failed, gin.H{"account_id": aid, "error": err.Error()})
 		} else {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, batchApi, type TemplateFile } from '@/api'
+import { accountApi, batchApi, type TemplateFile, type SecretEntry } from '@/api'
 import { PageHeader } from '@/components/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Github, FileCode, Plus, Trash2, Download, FolderGit2, CircleCheck, CircleX, Loader2, Lock, Globe } from 'lucide-react'
+import { Github, FileCode, Plus, Trash2, Download, FolderGit2, CircleCheck, CircleX, Loader2, Lock, Globe, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ManualFile {
@@ -30,6 +30,7 @@ export default function BatchRepoPage() {
   const [cloneUrl, setCloneUrl] = useState('')
   const [manualFiles, setManualFiles] = useState<ManualFile[]>([{ path: '', content: '' }])
   const [templateFiles, setTemplateFiles] = useState<TemplateFile[]>([])
+  const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
   const [results, setResults] = useState<{ success: any[]; failed: any[] } | null>(null)
 
   const { data: accounts, isLoading, isError, refetch } = useQuery({
@@ -63,6 +64,7 @@ export default function BatchRepoPage() {
         description,
         private: isPrivate,
         files,
+        secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
       })
     },
     onSuccess: (data) => {
@@ -104,6 +106,13 @@ export default function BatchRepoPage() {
   const removeManualFile = (idx: number) => setManualFiles(prev => prev.filter((_, i) => i !== idx))
   const updateManualFile = (idx: number, field: 'path' | 'content', val: string) =>
     setManualFiles(prev => prev.map((f, i) => i === idx ? { ...f, [field]: val } : f))
+
+  const addSecret = () => setSecrets(prev => [...prev, { name: '', value: '', show: false }])
+  const removeSecret = (idx: number) => setSecrets(prev => prev.filter((_, i) => i !== idx))
+  const updateSecret = (idx: number, field: 'name' | 'value', val: string) =>
+    setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, [field]: val } : s))
+  const toggleSecretVisibility = (idx: number) =>
+    setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, show: !s.show } : s))
 
   const canExecute = accountIds.length > 0 && repoName.trim() && (sourceMode === 'manual' || templateFiles.length > 0)
 
@@ -249,6 +258,53 @@ export default function BatchRepoPage() {
                   </Button>
                 </TabsContent>
               </Tabs>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <KeyRound className="h-4 w-4" />
+                Repository Secrets
+                {secrets.length > 0 && <Badge variant="secondary">{secrets.length}</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                创建仓库后自动设置 Actions secrets（如 TOKEN、API_KEY 等）。值会被加密传输，不会明文存储。
+              </p>
+              {secrets.map((secret, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={secret.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSecret(idx, 'name', e.target.value)}
+                    placeholder="SECRET_NAME"
+                    className="font-mono text-sm sm:w-48"
+                  />
+                  <div className="relative flex-1">
+                    <Input
+                      type={secret.show ? 'text' : 'password'}
+                      value={secret.value}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSecret(idx, 'value', e.target.value)}
+                      placeholder="secret value"
+                      className="pr-10 font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecretVisibility(idx)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {secret.show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => removeSecret(idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addSecret}>
+                <Plus className="mr-2 h-4 w-4" />添加 Secret
+              </Button>
             </CardContent>
           </Card>
 

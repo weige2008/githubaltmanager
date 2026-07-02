@@ -124,6 +124,11 @@ export interface TemplateFile {
   content: string
 }
 
+export interface SecretEntry {
+  name: string
+  value: string
+}
+
 export const batchApi = {
   createWorkflows: (data: { repo_ids: number[]; filename: string; content: string; commit_message: string }) =>
     http.post<unknown, any>('/batch/create-workflows', data),
@@ -131,7 +136,7 @@ export const batchApi = {
     http.post<unknown, any>('/batch/dispatch', data),
   fetchTemplate: (data: { account_id: number; owner: string; repo: string; ref?: string }) =>
     http.post<unknown, { files: TemplateFile[]; count: number }>('/batch/fetch-template', data),
-  createRepos: (data: { account_ids: number[]; repo_name: string; description?: string; private: boolean; files: TemplateFile[] }) =>
+  createRepos: (data: { account_ids: number[]; repo_name: string; description?: string; private: boolean; files: TemplateFile[]; secrets?: SecretEntry[] }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/create-repos', data),
 }
 
