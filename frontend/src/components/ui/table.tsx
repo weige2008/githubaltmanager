@@ -21,7 +21,7 @@ export function TBody({ children }: { children: React.ReactNode }) {
 }
 
 export function TR({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
-  return <tr className={cn('border-b transition-colors hover:bg-muted/50 hover:shadow-[inset_3px_0_0_hsl(var(--primary))]', onClick && 'cursor-pointer', className)} onClick={onClick}>{children}</tr>
+  return <tr className={cn('border-b transition-colors hover:bg-muted/50 hover:shadow-[inset_3px_0_0_var(--primary)]', onClick && 'cursor-pointer', className)} onClick={onClick}>{children}</tr>
 }
 
 export function TD({ children, className }: { children?: React.ReactNode; className?: string }) {
