@@ -4,7 +4,7 @@ import { autoTaskApi, authApi, type AutoTaskConfig } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database } from 'lucide-react'
+import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { zhCN, enUS } from 'date-fns/locale'
@@ -289,18 +289,126 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="about">
+        <TabsContent value="about" className="space-y-4">
+          {/* 项目信息 */}
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Info className="h-4 w-4" /> {t('settings.about')}</CardTitle></CardHeader>
-            <CardContent className="text-sm space-y-1 text-muted-foreground">
-              <div>{t('settings.aboutProject')}: {t('settings.aboutProjectValue')}</div>
-              <div>{t('settings.aboutTechStack')}: {t('settings.aboutTechStackValue')}</div>
-              <div>{t('settings.aboutEncryption')}: {t('settings.aboutEncryptionValue')}</div>
-              <Separator className="my-3" />
-              <div className="flex items-center gap-2 font-mono text-xs">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{t('settings.deployTime')}: {formatDeployTime(__BUILD_TIME__)}</span>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Info className="h-4 w-4" /> 项目信息</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="text-xs text-muted-foreground">版本</div>
+                  <div className="mt-0.5 font-mono text-sm font-bold">v2.2.3</div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="text-xs text-muted-foreground">部署时间</div>
+                  <div className="mt-0.5 font-mono text-xs font-bold">
+                    {(() => { try { return new Date(__BUILD_TIME__).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) } catch { return '—' } })()}
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="text-xs text-muted-foreground">前端</div>
+                  <div className="mt-0.5 text-xs font-medium">React 19 + Tailwind</div>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="text-xs text-muted-foreground">后端</div>
+                  <div className="mt-0.5 text-xs font-medium">Go + Gin + GORM</div>
+                </div>
               </div>
+              <Separator />
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">加密方案：</span> AES-256-GCM + Argon2id + NaCl box</div>
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">数据库：</span> SQLite（纯 Go，零 CGO 依赖）</div>
+                <div className="flex items-center gap-2"><span className="font-medium text-foreground">嵌入方式：</span> go:embed（单二进制，无需 Nginx）</div>
+              </div>
+              <Separator />
+              <div className="flex flex-wrap gap-2">
+                <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
+                  <Github className="h-3.5 w-3.5" /> GitHub 仓库
+                </a>
+                <a href="https://github.com/weige2008/githubaltmanager/releases" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
+                  <Tag className="h-3.5 w-3.5" /> 版本发布
+                </a>
+                <a href="https://github.com/weige2008/githubaltmanager/issues" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
+                  <AlertCircle className="h-3.5 w-3.5" /> 问题反馈
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 用户须知 */}
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldAlert className="h-4 w-4" /> 用户须知</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/5 p-3">
+                <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                <div className="text-sm">
+                  <span className="font-medium">主密码无法找回。</span>
+                  <span className="text-muted-foreground"> 主密码用于加密所有 Token、密码和邮箱。一旦遗忘，所有已加密数据将永久无法解密。请使用密码管理器（如 Bitwarden / 1Password）妥善保存。</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/5 p-3">
+                <Database className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+                <div className="text-sm">
+                  <span className="font-medium">服务重启后需重新登录。</span>
+                  <span className="text-muted-foreground"> 加密密钥仅在登录时驻留内存，重启后自动清除。定时任务和自动检测在服务重启后可通过 <code className="rounded bg-muted px-1 font-mono text-xs">GAM_MASTER_PASSWORD</code> 环境变量自动解锁。</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-success/30 bg-success/5 p-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                <div className="text-sm">
+                  <span className="font-medium">数据库可安全备份。</span>
+                  <span className="text-muted-foreground"> 直接复制 <code className="rounded bg-muted px-1 font-mono text-xs">data/githubaltmanager.db</code> 即可。备份文件包含加密数据，即使泄露，没有主密码也无法解密。</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="text-sm">
+                  <span className="font-medium">Token 安全提示。</span>
+                  <span className="text-muted-foreground"> 导入的 GitHub Token 拥有你授予的全部权限。建议使用最小权限原则（仅需 <code className="rounded bg-muted px-1 font-mono text-xs">repo</code> + <code className="rounded bg-muted px-1 font-mono text-xs">workflow</code>），避免授予 <code className="rounded bg-muted px-1 font-mono text-xs">delete_repo</code> 等危险权限。</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border p-3">
+                <Activity className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="text-sm">
+                  <span className="font-medium">API 速率限制。</span>
+                  <span className="text-muted-foreground"> GitHub API 每小时限 5000 次请求。批量操作大量账户时请注意间隔。系统会感知 <code className="rounded bg-muted px-1 font-mono text-xs">X-RateLimit-Remaining</code> 响应头。</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 支持的功能 */}
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Layers className="h-4 w-4" /> 功能列表</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {[
+                  { icon: Users, label: '账户管理（加密导入/密码存储/封禁检测）' },
+                  { icon: FolderPlus, label: '批量建仓（跨账户克隆文件 + Secrets）' },
+                  { icon: GitBranch, label: '批量工作流（跨账户同名仓库触发）' },
+                  { icon: FolderGit2, label: '仓库浏览（文件树/在线编辑/Workflow扫描）' },
+                  { icon: Clock, label: '定时任务（cron 调度，后端持续运行）' },
+                  { icon: RefreshCw, label: '自动检测/同步（可配置间隔）' },
+                  { icon: Palette, label: '主题系统（10 套预设 + 字体/圆角/密度）' },
+                  { icon: Languages, label: '国际化（中文 + 英文）' },
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-md border bg-muted/20 p-2">
+                    <f.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-xs">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 开源许可 */}
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span>开源协议</span>
+              </div>
+              <Badge variant="outline">MIT License</Badge>
             </CardContent>
           </Card>
         </TabsContent>
