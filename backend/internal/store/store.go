@@ -17,7 +17,7 @@ import (
 // 使用纯 Go SQLite 驱动（github.com/glebarez/sqlite，基于 modernc.org/sqlite），
 // 无需 CGO，支持交叉编译到任意平台。
 func Open(cfg *config.Config) (*gorm.DB, error) {
-	gormLogLevel := logger.Warn
+	gormLogLevel := logger.Error
 	if !cfg.IsProd() {
 		gormLogLevel = logger.Info
 	}

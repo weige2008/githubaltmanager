@@ -53,13 +53,11 @@ func (c *Container) RunDueTasks() {
 // === AutoTaskRunner 接口实现（间隔模式） ===
 
 func (c *Container) GetAutoConfig() (checkEnabled bool, checkInterval int, syncEnabled bool, syncInterval int) {
-	var cfg struct {
-		AutoCheckEnabled  bool `gorm:"column:auto_check_enabled"`
-		AutoCheckInterval int  `gorm:"column:auto_check_interval"`
-		AutoSyncEnabled   bool `gorm:"column:auto_sync_enabled"`
-		AutoSyncInterval  int  `gorm:"column:auto_sync_interval"`
+	var cfg model.AppConfig
+	result := c.DB.Where("id = 1").First(&cfg)
+	if result.Error != nil {
+		return false, 30, true, 30
 	}
-	c.DB.Table("app_configs").First(&cfg, 1)
 	return cfg.AutoCheckEnabled, cfg.AutoCheckInterval, cfg.AutoSyncEnabled, cfg.AutoSyncInterval
 }
 
