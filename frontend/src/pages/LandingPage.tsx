@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
 import { useThemeStore } from '@/store/theme'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { NotificationPopover } from '@/components/notification-popover'
 import { Button } from '@/components/ui/button'
 import {
   Lock, Shield, Zap, Clock, Folder, Layers, Terminal, Activity, MemoryStick,
@@ -253,10 +255,10 @@ export default function LandingPage() {
 
           {/* Center links (desktop) */}
           <div className="hidden items-center gap-0.5 sm:flex">
-            <a href="/" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground">{t('landing.nav.home')}</a>
-            <button onClick={() => navigate('/dashboard')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.console')}</button>
-            <button onClick={() => navigate('/automation')} className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.automation')}</button>
-            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground">{t('landing.nav.docs')}</a>
+            <a href="/" className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors">{t('landing.nav.home')}</a>
+            <button onClick={() => navigate('/dashboard')} className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.console')}</button>
+            <button onClick={() => navigate('/automation')} className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.automation')}</button>
+            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.docs')}</a>
           </div>
 
           {/* Right actions */}
@@ -264,6 +266,8 @@ export default function LandingPage() {
             <button onClick={cycleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            <LanguageSwitcher />
+            {token && <NotificationPopover />}
             <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
               <Github className="size-4" />
             </a>
