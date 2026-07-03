@@ -233,48 +233,48 @@ export default function LandingPage() {
       <div className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-3 pointer-events-none">
         <motion.nav
           animate={{
-            maxWidth: scrolled ? 'max-w-3xl' : '100%',
-            marginTop: scrolled ? 0 : 0,
-            paddingTop: scrolled ? 8 : 16,
-            paddingBottom: scrolled ? 8 : 16,
+            maxWidth: scrolled ? 640 : 768,
+            paddingTop: scrolled ? 6 : 12,
+            paddingBottom: scrolled ? 6 : 12,
           }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className={`pointer-events-auto flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] h-12 rounded-2xl px-4 backdrop-blur-2xl ${
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className={`pointer-events-auto flex h-11 items-center justify-between gap-4 rounded-2xl px-3 backdrop-blur-2xl ${
             scrolled
-              ? 'bg-background/70 ring-[0.5px] ring-border/50 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.02)] dark:shadow-[0_2px_16px_-6px_rgba(0,0,0,0.4)] w-full max-w-3xl'
-              : 'bg-transparent border-0 shadow-none w-full max-w-6xl ring-0'
+              ? 'bg-background/70 ring-[0.5px] ring-border/50 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.02)] dark:shadow-[0_2px_16px_-6px_rgba(0,0,0,0.4)]'
+              : 'bg-transparent ring-0 shadow-none'
           }`}
+          style={{ width: '100%' }}
         >
           {/* Logo */}
-          <a href="/" className="group flex shrink-0 items-center gap-2.5">
-            <div className="flex size-7 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105">
+          <a href="/" className="group flex shrink-0 items-center gap-2">
+            <div className="flex size-6 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105">
               <Github className="size-full rounded-lg" />
             </div>
-            <span className="text-sm font-semibold tracking-tight">{t('landing.brand')}</span>
+            <span className="text-[13px] font-semibold tracking-tight">{t('landing.brand')}</span>
           </a>
 
           {/* Center links (desktop) */}
-          <div className="hidden items-center gap-0.5 sm:flex">
-            <a href="/" className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors">{t('landing.nav.home')}</a>
-            <button onClick={() => navigate('/dashboard')} className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.console')}</button>
-            <button onClick={() => navigate('/automation')} className="relative rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.automation')}</button>
-            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.docs')}</a>
+          <div className="hidden items-center gap-0 md:flex">
+            <a href="/" className="rounded-md px-2.5 py-1 text-xs font-medium text-foreground transition-colors">{t('landing.nav.home')}</a>
+            <button onClick={() => navigate('/dashboard')} className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.console')}</button>
+            <button onClick={() => navigate('/automation')} className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.automation')}</button>
+            <a href="https://github.com/weige2008/githubaltmanager/blob/main/README.md" target="_blank" rel="noreferrer" className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">{t('landing.nav.docs')}</a>
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center gap-1.5">
-            <button onClick={cycleTheme} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <div className="flex items-center gap-1">
+            <button onClick={cycleTheme} className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
+              {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
             </button>
             <LanguageSwitcher />
             {token && <NotificationPopover />}
-            <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
-              <Github className="size-4" />
+            <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noreferrer" className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:hover:bg-muted/50">
+              <Github className="size-3.5" />
             </a>
-            <div className="mx-1 hidden h-4 w-px bg-border/40 sm:block" />
-            <button onClick={goEnter} className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
+            <div className="mx-0.5 hidden h-3.5 w-px bg-border/40 sm:block" />
+            <button onClick={goEnter} className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
               {token ? t('landing.nav.console') : t('landing.nav.login')}
-              <ArrowRight className="size-3" />
+              <ArrowRight className="size-2.5" />
             </button>
           </div>
         </motion.nav>
