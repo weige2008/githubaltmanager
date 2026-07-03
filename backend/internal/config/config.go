@@ -62,7 +62,7 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Server: ServerConfig{
 			Host: envStr("GAM_HOST", "0.0.0.0"),
-			Port: envInt("GAM_PORT", 8080),
+			Port: envInt("GAM_PORT", 19527),
 			Env:  strings.ToLower(envStr("GAM_ENV", "dev")),
 		},
 		Database: DatabaseConfig{

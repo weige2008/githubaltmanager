@@ -62,7 +62,7 @@ func ensureDefaults() {
 	changed := false
 	defaults := map[string]string{
 		"GAM_HOST":          "0.0.0.0",
-		"GAM_PORT":          "8080",
+		"GAM_PORT":          "19527",
 		"GAM_ENV":           "prod",
 		"GAM_DB_PATH":       "data/githubaltmanager.db",
 		"GAM_GH_API":        "https://api.github.com",
