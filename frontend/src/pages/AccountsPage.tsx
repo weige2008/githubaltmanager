@@ -26,7 +26,7 @@ export default function AccountsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { data: accounts, isLoading, isError } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
+  const { data: accounts, isLoading, isError } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importData, setImportData] = useState({ token: '', password: '', recovery_email: '', note: '' })

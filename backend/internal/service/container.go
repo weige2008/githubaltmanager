@@ -77,6 +77,21 @@ func (c *Container) RunAutoSync() {
 	NewAutoTaskService(c.DB).RunAutoSync(c)
 }
 
+func (c *Container) CleanRecycleBin() {
+	var cfg model.AppConfig
+	c.DB.First(&cfg, 1)
+	if !cfg.RecycleBinEnabled { return }
+	days := cfg.RecycleBinDays
+	if days <= 0 { days = 30 }
+	threshold := time.Now().AddDate(0, 0, -days)
+	result := c.DB.Where("deleted_at IS NOT NULL AND deleted_at < ?", threshold).Delete(&model.Account{})
+	if result.RowsAffected > 0 {
+		log.Printf("[recycle-bin] cleaned %d accounts older than %d days", result.RowsAffected, days)
+	}
+	now := time.Now()
+	c.DB.Model(&model.AppConfig{}).Where("id = 1").Update("recycle_bin_last_clean", &now)
+}
+
 // ensureUnlockedForAuto 尝试用配置的 master 密码自动解锁 keystore
 // 支持 GAM_MASTER_PASSWORD 环境变量
 func (c *Container) ensureUnlockedForAuto() {

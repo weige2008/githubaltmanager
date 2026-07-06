@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: stats, isLoading, isError, refetch } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
-  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
+  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
 
   if (isLoading) return <LoadingState />
   if (isError) return <ErrorState retry={refetch} />

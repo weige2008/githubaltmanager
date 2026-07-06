@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"githubaltmanager/internal/config"
@@ -75,7 +76,15 @@ func (s *AutoTaskService) finishLog(logID uint, status string, total, success, f
 // RunAutoSync 对所有账户执行仓库同步（带日志）
 func (s *AutoTaskService) RunAutoSync(c *Container) {
 	var accs []model.Account
-	if err := s.DB.Find(&accs).Error; err != nil {
+	query := s.DB.Where("deleted_at IS NULL")
+	// Apply group filter from config
+	var cfg model.AppConfig
+	s.DB.First(&cfg, 1)
+	if cfg.AutoSyncGroups != "" {
+		groups := strings.Split(cfg.AutoSyncGroups, ",")
+		query = query.Where("account_group IN ?", groups)
+	}
+	if err := query.Find(&accs).Error; err != nil {
 		log.Printf("[auto-sync] 查询账户失败: %v", err)
 		return
 	}
@@ -120,7 +129,15 @@ func (s *AutoTaskService) RunAutoSync(c *Container) {
 // RunAutoCheck 对所有账户执行封禁检测（带日志）
 func (s *AutoTaskService) RunAutoCheck(c *Container) {
 	var accs []model.Account
-	if err := s.DB.Find(&accs).Error; err != nil {
+	query := s.DB.Where("deleted_at IS NULL")
+	// Apply group filter from config
+	var cfg model.AppConfig
+	s.DB.First(&cfg, 1)
+	if cfg.AutoCheckGroups != "" {
+		groups := strings.Split(cfg.AutoCheckGroups, ",")
+		query = query.Where("account_group IN ?", groups)
+	}
+	if err := query.Find(&accs).Error; err != nil {
 		log.Printf("[auto-check] 查询账户失败: %v", err)
 		return
 	}

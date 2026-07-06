@@ -17,6 +17,7 @@ type AutoTaskRunner interface {
 	GetAutoConfig() (checkEnabled bool, checkInterval int, syncEnabled bool, syncInterval int)
 	RunAutoCheck()
 	RunAutoSync()
+	CleanRecycleBin()
 }
 
 type Scheduler struct {
@@ -78,6 +79,7 @@ func Stop() {
 var (
 	lastCheckTime   time.Time
 	lastSyncTime    time.Time
+	lastRecycleClean time.Time
 	autoRunning     bool
 	autoMu          sync.Mutex
 	autoStopChan    chan struct{}
@@ -111,13 +113,19 @@ func StartAutoScheduler(runner AutoTaskRunner) {
 					}
 				}
 
-				if syncEnabled && syncInterval > 0 {
-					next := lastSyncTime.Add(time.Duration(syncInterval) * time.Minute)
-					if now.After(next) || lastSyncTime.IsZero() {
-						lastSyncTime = now
-						go runner.RunAutoSync()
-					}
+			if syncEnabled && syncInterval > 0 {
+				next := lastSyncTime.Add(time.Duration(syncInterval) * time.Minute)
+				if now.After(next) || lastSyncTime.IsZero() {
+					lastSyncTime = now
+					go runner.RunAutoSync()
 				}
+			}
+
+			// Recycle bin cleanup - check every hour
+			if lastRecycleClean.IsZero() || now.Sub(lastRecycleClean) > time.Hour {
+				lastRecycleClean = now
+				go runner.CleanRecycleBin()
+			}
 
 			case <-autoStopChan:
 				return

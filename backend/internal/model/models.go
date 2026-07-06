@@ -22,6 +22,15 @@ type AppConfig struct {
 	AutoSyncInterval  int    `gorm:"column:auto_sync_interval;default:30" json:"auto_sync_interval"`
 	AutoSyncLastAt    *time.Time `gorm:"column:auto_sync_last_at" json:"auto_sync_last_at"`
 	AutoCheckLastAt   *time.Time `gorm:"column:auto_check_last_at" json:"auto_check_last_at"`
+
+	// 自动任务分组（逗号分隔，空=全部）
+	AutoCheckGroups string `gorm:"column:auto_check_groups;type:text" json:"auto_check_groups"`
+	AutoSyncGroups  string `gorm:"column:auto_sync_groups;type:text" json:"auto_sync_groups"`
+
+	// 回收站设置
+	RecycleBinEnabled  bool `gorm:"column:recycle_bin_enabled;not null;default:true" json:"recycle_bin_enabled"`
+	RecycleBinDays     int  `gorm:"column:recycle_bin_days;default:30" json:"recycle_bin_days"`
+	RecycleBinLastClean *time.Time `gorm:"column:recycle_bin_last_clean" json:"recycle_bin_last_clean"`
 }
 
 // AutoTaskLog 自动任务执行日志
@@ -51,6 +60,8 @@ type Account struct {
 	TokenScopes   string `gorm:"column:token_scopes;type:text" json:"token_scopes"`
 	LastCheckedAt *time.Time `gorm:"column:last_checked_at" json:"last_checked_at"`
 	Note          string `gorm:"column:note;type:text" json:"note"`
+	Group         string `gorm:"column:account_group;size:100;index" json:"group"` // 分组名
+	DeletedAt     *time.Time `gorm:"column:deleted_at;index" json:"deleted_at"`     // 软删除时间（回收站）
 }
 
 func (Account) TableName() string { return "accounts" }

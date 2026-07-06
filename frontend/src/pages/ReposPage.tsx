@@ -31,7 +31,7 @@ export default function ReposPage() {
   const [wfOpen, setWfOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
-  const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
+  const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
   const { data: repos, isLoading: reposLoading, isError: reposError, refetch: refetchRepos } = useQuery({
     queryKey: ['repos', selectedAcc],
     queryFn: () => repoApi.listByAccount(selectedAcc!),

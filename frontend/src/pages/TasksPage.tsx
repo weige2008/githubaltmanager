@@ -48,7 +48,7 @@ export default function TasksPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { data: tasks, isLoading, isError, refetch } = useQuery({ queryKey: ['tasks'], queryFn: taskApi.list })
-  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: accountApi.list })
+  const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
   const [open, setOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [form, setForm] = useState({ account_id: 0, repository_id: 0, workflow_filename: '', ref: 'main', interval: 1440, inputs_json: '' })

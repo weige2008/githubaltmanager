@@ -12,6 +12,8 @@ export interface Account {
   token_scopes: string
   last_checked_at: string | null
   note: string
+  group: string
+  deleted_at: string | null
   created_at: string
   updated_at: string
 }
@@ -23,16 +25,22 @@ export interface AccountSecrets {
 }
 
 export const accountApi = {
-  list: () => http.get<unknown, Account[]>('/accounts'),
+  list: (group?: string) => http.get<unknown, Account[]>('/accounts', { params: group ? { group } : {} }),
   get: (id: number) => http.get<unknown, Account>(`/accounts/${id}`),
-  import: (data: { token: string; password?: string; recovery_email?: string; note?: string }) =>
+  import: (data: { token: string; password?: string; recovery_email?: string; note?: string; group?: string }) =>
     http.post<unknown, Account>('/accounts/import', data),
-  update: (id: number, data: Partial<{ password?: string; recovery_email?: string; note?: string }>) =>
+  update: (id: number, data: Partial<{ password?: string; recovery_email?: string; note?: string; group?: string }>) =>
     http.put<unknown, Account>(`/accounts/${id}`, data),
   remove: (id: number) => http.delete<unknown, { ok: boolean }>(`/accounts/${id}`),
+  restore: (id: number) => http.post<unknown, { ok: boolean }>(`/accounts/${id}/restore`),
   checkStatus: (id: number) => http.post<unknown, Account>(`/accounts/${id}/check`),
   batchCheck: (ids: number[]) => http.post<unknown, { results: any[] }>('/accounts/batch-check', { ids }),
+  batchCheckGroup: (group?: string) => http.post<unknown, { results: any[]; total: number }>('/accounts/batch-check-group', { group: group || '' }),
   getSecrets: (id: number) => http.get<unknown, AccountSecrets>(`/accounts/${id}/secrets`),
+  listGroups: () => http.get<unknown, string[]>('/accounts/groups'),
+  listRecycleBin: () => http.get<unknown, Account[]>('/accounts/recycle-bin'),
+  permanentDelete: (id: number) => http.delete<unknown, { ok: boolean }>(`/accounts/recycle-bin/${id}`),
+  cleanRecycleBin: () => http.post<unknown, { ok: boolean; cleaned_before: string }>('/accounts/recycle-bin/clean'),
 }
 
 export const authApi = {
@@ -163,6 +171,11 @@ export interface AutoTaskConfig {
   auto_sync_interval: number
   auto_check_last_at?: string | null
   auto_sync_last_at?: string | null
+  auto_check_groups?: string
+  auto_sync_groups?: string
+  recycle_bin_enabled?: boolean
+  recycle_bin_days?: number
+  recycle_bin_last_clean?: string | null
 }
 
 export interface AutoTaskLog {

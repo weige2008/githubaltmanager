@@ -40,6 +40,10 @@ func (h *AutoTaskHandler) Get(c *gin.Context) {
 			"auto_check_interval": 30,
 			"auto_sync_enabled":   true,
 			"auto_sync_interval":  30,
+			"auto_check_groups":   "",
+			"auto_sync_groups":    "",
+			"recycle_bin_enabled":  true,
+			"recycle_bin_days":    30,
 		})
 		return
 	}
@@ -50,6 +54,11 @@ func (h *AutoTaskHandler) Get(c *gin.Context) {
 		"auto_sync_interval":  cfg.AutoSyncInterval,
 		"auto_check_last_at":  cfg.AutoCheckLastAt,
 		"auto_sync_last_at":   cfg.AutoSyncLastAt,
+		"auto_check_groups":   cfg.AutoCheckGroups,
+		"auto_sync_groups":    cfg.AutoSyncGroups,
+		"recycle_bin_enabled": cfg.RecycleBinEnabled,
+		"recycle_bin_days":    cfg.RecycleBinDays,
+		"recycle_bin_last_clean": cfg.RecycleBinLastClean,
 	})
 }
 
