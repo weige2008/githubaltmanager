@@ -168,7 +168,15 @@
     "passwordCopied": "Mot de passe copié",
     "tabInfo": "Infos",
     "tabRepos": "Dépôts",
-    "emptyValue": "(vide)"
+    "emptyValue": "(vide)",
+    "sortDefault": "Par défaut",
+    "sortName": "Par nom",
+    "sortStatus": "Par statut",
+    "sortChecked": "Par vérification",
+    "sortCreated": "Par création",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "pinned": "Épinglé"
   },
   "repos": {
     "title": "Dépôts",
@@ -565,10 +573,7 @@
     }
   },
   "ui": {
-    "confirm": {
-      "title": "Confirmer l'action",
-      "desc": "Cette action est irréversible. Continuer ?"
-    },
+    "confirm": "Confirmer",
     "error": {
       "title": "Échec du chargement",
       "desc": "Veuillez vérifier votre connexion et réessayer"
@@ -582,7 +587,6 @@
     "deselectAll": "Tout désélectionner",
     "reset": "Réinitialiser",
     "cancel": "Annuler",
-    "confirm": "Confirmer",
     "save": "Enregistrer",
     "delete": "Supprimer",
     "results": "Résultats",

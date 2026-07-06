@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { accountApi, repoApi, type Account } from '@/api'
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3 } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, PinOff, ArrowUpDown, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -16,9 +16,10 @@ import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { CopyButton } from '@/components/ui/copy-button'
-import { MaskedValue } from '@/components/ui/masked-value'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTranslation } from 'react-i18next'
+
+type SortMode = 'default' | 'name' | 'status' | 'checked' | 'created'
 
 function displayName(acc: Account) {
   return acc.note?.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login
@@ -37,6 +38,64 @@ export default function AccountsPage() {
   const [noteAcc, setNoteAcc] = useState<Account | null>(null)
   const [noteValue, setNoteValue] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null)
+
+  const [sortMode, setSortMode] = useState<SortMode>('default')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [pinnedIds, setPinnedIds] = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem('gam-pinned-accounts') || '[]') } catch { return [] }
+  })
+
+  useEffect(() => {
+    localStorage.setItem('gam-pinned-accounts', JSON.stringify(pinnedIds))
+  }, [pinnedIds])
+
+  const togglePin = (id: number) => {
+    setPinnedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
+  }
+
+  const sortedAccounts = useMemo(() => {
+    if (!accounts) return []
+    let list = [...accounts]
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      list = list.filter(a =>
+        a.github_login.toLowerCase().includes(q) ||
+        (a.note || '').toLowerCase().includes(q) ||
+        (a.display_name || '').toLowerCase().includes(q)
+      )
+    }
+
+    const statusOrder: Record<string, number> = { banned: 0, error: 1, unknown: 2, active: 3 }
+    switch (sortMode) {
+      case 'name':
+        list.sort((a, b) => displayName(a).localeCompare(displayName(b)))
+        break
+      case 'status':
+        list.sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
+        break
+      case 'checked':
+        list.sort((a, b) => {
+          if (!a.last_checked_at) return 1
+          if (!b.last_checked_at) return -1
+          return new Date(b.last_checked_at).getTime() - new Date(a.last_checked_at).getTime()
+        })
+        break
+      case 'created':
+        list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        break
+    }
+
+    if (pinnedIds.length > 0) {
+      list.sort((a, b) => {
+        const aPinned = pinnedIds.includes(a.id) ? 0 : 1
+        const bPinned = pinnedIds.includes(b.id) ? 0 : 1
+        return aPinned - bPinned
+      })
+    }
+
+    return list
+  }, [accounts, sortMode, searchQuery, pinnedIds])
 
   const checkMutation = useMutation({
     mutationFn: (id: number) => accountApi.checkStatus(id),
@@ -92,8 +151,9 @@ export default function AccountsPage() {
         actions={<Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />{t('accounts.import')}</Button>}
       />
 
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" className="gap-2"
             onClick={() => { accounts?.forEach((a) => checkMutation.mutate(a.id)) }}>
             <ShieldCheck className="h-4 w-4" /> {t('accounts.batchCheck')}
@@ -102,7 +162,32 @@ export default function AccountsPage() {
             <RefreshCw className="h-4 w-4" /> {t('common.refresh')}
           </Button>
         </div>
-        <span className="text-sm text-muted-foreground">{t('accounts.countLabel', { count: accounts?.length ?? 0 })}</span>
+
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('common.search')}
+              className="h-9 w-40 pl-8 text-sm"
+            />
+          </div>
+          <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+            <SelectTrigger className="h-9 w-[140px] gap-2 text-sm">
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">{t('accounts.sortDefault')}</SelectItem>
+              <SelectItem value="name">{t('accounts.sortName')}</SelectItem>
+              <SelectItem value="status">{t('accounts.sortStatus')}</SelectItem>
+              <SelectItem value="checked">{t('accounts.sortChecked')}</SelectItem>
+              <SelectItem value="created">{t('accounts.sortCreated')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{sortedAccounts.length}</span>
+        </div>
       </div>
 
       <Card>
@@ -111,18 +196,31 @@ export default function AccountsPage() {
             <LoadingState />
           ) : isError ? (
             <ErrorState retry={() => queryClient.invalidateQueries({ queryKey: ['accounts'] })} />
-          ) : accounts && accounts.length > 0 ? (
+          ) : sortedAccounts.length > 0 ? (
             <Table>
               <THead>
                 <TR>
+                  <TH className="w-8"></TH>
                   <TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
                 </TR>
               </THead>
               <TBody>
-                {accounts.map((acc) => {
+                {sortedAccounts.map((acc) => {
                   const sb = statusBadge(acc.status)
+                  const isPinned = pinnedIds.includes(acc.id)
                   return (
-                    <TR key={acc.id}>
+                    <TR key={acc.id} className={isPinned ? 'bg-muted/30' : ''}>
+                      <TD>
+                        <button
+                          onClick={() => togglePin(acc.id)}
+                          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                            isPinned ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground'
+                          }`}
+                          title={isPinned ? t('accounts.unpin') : t('accounts.pin')}
+                        >
+                          {isPinned ? <Pin className="h-3.5 w-3.5 fill-current" /> : <Pin className="h-3.5 w-3.5" />}
+                        </button>
+                      </TD>
                       <TD>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
@@ -130,7 +228,10 @@ export default function AccountsPage() {
                             <AvatarFallback>{acc.github_login[0]?.toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{displayName(acc)}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium">{displayName(acc)}</span>
+                              {isPinned && <Badge variant="secondary" className="px-1 py-0 text-[10px]">{t('accounts.pinned')}</Badge>}
+                            </div>
                             <div className="text-xs text-muted-foreground">{acc.display_name}</div>
                           </div>
                           <button onClick={() => openNote(acc)} className="ml-1 opacity-30 hover:opacity-100"><Edit3 className="h-3.5 w-3.5" /></button>

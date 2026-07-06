@@ -168,7 +168,15 @@
     "passwordCopied": "パスワードをコピーしました",
     "tabInfo": "情報",
     "tabRepos": "リポジトリ",
-    "emptyValue": "(空)"
+    "emptyValue": "(空)",
+    "sortDefault": "デフォルト",
+    "sortName": "名前順",
+    "sortStatus": "ステータス順",
+    "sortChecked": "最終チェック順",
+    "sortCreated": "作成日順",
+    "pin": "ピン留め",
+    "unpin": "ピン解除",
+    "pinned": "固定済み"
   },
   "repos": {
     "title": "リポジトリ",
@@ -565,10 +573,7 @@
     }
   },
   "ui": {
-    "confirm": {
-      "title": "操作の確認",
-      "desc": "この操作は取り消せません。続行しますか?"
-    },
+    "confirm": "確認",
     "error": {
       "title": "読み込みに失敗しました",
       "desc": "接続を確認してもう一度お試しください"
@@ -582,7 +587,6 @@
     "deselectAll": "すべて選択解除",
     "reset": "リセット",
     "cancel": "キャンセル",
-    "confirm": "確認",
     "save": "保存",
     "delete": "削除",
     "results": "結果",

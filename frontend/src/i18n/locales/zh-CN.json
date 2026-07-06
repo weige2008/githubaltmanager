@@ -168,7 +168,15 @@
     "passwordCopied": "密码已复制",
     "tabInfo": "详情",
     "tabRepos": "仓库",
-    "emptyValue": "(空)"
+    "emptyValue": "(空)",
+    "sortDefault": "默认排序",
+    "sortName": "按名称",
+    "sortStatus": "按状态",
+    "sortChecked": "按检测时间",
+    "sortCreated": "按创建时间",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "pinned": "已置顶"
   },
   "repos": {
     "title": "仓库浏览",
@@ -569,10 +577,7 @@
     }
   },
   "ui": {
-    "confirm": {
-      "title": "确认操作",
-      "desc": "此操作不可撤销，确定要继续吗？"
-    },
+    "confirm": "确认",
     "error": {
       "title": "加载失败",
       "desc": "请检查网络连接后重试"
@@ -586,7 +591,6 @@
     "deselectAll": "取消全选",
     "reset": "重置",
     "cancel": "取消",
-    "confirm": "确认",
     "save": "保存",
     "delete": "删除",
     "results": "执行结果",

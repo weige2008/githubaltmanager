@@ -168,7 +168,15 @@
     "passwordCopied": "Đã sao chép mật khẩu",
     "tabInfo": "Thông tin",
     "tabRepos": "Kho",
-    "emptyValue": "(trống)"
+    "emptyValue": "(trống)",
+    "sortDefault": "Mặc định",
+    "sortName": "Theo tên",
+    "sortStatus": "Theo trạng thái",
+    "sortChecked": "Theo kiểm tra",
+    "sortCreated": "Theo tạo",
+    "pin": "Ghim",
+    "unpin": "Bỏ ghim",
+    "pinned": "Đã ghim"
   },
   "repos": {
     "title": "Kho lưu trữ",
@@ -565,10 +573,7 @@
     }
   },
   "ui": {
-    "confirm": {
-      "title": "Xác nhận thao tác",
-      "desc": "Thao tác này không thể hoàn tác. Tiếp tục?"
-    },
+    "confirm": "Xác nhận",
     "error": {
       "title": "Tải thất bại",
       "desc": "Vui lòng kiểm tra kết nối và thử lại"
@@ -582,7 +587,6 @@
     "deselectAll": "Bỏ chọn tất cả",
     "reset": "Đặt lại",
     "cancel": "Hủy",
-    "confirm": "Xác nhận",
     "save": "Lưu",
     "delete": "Xóa",
     "results": "Kết quả",

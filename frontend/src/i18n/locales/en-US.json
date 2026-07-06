@@ -168,7 +168,15 @@
     "passwordCopied": "Password copied",
     "tabInfo": "Info",
     "tabRepos": "Repos",
-    "emptyValue": "(empty)"
+    "emptyValue": "(empty)",
+    "sortDefault": "Default",
+    "sortName": "By Name",
+    "sortStatus": "By Status",
+    "sortChecked": "By Last Checked",
+    "sortCreated": "By Created",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinned": "Pinned"
   },
   "repos": {
     "title": "Repositories",
@@ -569,10 +577,7 @@
     }
   },
   "ui": {
-    "confirm": {
-      "title": "Confirm Action",
-      "desc": "This action cannot be undone. Continue?"
-    },
+    "confirm": "Confirm",
     "error": {
       "title": "Loading Failed",
       "desc": "Please check your connection and retry"
@@ -586,7 +591,6 @@
     "deselectAll": "Deselect All",
     "reset": "Reset",
     "cancel": "Cancel",
-    "confirm": "Confirm",
     "save": "Save",
     "delete": "Delete",
     "results": "Results",
