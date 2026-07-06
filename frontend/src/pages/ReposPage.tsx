@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, repoApi, type Workflow, type WorkflowInput } from '@/api'
+import { displayName } from '@/lib/account'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -145,7 +146,7 @@ export default function ReposPage() {
             <Select value={selectedAcc ? String(selectedAcc) : undefined} onValueChange={(v) => { const next = new URLSearchParams(params); next.delete('rid'); next.delete('path'); setParams(next); setSelectedAcc(Number(v)); setSelectedRepo(null) }}>
               <SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder={t('repos.selectAccount')} /></SelectTrigger>
               <SelectContent>
-                {accounts?.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.note?.trim() ? `${a.note}(${a.github_login})` : a.github_login}</SelectItem>)}
+                {accounts?.map((a) => <SelectItem key={a.id} value={String(a.id)}>{displayName(a)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button variant="outline" size="sm" className="gap-2" onClick={syncRepos} disabled={!selectedAcc || syncing}>

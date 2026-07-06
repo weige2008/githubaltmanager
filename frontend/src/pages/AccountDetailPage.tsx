@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { accountApi, repoApi, type Repo } from '@/api'
+import { displayName } from '@/lib/account'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,7 +49,7 @@ export default function AccountDetailPage() {
 
   if (isLoading || !acc) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
 
-  const accountName = acc.note?.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login
+  const accountName = displayName(acc)
 
   return (
     <div className="space-y-6">

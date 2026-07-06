@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { statsApi, accountApi } from '@/api'
+import { displayName } from '@/lib/account'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
@@ -122,7 +123,7 @@ export default function DashboardPage() {
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {accounts.slice(0, 9).map((acc) => (
                   <div key={acc.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                    <span>{acc.note?.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login}</span>
+                    <span>{displayName(acc)}</span>
                     <span className={cn('text-xs font-medium',
                       acc.status === 'active' ? 'text-green-500' : acc.status === 'banned' ? 'text-red-500' : 'text-muted-foreground')}>
                       {acc.status}

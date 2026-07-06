@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { accountApi, taskApi, type Task } from '@/api'
+import { displayName } from '@/lib/account'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -129,7 +130,7 @@ export default function TasksPage() {
             <Select value={form.account_id ? String(form.account_id) : ''} onValueChange={(v) => setForm({ ...form, account_id: Number(v) })}>
               <SelectTrigger><SelectValue placeholder={t('tasks.account')} /></SelectTrigger>
               <SelectContent>
-                {accounts?.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.note?.trim() ? `${a.note}(${a.github_login})` : a.github_login}</SelectItem>)}
+                {accounts?.map((a) => <SelectItem key={a.id} value={String(a.id)}>{displayName(a)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

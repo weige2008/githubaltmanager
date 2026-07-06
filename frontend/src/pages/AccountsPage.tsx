@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { accountApi, repoApi, type Account } from '@/api'
+import { displayName as getDisplayName, getPinnedIds, getSortMode, sortAccounts } from '@/lib/account'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,10 +22,6 @@ import { useTranslation } from 'react-i18next'
 
 type SortMode = 'default' | 'name' | 'status' | 'checked' | 'created'
 
-function displayName(acc: Account) {
-  return acc.note?.trim() ? `${acc.note.trim()}(${acc.github_login})` : acc.github_login
-}
-
 export default function AccountsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -39,15 +36,17 @@ export default function AccountsPage() {
   const [noteValue, setNoteValue] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null)
 
-  const [sortMode, setSortMode] = useState<SortMode>('default')
+  const [sortMode, setSortMode] = useState<SortMode>(() => getSortMode() as SortMode)
   const [searchQuery, setSearchQuery] = useState('')
-  const [pinnedIds, setPinnedIds] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem('gam-pinned-accounts') || '[]') } catch { return [] }
-  })
+  const [pinnedIds, setPinnedIds] = useState<number[]>(() => getPinnedIds())
 
   useEffect(() => {
     localStorage.setItem('gam-pinned-accounts', JSON.stringify(pinnedIds))
   }, [pinnedIds])
+
+  useEffect(() => {
+    localStorage.setItem('gam-account-sort', sortMode)
+  }, [sortMode])
 
   const togglePin = (id: number) => {
     setPinnedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
@@ -55,7 +54,7 @@ export default function AccountsPage() {
 
   const sortedAccounts = useMemo(() => {
     if (!accounts) return []
-    let list = [...accounts]
+    let list = sortAccounts(accounts)
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
@@ -66,36 +65,8 @@ export default function AccountsPage() {
       )
     }
 
-    const statusOrder: Record<string, number> = { banned: 0, error: 1, unknown: 2, active: 3 }
-    switch (sortMode) {
-      case 'name':
-        list.sort((a, b) => displayName(a).localeCompare(displayName(b)))
-        break
-      case 'status':
-        list.sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
-        break
-      case 'checked':
-        list.sort((a, b) => {
-          if (!a.last_checked_at) return 1
-          if (!b.last_checked_at) return -1
-          return new Date(b.last_checked_at).getTime() - new Date(a.last_checked_at).getTime()
-        })
-        break
-      case 'created':
-        list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        break
-    }
-
-    if (pinnedIds.length > 0) {
-      list.sort((a, b) => {
-        const aPinned = pinnedIds.includes(a.id) ? 0 : 1
-        const bPinned = pinnedIds.includes(b.id) ? 0 : 1
-        return aPinned - bPinned
-      })
-    }
-
     return list
-  }, [accounts, sortMode, searchQuery, pinnedIds])
+  }, [accounts, searchQuery])
 
   const checkMutation = useMutation({
     mutationFn: (id: number) => accountApi.checkStatus(id),
@@ -229,7 +200,7 @@ export default function AccountsPage() {
                           </Avatar>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-medium">{displayName(acc)}</span>
+                              <span className="font-medium">{getDisplayName(acc)}</span>
                               {isPinned && <Badge variant="secondary" className="px-1 py-0 text-[10px]">{t('accounts.pinned')}</Badge>}
                             </div>
                             <div className="text-xs text-muted-foreground">{acc.display_name}</div>

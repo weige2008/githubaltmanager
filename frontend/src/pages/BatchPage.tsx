@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, repoApi, batchApi, type Repo, type Account } from '@/api'
+import { displayName, sortAccounts } from '@/lib/account'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -70,6 +71,7 @@ export default function BatchPage() {
     enabled: selectedAccounts.length > 0,
   })
 
+  const sortedAccountsList = useMemo(() => accounts ? sortAccounts(accounts) : [], [accounts])
   const accMap = useMemo(() => {
     const m = new Map<number, Account>()
     accounts?.forEach((a) => m.set(a.id, a))
@@ -166,7 +168,7 @@ export default function BatchPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="max-h-[400px] space-y-1 overflow-y-auto">
-            {accounts?.map((acc) => {
+            {sortedAccountsList.map((acc) => {
               const checked = selectedAccounts.includes(acc.id)
               return (
                 <label key={acc.id} className="flex cursor-pointer items-center gap-2.5 rounded-md p-2 hover:bg-accent">
@@ -174,7 +176,7 @@ export default function BatchPage() {
                   <Avatar className="h-6 w-6">
                     <AvatarFallback className="text-[10px]">{acc.github_login.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <span className="flex-1 truncate text-sm">{acc.github_login}</span>
+                  <span className="flex-1 truncate text-sm">{displayName(acc)}</span>
                   {checked && (
                     <Badge variant="secondary" className="text-xs">
                       {(allRepos || []).filter((r) => r.account_id === acc.id).length || '...'}

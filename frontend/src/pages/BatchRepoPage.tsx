@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, batchApi, type TemplateFile, type SecretEntry } from '@/api'
+import { displayName, sortAccounts } from '@/lib/account'
 import { PageHeader } from '@/components/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -134,10 +135,10 @@ export default function BatchRepoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="max-h-[500px] space-y-1 overflow-y-auto">
-            {accounts?.map(acc => (
+            {(accounts ? sortAccounts(accounts) : []).map(acc => (
               <label key={acc.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-accent">
                 <Checkbox checked={accountIds.includes(acc.id)} onCheckedChange={() => toggleAccount(acc.id)} />
-                <span className="text-sm font-medium">{acc.github_login}</span>
+                <span className="text-sm font-medium">{displayName(acc)}</span>
                 <Badge variant={acc.status === 'active' ? 'success' : 'destructive'} className="ml-auto text-xs">
                   {acc.status}
                 </Badge>
