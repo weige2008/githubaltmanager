@@ -106,6 +106,7 @@ export default function AccountDetailPage() {
                 </div>
                 <div><span className="text-muted-foreground">{t('accounts.lastChecked')}</span><br />{acc.last_checked_at ? new Date(acc.last_checked_at).toLocaleString() : '—'}</div>
                 <div><span className="text-muted-foreground">{t('accounts.notes')}</span><br />{acc.note || '—'}</div>
+                <div><span className="text-muted-foreground">{t('accounts.group', { defaultValue: '分组' })}</span><br />{acc.group || '—'}</div>
                 <div className="col-span-2 lg:col-span-3"><span className="text-muted-foreground">{t('accounts.statusReason')}</span><br />{acc.status_reason || '—'}</div>
               </div>
             </CardContent>

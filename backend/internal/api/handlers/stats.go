@@ -32,7 +32,7 @@ type Overview struct {
 // Overview 仪表盘概览数据
 func (h *StatsHandler) Overview(c *gin.Context) {
 	var o Overview
-	db := h.c.DB.Table("accounts")
+	db := h.c.DB.Table("accounts").Where("deleted_at IS NULL")
 	db.Count(&o.Total)
 	db.Where("status = ?", "active").Count(&o.Active)
 	db.Where("status = ?", "banned").Count(&o.Banned)

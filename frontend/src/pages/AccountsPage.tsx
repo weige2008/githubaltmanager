@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { accountApi, repoApi, type Account } from '@/api'
 import { displayName as getDisplayName, getPinnedIds, getSortMode, sortAccounts } from '@/lib/account'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,12 @@ export default function AccountsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { data: accounts, isLoading, isError } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [activeGroup, setActiveGroup] = useState<string>('')
+  const { data: accounts, isLoading, isError } = useQuery({
+    queryKey: ['accounts', activeGroup],
+    queryFn: () => accountApi.list(activeGroup === 'recycle' || activeGroup === 'all' || !activeGroup ? undefined : activeGroup)
+  })
   const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -43,7 +48,14 @@ export default function AccountsPage() {
   const [sortMode, setSortMode] = useState<SortMode>(() => getSortMode() as SortMode)
   const [searchQuery, setSearchQuery] = useState('')
   const [pinnedIds, setPinnedIds] = useState<number[]>(() => getPinnedIds())
-  const [activeGroup, setActiveGroup] = useState<string>('')
+
+  useEffect(() => {
+    if (searchParams.get('recycle') === '1') {
+      setRecycleOpen(true)
+      searchParams.delete('recycle')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     localStorage.setItem('gam-pinned-accounts', JSON.stringify(pinnedIds))
@@ -83,6 +95,12 @@ export default function AccountsPage() {
     onError: () => toast.error(t('accounts.checkFailed')),
   })
 
+  const batchCheckMutation = useMutation({
+    mutationFn: (ids: number[]) => accountApi.batchCheck(ids),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); toast.success(t('accounts.checkComplete')) },
+    onError: () => toast.error(t('accounts.checkFailed')),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => accountApi.remove(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); toast.success(t('accounts.deleteSuccess')) },
@@ -93,16 +111,21 @@ export default function AccountsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
       queryClient.invalidateQueries({ queryKey: ['accounts', 'recycle-bin'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
       toast.success('已恢复') // TODO: i18n
     },
+    onError: (e: any) => toast.error(e?.message || '恢复失败'),
   })
 
   const permDeleteMutation = useMutation({
     mutationFn: (id: number) => accountApi.permanentDelete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
       queryClient.invalidateQueries({ queryKey: ['accounts', 'recycle-bin'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
       toast.success('已永久删除') // TODO: i18n
     },
+    onError: (e: any) => toast.error(e?.message || '永久删除失败'),
   })
 
   const handleImport = async () => {
@@ -122,11 +145,15 @@ export default function AccountsPage() {
 
   const handleSaveNote = async () => {
     if (!noteAcc) return
-    await accountApi.update(noteAcc.id, { note: noteValue, group: groupValue })
-    toast.success(t('accounts.noteSaved'))
-    setNoteOpen(false)
-    queryClient.invalidateQueries({ queryKey: ['accounts'] })
-    queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
+    try {
+      await accountApi.update(noteAcc.id, { note: noteValue, group: groupValue })
+      toast.success(t('accounts.noteSaved'))
+      setNoteOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
+    } catch (e: any) {
+      toast.error(e?.message || t('accounts.noteSaveFailed', { defaultValue: '保存失败' }))
+    }
   }
 
   const openNote = (acc: Account) => {
@@ -188,7 +215,9 @@ export default function AccountsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" className="gap-2"
-            onClick={() => { sortedAccounts.forEach((a) => checkMutation.mutate(a.id)) }}>
+            onClick={() => batchCheckMutation.mutate(sortedAccounts.map((a) => a.id))}
+            disabled={batchCheckMutation.isPending || sortedAccounts.length === 0}
+          >
             <ShieldCheck className="h-4 w-4" /> {t('accounts.batchCheck')}
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => queryClient.invalidateQueries({ queryKey: ['accounts'] })}>

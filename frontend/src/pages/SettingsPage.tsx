@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { autoTaskApi, authApi, accountApi, type AutoTaskConfig } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,6 +58,7 @@ const joinGroups = (arr: string[]): string => arr.join(',')
 export default function SettingsPage() {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { mode, setMode } = useThemeStore()
 
   const { data: config, isLoading, isError, refetch } = useQuery({
@@ -79,7 +81,14 @@ export default function SettingsPage() {
     recycle_bin_enabled: false, recycle_bin_days: 30,
   })
 
-  useEffect(() => { if (config) setForm(config) }, [config])
+  // Only update form on first load, not on every refetch
+  const loadedRef = useRef(false)
+  useEffect(() => {
+    if (config && !loadedRef.current) {
+      setForm(config)
+      loadedRef.current = true
+    }
+  }, [config])
 
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -342,7 +351,7 @@ export default function SettingsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toast.info('敬请期待')}
+                        onClick={() => navigate('/accounts?recycle=1')}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         查看回收站

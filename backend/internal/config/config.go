@@ -55,6 +55,10 @@ type AutoTaskConfig struct {
 	AutoCheckInterval int    `json:"auto_check_interval"`
 	AutoSyncEnabled   bool   `json:"auto_sync_enabled"`
 	AutoSyncInterval  int    `json:"auto_sync_interval"`
+	AutoCheckGroups   string `json:"auto_check_groups"`
+	AutoSyncGroups    string `json:"auto_sync_groups"`
+	RecycleBinEnabled bool   `json:"recycle_bin_enabled"`
+	RecycleBinDays    int    `json:"recycle_bin_days"`
 }
 
 // Load 从环境变量加载配置，缺失时使用合理默认值

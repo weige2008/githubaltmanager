@@ -4,12 +4,20 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"githubaltmanager/internal/config"
 	"githubaltmanager/internal/model"
 
 	"gorm.io/gorm"
+)
+
+// autoCheckMu / autoSyncMu 防止自动检测/自动同步并发重复执行
+// （AutoTaskService 每次调用都新建实例，故使用包级锁）
+var (
+	autoCheckMu sync.Mutex
+	autoSyncMu  sync.Mutex
 )
 
 // AutoTaskService 管理自动检测+自动同步
@@ -32,6 +40,10 @@ func (s *AutoTaskService) GetAutoTaskConfig() (*config.AutoTaskConfig, error) {
 		AutoCheckInterval: cfg.AutoCheckInterval,
 		AutoSyncEnabled:   cfg.AutoSyncEnabled,
 		AutoSyncInterval:  cfg.AutoSyncInterval,
+		AutoCheckGroups:   cfg.AutoCheckGroups,
+		AutoSyncGroups:    cfg.AutoSyncGroups,
+		RecycleBinEnabled: cfg.RecycleBinEnabled,
+		RecycleBinDays:    cfg.RecycleBinDays,
 	}, nil
 }
 
@@ -43,12 +55,32 @@ func (s *AutoTaskService) UpdateAutoTaskConfig(req config.AutoTaskConfig) error 
 	if req.AutoSyncInterval < 1 {
 		req.AutoSyncInterval = 30
 	}
+	if req.RecycleBinDays < 1 {
+		req.RecycleBinDays = 30
+	}
 	return s.DB.Model(&model.AppConfig{}).Where("id = 1").Updates(map[string]any{
 		"auto_check_enabled":  req.AutoCheckEnabled,
 		"auto_check_interval": req.AutoCheckInterval,
 		"auto_sync_enabled":   req.AutoSyncEnabled,
 		"auto_sync_interval":  req.AutoSyncInterval,
+		"auto_check_groups":   req.AutoCheckGroups,
+		"auto_sync_groups":    req.AutoSyncGroups,
+		"recycle_bin_enabled": req.RecycleBinEnabled,
+		"recycle_bin_days":    req.RecycleBinDays,
 	}).Error
+}
+
+// splitGroups 按逗号分割分组并去除空白/空项
+func splitGroups(s string) []string {
+	raw := strings.Split(s, ",")
+	out := make([]string, 0, len(raw))
+	for _, g := range raw {
+		g = strings.TrimSpace(g)
+		if g != "" {
+			out = append(out, g)
+		}
+	}
+	return out
 }
 
 // startLog 创建一条 running 日志，返回 logID
@@ -75,14 +107,22 @@ func (s *AutoTaskService) finishLog(logID uint, status string, total, success, f
 
 // RunAutoSync 对所有账户执行仓库同步（带日志）
 func (s *AutoTaskService) RunAutoSync(c *Container) {
+	if !autoSyncMu.TryLock() {
+		log.Printf("[auto-sync] 上一次同步仍在运行，跳过本次")
+		return
+	}
+	defer autoSyncMu.Unlock()
+
 	var accs []model.Account
 	query := s.DB.Where("deleted_at IS NULL")
 	// Apply group filter from config
 	var cfg model.AppConfig
 	s.DB.First(&cfg, 1)
 	if cfg.AutoSyncGroups != "" {
-		groups := strings.Split(cfg.AutoSyncGroups, ",")
-		query = query.Where("account_group IN ?", groups)
+		groups := splitGroups(cfg.AutoSyncGroups)
+		if len(groups) > 0 {
+			query = query.Where("account_group IN ?", groups)
+		}
 	}
 	if err := query.Find(&accs).Error; err != nil {
 		log.Printf("[auto-sync] 查询账户失败: %v", err)
@@ -128,14 +168,22 @@ func (s *AutoTaskService) RunAutoSync(c *Container) {
 
 // RunAutoCheck 对所有账户执行封禁检测（带日志）
 func (s *AutoTaskService) RunAutoCheck(c *Container) {
+	if !autoCheckMu.TryLock() {
+		log.Printf("[auto-check] 上一次检测仍在运行，跳过本次")
+		return
+	}
+	defer autoCheckMu.Unlock()
+
 	var accs []model.Account
 	query := s.DB.Where("deleted_at IS NULL")
 	// Apply group filter from config
 	var cfg model.AppConfig
 	s.DB.First(&cfg, 1)
 	if cfg.AutoCheckGroups != "" {
-		groups := strings.Split(cfg.AutoCheckGroups, ",")
-		query = query.Where("account_group IN ?", groups)
+		groups := splitGroups(cfg.AutoCheckGroups)
+		if len(groups) > 0 {
+			query = query.Where("account_group IN ?", groups)
+		}
 	}
 	if err := query.Find(&accs).Error; err != nil {
 		log.Printf("[auto-check] 查询账户失败: %v", err)

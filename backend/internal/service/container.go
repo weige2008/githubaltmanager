@@ -81,13 +81,29 @@ func (c *Container) RunAutoSync() {
 func (c *Container) CleanRecycleBin() {
 	var cfg model.AppConfig
 	c.DB.First(&cfg, 1)
-	if !cfg.RecycleBinEnabled { return }
+	if !cfg.RecycleBinEnabled {
+		return
+	}
 	days := cfg.RecycleBinDays
-	if days <= 0 { days = 30 }
+	if days <= 0 {
+		days = 30
+	}
 	threshold := time.Now().AddDate(0, 0, -days)
-	result := c.DB.Where("deleted_at IS NOT NULL AND deleted_at < ?", threshold).Delete(&model.Account{})
-	if result.RowsAffected > 0 {
-		log.Printf("[recycle-bin] cleaned %d accounts older than %d days", result.RowsAffected, days)
+
+	var ids []uint
+	c.DB.Model(&model.Account{}).Where("deleted_at IS NOT NULL AND deleted_at < ?", threshold).Pluck("id", &ids)
+	if len(ids) > 0 {
+		err := c.DB.Transaction(func(tx *gorm.DB) error {
+			tx.Where("account_id IN ?", ids).Delete(&model.Repository{})
+			tx.Where("account_id IN ?", ids).Delete(&model.Workflow{})
+			tx.Where("account_id IN ?", ids).Delete(&model.ScheduledTask{})
+			return tx.Where("id IN ?", ids).Delete(&model.Account{}).Error
+		})
+		if err != nil {
+			log.Printf("[recycle-bin] clean failed: %v", err)
+		} else {
+			log.Printf("[recycle-bin] cleaned %d accounts older than %d days", len(ids), days)
+		}
 	}
 	now := time.Now()
 	c.DB.Model(&model.AppConfig{}).Where("id = 1").Update("recycle_bin_last_clean", &now)

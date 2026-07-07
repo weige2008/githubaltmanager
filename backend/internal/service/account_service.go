@@ -85,9 +85,9 @@ func (s *AccountService) ImportByToken(c *Container, token, password, recoveryEm
 		return nil, errors.New("token 验证失败，请检查 token 是否有效")
 	}
 
-	// 重复检查
+	// 重复检查（仅检查未软删的账户）
 	var existing model.Account
-	if err := s.DB.Where("github_login = ?", u.Login).First(&existing).Error; err == nil {
+	if err := s.DB.Where("github_login = ? AND deleted_at IS NULL", u.Login).First(&existing).Error; err == nil {
 		return nil, errors.New("账户 " + u.Login + " 已存在")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
@@ -117,6 +117,37 @@ func (s *AccountService) ImportByToken(c *Container, token, password, recoveryEm
 	displayName := u.Name
 	if displayName == "" {
 		displayName = u.Login
+	}
+
+	// 若存在同名软删账户，恢复它并更新 token
+	var softDeleted model.Account
+	if sdErr := s.DB.Where("github_login = ? AND deleted_at IS NOT NULL", u.Login).First(&softDeleted).Error; sdErr == nil {
+		updates := map[string]any{
+			"deleted_at":    nil,
+			"github_id":     u.ID,
+			"display_name":  displayName,
+			"avatar_url":    u.AvatarURL,
+			"token_enc":     tokenEnc,
+			"status":        "active",
+			"status_reason": "token 导入时验证通过",
+			"token_scopes":  strings.Join(scopes, ","),
+		}
+		if pwEnc != "" {
+			updates["password_enc"] = pwEnc
+		}
+		if emailEnc != "" {
+			updates["recovery_email"] = emailEnc
+		}
+		if note != "" {
+			updates["note"] = note
+		}
+		if err := s.DB.Model(&softDeleted).Updates(updates).Error; err != nil {
+			return nil, err
+		}
+		softDeleted.DeletedAt = nil
+		return &softDeleted, nil
+	} else if !errors.Is(sdErr, gorm.ErrRecordNotFound) {
+		return nil, sdErr
 	}
 
 	acc := model.Account{

@@ -106,7 +106,7 @@ func (s *TaskService) UpdateNextRun(t *model.ScheduledTask) error {
 func (s *TaskService) RunDueTasks(c *Container) {
 	now := time.Now()
 	var due []model.ScheduledTask
-	if err := s.DB.Where("enabled = ? AND next_run_at <= ?", true, now).Find(&due).Error; err != nil {
+	if err := s.DB.Joins("LEFT JOIN accounts ON accounts.id = scheduled_tasks.account_id").Where("scheduled_tasks.enabled = ? AND scheduled_tasks.next_run_at <= ? AND accounts.deleted_at IS NULL", true, now).Find(&due).Error; err != nil {
 		log.Printf("[scheduler] query due tasks: %v", err)
 		return
 	}

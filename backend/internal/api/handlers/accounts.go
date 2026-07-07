@@ -9,6 +9,8 @@ import (
 	"githubaltmanager/internal/crypto"
 	"githubaltmanager/internal/model"
 	"githubaltmanager/internal/service"
+
+	"gorm.io/gorm"
 )
 
 type AccountHandler struct {
@@ -130,37 +132,58 @@ func (h *AccountHandler) Update(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	acc, err := h.s.Get(uint(id))
+	_, err := h.s.Get(uint(id))
 	if err != nil {
 		resp.NotFound(c, "账户不存在")
 		return
 	}
 	updates := map[string]any{}
-	if p.Note != nil { updates["note"] = *p.Note }
-	if p.Group != nil { updates["account_group"] = *p.Group }
+	if p.Note != nil {
+		updates["note"] = *p.Note
+	}
+	if p.Group != nil {
+		updates["account_group"] = *p.Group
+	}
 
 	// Handle encrypted fields
 	if p.Password != nil && *p.Password != "" {
-		encPass, err := crypto.EncryptField(*p.Password)
-		if err == nil { updates["password_enc"] = encPass }
+		encPass, encErr := crypto.EncryptField(*p.Password)
+		if encErr == nil {
+			updates["password_enc"] = encPass
+		}
 	}
 	if p.RecoveryEmail != nil && *p.RecoveryEmail != "" {
-		encEmail, err := crypto.EncryptField(*p.RecoveryEmail)
-		if err == nil { updates["recovery_email"] = encEmail }
+		encEmail, encErr := crypto.EncryptField(*p.RecoveryEmail)
+		if encErr == nil {
+			updates["recovery_email"] = encEmail
+		}
 	}
 
 	if len(updates) > 0 {
-		h.c.DB.Model(&model.Account{}).Where("id = ?", id).Updates(updates)
+		if dbErr := h.c.DB.Model(&model.Account{}).Where("id = ?", id).Updates(updates).Error; dbErr != nil {
+			resp.Internal(c, "更新失败", dbErr)
+			return
+		}
 	}
-	acc, _ = h.s.Get(uint(id))
+	acc, err := h.s.Get(uint(id))
+	if err != nil {
+		resp.Internal(c, "重新加载账户失败", err)
+		return
+	}
 	resp.OK(c, h.s.ToOut(acc))
 }
 
 func (h *AccountHandler) Delete(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	// Soft delete - move to recycle bin
+	// Soft delete - move to recycle bin & disable all scheduled tasks
 	now := time.Now()
-	if err := h.c.DB.Model(&model.Account{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now).Error; err != nil {
+	err := h.c.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Account{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now).Error; err != nil {
+			return err
+		}
+		return tx.Model(&model.ScheduledTask{}).Where("account_id = ?", id).Update("enabled", false).Error
+	})
+	if err != nil {
 		resp.Internal(c, "删除失败", err)
 		return
 	}
@@ -194,6 +217,10 @@ func (h *AccountHandler) BatchCheckStatus(c *gin.Context) {
 	var p BatchCheckPayload
 	if err := c.ShouldBindJSON(&p); err != nil || len(p.IDs) == 0 {
 		resp.BadRequest(c, "请提供 ids", err)
+		return
+	}
+	if len(p.IDs) > 100 {
+		resp.BadRequest(c, "最多 100 个账户", nil)
 		return
 	}
 	results := make([]gin.H, 0, len(p.IDs))
@@ -249,23 +276,55 @@ func (h *AccountHandler) ListRecycleBin(c *gin.Context) {
 	resp.OK(c, out)
 }
 
+// PermanentDelete 永久删除账户（连同关联的仓库/workflow/任务）
 func (h *AccountHandler) PermanentDelete(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.c.DB.Where("id = ?", id).Delete(&model.Account{}).Error; err != nil {
+	err := h.c.DB.Transaction(func(tx *gorm.DB) error {
+		tx.Where("account_id = ?", id).Delete(&model.Repository{})
+		tx.Where("account_id = ?", id).Delete(&model.Workflow{})
+		tx.Where("account_id = ?", id).Delete(&model.ScheduledTask{})
+		return tx.Where("id = ?", id).Delete(&model.Account{}).Error
+	})
+	if err != nil {
 		resp.Internal(c, "永久删除失败", err)
 		return
 	}
 	resp.OK(c, gin.H{"ok": true})
 }
 
+// CleanRecycleBin 清理回收站中超过保留期的账户（连同关联行）
 func (h *AccountHandler) CleanRecycleBin(c *gin.Context) {
 	var cfg model.AppConfig
 	h.c.DB.First(&cfg, 1)
 	days := cfg.RecycleBinDays
-	if days <= 0 { days = 30 }
+	if days <= 0 {
+		days = 30
+	}
 	threshold := time.Now().AddDate(0, 0, -days)
-	h.c.DB.Where("deleted_at IS NOT NULL AND deleted_at < ?", threshold).Delete(&model.Account{})
+
+	var ids []uint
+	if err := h.c.DB.Model(&model.Account{}).Where("deleted_at IS NOT NULL AND deleted_at < ?", threshold).Pluck("id", &ids).Error; err != nil {
+		resp.Internal(c, "查询回收站失败", err)
+		return
+	}
+
+	if len(ids) > 0 {
+		err := h.c.DB.Transaction(func(tx *gorm.DB) error {
+			tx.Where("account_id IN ?", ids).Delete(&model.Repository{})
+			tx.Where("account_id IN ?", ids).Delete(&model.Workflow{})
+			tx.Where("account_id IN ?", ids).Delete(&model.ScheduledTask{})
+			return tx.Where("id IN ?", ids).Delete(&model.Account{}).Error
+		})
+		if err != nil {
+			resp.Internal(c, "清理回收站失败", err)
+			return
+		}
+	}
+
 	now := time.Now()
-	h.c.DB.Model(&model.AppConfig{}).Where("id = 1").Update("recycle_bin_last_clean", &now)
+	if err := h.c.DB.Model(&model.AppConfig{}).Where("id = 1").Update("recycle_bin_last_clean", &now).Error; err != nil {
+		resp.Internal(c, "更新清理时间失败", err)
+		return
+	}
 	resp.OK(c, gin.H{"ok": true, "cleaned_before": threshold.Format("2006-01-02")})
 }
