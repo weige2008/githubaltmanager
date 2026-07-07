@@ -348,7 +348,7 @@ export default function AccountsPage() {
 
       {/* Edit note + group dialog */}
       <Dialog open={noteOpen} onClose={() => setNoteOpen(false)} className="max-w-sm">
-        <DialogTitle>{t('accounts.editNote', { name: getDisplayName(noteAcc!) })}</DialogTitle>
+        <DialogTitle>{t('accounts.editNote', { name: noteAcc ? getDisplayName(noteAcc) : '' })}</DialogTitle>
         <div className="space-y-3">
           <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.notesOptional')}</label><Input value={noteValue} onChange={(e) => setNoteValue(e.target.value)} placeholder={t('accounts.notePlaceholderExample')} /></div>
           <div className="space-y-2"><label className="text-sm font-medium">分组</label>
