@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, repoApi, batchApi, type Repo, type Account } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -52,6 +53,9 @@ export default function BatchPage() {
     queryKey: ['accounts'],
     queryFn: () => accountApi.list(),
   })
+  const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
+
+  const [groupFilter, setGroupFilter] = useState<string>('')
 
   const { data: allRepos, isLoading: reposLoading } = useQuery({
     queryKey: ['batch-repos', selectedAccounts],
@@ -71,7 +75,13 @@ export default function BatchPage() {
     enabled: selectedAccounts.length > 0,
   })
 
-  const sortedAccountsList = useMemo(() => accounts ? sortAccounts(accounts) : [], [accounts])
+  const sortedAccountsList = useMemo(() => {
+    if (!accounts) return []
+    let list = sortAccounts(accounts)
+    if (groupFilter === '__ungrouped__') list = list.filter(a => !a.group)
+    else if (groupFilter) list = list.filter(a => (a.group || '') === groupFilter)
+    return list
+  }, [accounts, groupFilter])
   const accMap = useMemo(() => {
     const m = new Map<number, Account>()
     accounts?.forEach((a) => m.set(a.id, a))
@@ -106,10 +116,8 @@ export default function BatchPage() {
   }
 
   const toggleAllAccounts = () => {
-    if (!accounts) return
-    setSelectedAccounts((prev) => prev.length === accounts.length ? [] : accounts.map((a) => a.id))
+    setSelectedAccounts((prev) => prev.length === sortedAccountsList.length ? [] : sortedAccountsList.map((a) => a.id))
     setSelectedRepoIds([])
-    setResults(null)
   }
 
   const toggleRepo = (id: number) => {
@@ -163,9 +171,18 @@ export default function BatchPage() {
             <CardTitle className="flex items-center justify-between text-base">
               <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
-                {selectedAccounts.length === (accounts?.length || 0) ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
+                {selectedAccounts.length === sortedAccountsList.length && sortedAccountsList.length > 0 ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
+            {(groups || []).filter(g => g).length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                <button onClick={() => setGroupFilter('')} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', !groupFilter ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>全部</button>
+                <button onClick={() => setGroupFilter('__ungrouped__')} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', groupFilter === '__ungrouped__' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>未分组</button>
+                {(groups || []).filter(g => g).map(g => (
+                  <button key={g} onClick={() => setGroupFilter(g)} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', groupFilter === g ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>{g}</button>
+                ))}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="max-h-[400px] space-y-1 overflow-y-auto">
             {sortedAccountsList.map((acc) => {

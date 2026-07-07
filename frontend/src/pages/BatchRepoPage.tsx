@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, batchApi, type TemplateFile, type SecretEntry } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
+import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,8 @@ export default function BatchRepoPage() {
     queryKey: ['accounts'],
     queryFn: () => accountApi.list(),
   })
+  const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
+  const [groupFilter, setGroupFilter] = useState<string>('')
 
   const fetchTemplateMut = useMutation({
     mutationFn: (vars: { accountId: number; owner: string; repo: string }) =>
@@ -99,8 +102,8 @@ export default function BatchRepoPage() {
   }
 
   const toggleAll = () => {
-    if (!accounts) return
-    setAccountIds(prev => prev.length === accounts.length ? [] : accounts.map(a => a.id))
+    const list = accounts ? sortAccounts(accounts).filter(a => !groupFilter || groupFilter === '__ungrouped__' ? (groupFilter === '__ungrouped__' ? !a.group : true) : (a.group || '') === groupFilter) : []
+    setAccountIds(prev => prev.length === list.length ? [] : list.map(a => a.id))
   }
 
   const addManualFile = () => setManualFiles(prev => [...prev, { path: '', content: '' }])
@@ -130,12 +133,25 @@ export default function BatchRepoPage() {
             <CardTitle className="flex items-center justify-between text-base">
               <span>{t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAll}>
-                {accountIds.length === (accounts?.length || 0) ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
+                {t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
+            {(groups || []).filter(g => g).length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                <button onClick={() => setGroupFilter('')} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', !groupFilter ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>全部</button>
+                <button onClick={() => setGroupFilter('__ungrouped__')} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', groupFilter === '__ungrouped__' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>未分组</button>
+                {(groups || []).filter(g => g).map(g => (
+                  <button key={g} onClick={() => setGroupFilter(g)} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', groupFilter === g ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>{g}</button>
+                ))}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="max-h-[500px] space-y-1 overflow-y-auto">
-            {(accounts ? sortAccounts(accounts) : []).map(acc => (
+            {(accounts ? sortAccounts(accounts).filter(a => {
+              if (!groupFilter) return true
+              if (groupFilter === '__ungrouped__') return !a.group
+              return (a.group || '') === groupFilter
+            }) : []).map(acc => (
               <label key={acc.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-accent">
                 <Checkbox checked={accountIds.includes(acc.id)} onCheckedChange={() => toggleAccount(acc.id)} />
                 <span className="text-sm font-medium">{displayName(acc)}</span>
