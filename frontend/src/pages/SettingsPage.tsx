@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { autoTaskApi, authApi, type AutoTaskConfig } from '@/api'
+import { autoTaskApi, authApi, accountApi, type AutoTaskConfig } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText } from 'lucide-react'
+import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText, Trash2, Filter } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { zhCN, enUS } from 'date-fns/locale'
@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore, type ThemeMode } from '@/store/theme'
 import { LANGUAGES } from '@/i18n/languages'
@@ -48,6 +49,11 @@ const themeModes: { value: ThemeMode; labelKey: string }[] = [
   { value: 'dark', labelKey: 'theme.modeDark' },
 ]
 
+const splitGroups = (s?: string | null): string[] =>
+  (s || '').split(',').map((x) => x.trim()).filter(Boolean)
+
+const joinGroups = (arr: string[]): string => arr.join(',')
+
 export default function SettingsPage() {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
@@ -59,9 +65,18 @@ export default function SettingsPage() {
     refetchInterval: 5000,
   })
 
+  const { data: groups = [] } = useQuery({
+    queryKey: ['groups'],
+    queryFn: () => accountApi.listGroups(),
+  })
+
+  const groupOptions = groups.map((g) => ({ label: g, value: g }))
+
   const [form, setForm] = useState<AutoTaskConfig>({
     auto_check_enabled: false, auto_check_interval: 30,
     auto_sync_enabled: true, auto_sync_interval: 30,
+    auto_check_groups: '', auto_sync_groups: '',
+    recycle_bin_enabled: false, recycle_bin_days: 30,
   })
 
   useEffect(() => { if (config) setForm(config) }, [config])
@@ -101,6 +116,15 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['automation-logs'] })
     },
     onError: () => toast.error(t('settings.triggerFailed')),
+  })
+
+  const cleanRecycleBinMut = useMutation({
+    mutationFn: () => accountApi.cleanRecycleBin(),
+    onSuccess: () => {
+      toast.success('清理完成')
+      queryClient.invalidateQueries({ queryKey: ['autotask-config'] })
+    },
+    onError: () => toast.error('清理失败'),
   })
 
   const changePwMut = useMutation({
@@ -189,6 +213,21 @@ export default function SettingsPage() {
                         {form.auto_check_enabled ? t('settings.running') : t('settings.stopped')}
                       </Badge>
                     </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Filter className="h-4 w-4" />
+                        <span>检测分组</span>
+                        <span className="text-xs">（留空 = 全部分组）</span>
+                      </div>
+                      <MultiSelect
+                        options={groupOptions}
+                        value={splitGroups(form.auto_check_groups)}
+                        onChange={(arr) => updateForm({ auto_check_groups: joinGroups(arr) })}
+                        placeholder="全部分组"
+                        disabled={!form.auto_check_enabled}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -236,6 +275,87 @@ export default function SettingsPage() {
                       <Badge variant={form.auto_sync_enabled ? 'success' : 'secondary'}>
                         {form.auto_sync_enabled ? t('settings.running') : t('settings.stopped')}
                       </Badge>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Filter className="h-4 w-4" />
+                        <span>同步分组</span>
+                        <span className="text-xs">（留空 = 全部分组）</span>
+                      </div>
+                      <MultiSelect
+                        options={groupOptions}
+                        value={splitGroups(form.auto_sync_groups)}
+                        onChange={(arr) => updateForm({ auto_sync_groups: joinGroups(arr) })}
+                        placeholder="全部分组"
+                        disabled={!form.auto_sync_enabled}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 回收站 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <span className="flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        回收站
+                      </span>
+                      <Switch
+                        checked={!!form.recycle_bin_enabled}
+                        onCheckedChange={(checked) => updateForm({ recycle_bin_enabled: checked })}
+                      />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">保留天数</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          className="w-24"
+                          value={form.recycle_bin_days ?? 30}
+                          disabled={!form.recycle_bin_enabled}
+                          onChange={(e) => {
+                            const v = Number(e.target.value)
+                            setForm((prev) => ({ ...prev, recycle_bin_days: isNaN(v) ? 30 : v }))
+                          }}
+                          onBlur={(e) => {
+                            const v = Math.max(1, Number(e.target.value) || 30)
+                            updateForm({ recycle_bin_days: v })
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => cleanRecycleBinMut.mutate()}
+                        disabled={cleanRecycleBinMut.isPending}
+                      >
+                        {cleanRecycleBinMut.isPending
+                          ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          : <Trash2 className="mr-2 h-4 w-4" />}
+                        立即清理
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toast.info('敬请期待')}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        查看回收站
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>上次清理：{formatTime(config?.recycle_bin_last_clean)}</span>
+                      <Badge variant={form.recycle_bin_enabled ? 'success' : 'secondary'}>
+                        {form.recycle_bin_enabled ? t('settings.running') : t('settings.stopped')}
+                      </Badge>
+                    </div>
+                    <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-muted-foreground">
+                      删除账户时会进入回收站，超过保留天数的记录会在自动检测/同步时被永久删除。未启用回收站时，账户将直接永久删除。
                     </div>
                   </CardContent>
                 </Card>
