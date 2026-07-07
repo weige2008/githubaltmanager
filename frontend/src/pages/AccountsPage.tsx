@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -33,11 +33,10 @@ export default function AccountsPage() {
   const [activeGroup, setActiveGroup] = useState<string>('')
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat')
 
-  const { data: accounts, isLoading, isError } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => accountApi.list()
-  })
+  const { data: accounts, isLoading, isError } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
   const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
+
+  const existingGroups = useMemo(() => (groups || []).filter(g => g), [groups])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importData, setImportData] = useState({ token: '', password: '', recovery_email: '', note: '', group: '' })
@@ -49,24 +48,21 @@ export default function AccountsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null)
   const [recycleOpen, setRecycleOpen] = useState(false)
   const [permDeleteTarget, setPermDeleteTarget] = useState<Account | null>(null)
-  const [createGroupOpen, setCreateGroupOpen] = useState(false)
-  const [newGroupName, setNewGroupName] = useState('')
 
+  // Batch state
   const [selectedIds, setSelectedIds] = useState<number[]>([])
-  const [batchGroupTarget, setBatchGroupTarget] = useState<string>('')
+  const [batchNewGroup, setBatchNewGroup] = useState('')
+
+  // Edit dialog group mode
+  const [editGroupMode, setEditGroupMode] = useState<'select' | 'input'>('select')
 
   const [sortMode, setSortMode] = useState<SortMode>(() => getSortMode() as SortMode)
   const [searchQuery, setSearchQuery] = useState('')
   const [pinnedIds, setPinnedIds] = useState<number[]>(() => getPinnedIds())
 
   useEffect(() => {
-    if (searchParams.get('recycle') === '1') {
-      setRecycleOpen(true)
-      searchParams.delete('recycle')
-      setSearchParams(searchParams, { replace: true })
-    }
+    if (searchParams.get('recycle') === '1') { setRecycleOpen(true); searchParams.delete('recycle'); setSearchParams(searchParams, { replace: true }) }
   }, [searchParams, setSearchParams])
-
   useEffect(() => { localStorage.setItem('gam-pinned-accounts', JSON.stringify(pinnedIds)) }, [pinnedIds])
   useEffect(() => { localStorage.setItem('gam-account-sort', sortMode) }, [sortMode])
 
@@ -76,7 +72,8 @@ export default function AccountsPage() {
   const sortedAccounts = useMemo(() => {
     if (!accounts) return []
     let list = sortAccounts(accounts)
-    if (activeGroup) list = list.filter(a => (a.group || '') === activeGroup)
+    if (activeGroup === '__ungrouped__') list = list.filter(a => !a.group)
+    else if (activeGroup) list = list.filter(a => (a.group || '') === activeGroup)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter(a => a.github_login.toLowerCase().includes(q) || (a.note || '').toLowerCase().includes(q) || (a.display_name || '').toLowerCase().includes(q))
@@ -87,11 +84,7 @@ export default function AccountsPage() {
   const groupedAccounts = useMemo(() => {
     if (!sortedAccounts.length) return []
     const map = new Map<string, Account[]>()
-    for (const acc of sortedAccounts) {
-      const g = acc.group || ''
-      if (!map.has(g)) map.set(g, [])
-      map.get(g)!.push(acc)
-    }
+    for (const acc of sortedAccounts) { const g = acc.group || ''; if (!map.has(g)) map.set(g, []); map.get(g)!.push(acc) }
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
   }, [sortedAccounts])
 
@@ -102,22 +95,20 @@ export default function AccountsPage() {
   })
 
   const batchAssignMutation = useMutation({
-    mutationFn: async ({ ids, group }: { ids: number[]; group: string }) => {
-      await Promise.all(ids.map(id => accountApi.update(id, { group })))
-    },
-    onSuccess: () => {
+    mutationFn: async ({ ids, group }: { ids: number[]; group: string }) => { await Promise.all(ids.map(id => accountApi.update(id, { group }))) },
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
       queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
-      toast.success(`已将 ${selectedIds.length} 个账户移至「${batchGroupTarget}」`)
-      setSelectedIds([])
-      setBatchGroupTarget('')
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+      toast.success(vars.group ? `已将 ${vars.ids.length} 个账户移至「${vars.group}」` : `已将 ${vars.ids.length} 个账户移出分组`)
+      setSelectedIds([]); setBatchNewGroup('')
     },
     onError: () => toast.error('批量分组失败'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => accountApi.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); toast.success(t('accounts.deleteSuccess')) },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); queryClient.invalidateQueries({ queryKey: ['stats'] }); toast.success(t('accounts.deleteSuccess')) },
   })
 
   const restoreMutation = useMutation({
@@ -157,14 +148,17 @@ export default function AccountsPage() {
     if (!noteAcc) return
     try {
       await accountApi.update(noteAcc.id, { note: noteValue, group: groupValue })
-      toast.success(t('accounts.noteSaved'))
-      setNoteOpen(false)
+      toast.success(t('accounts.noteSaved')); setNoteOpen(false)
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
       queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
     } catch (e: any) { toast.error(e?.message || '保存失败') }
   }
 
-  const openNote = (acc: Account) => { setNoteAcc(acc); setNoteValue(acc.note || ''); setGroupValue(acc.group || ''); setNoteOpen(true) }
+  const openNote = (acc: Account) => {
+    setNoteAcc(acc); setNoteValue(acc.note || ''); setGroupValue(acc.group || '')
+    setEditGroupMode(acc.group && existingGroups.includes(acc.group) ? 'select' : 'input')
+    setNoteOpen(true)
+  }
 
   const statusBadge = (status: string) => {
     const map: Record<string, { variant: 'success' | 'destructive' | 'warning' | 'secondary'; label: string }> = {
@@ -180,9 +174,8 @@ export default function AccountsPage() {
   const someChecked = selectedIds.length > 0 && selectedIds.length < sortedAccounts.length
 
   const handleBatchAssign = (groupName: string) => {
-    if (!groupName || selectedIds.length === 0) return
-    setBatchGroupTarget(groupName)
-    batchAssignMutation.mutate({ ids: selectedIds, group: groupName })
+    if (selectedIds.length === 0) return
+    batchAssignMutation.mutate({ ids: [...selectedIds], group: groupName })
   }
 
   const renderAccountRow = (acc: Account) => {
@@ -191,9 +184,7 @@ export default function AccountsPage() {
     const isSelected = selectedIds.includes(acc.id)
     return (
       <TR key={acc.id} className={cn(isPinned && 'bg-muted/30', isSelected && 'bg-primary/5')}>
-        <TD className="w-8">
-          <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(acc.id)} />
-        </TD>
+        <TD className="w-8"><Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(acc.id)} /></TD>
         <TD className="w-8">
           <button onClick={() => togglePin(acc.id)} className={cn('flex h-7 w-7 items-center justify-center rounded-md transition-colors', isPinned ? 'text-primary' : 'text-muted-foreground/40 hover:text-muted-foreground')} title={isPinned ? t('accounts.unpin') : t('accounts.pin')}>
             {isPinned ? <Pin className="h-3.5 w-3.5 fill-current" /> : <Pin className="h-3.5 w-3.5" />}
@@ -226,24 +217,37 @@ export default function AccountsPage() {
     )
   }
 
+  // Count accounts per group
+  const groupCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    accounts?.forEach(a => { if (a.group) counts[a.group] = (counts[a.group] || 0) + 1 })
+    return counts
+  }, [accounts])
+  const ungroupedCount = accounts?.filter(a => !a.group).length || 0
+
   return (
     <div className="space-y-4">
       <PageHeader title={t('accounts.title')} description={t('accounts.description')}
         actions={<Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />{t('accounts.import')}</Button>} />
 
-      {/* Group filter tabs + actions */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant={activeGroup === '' ? 'default' : 'outline'} onClick={() => setActiveGroup('')}>{t('accounts.allGroups', { defaultValue: '全部' })}</Button>
-        {groups?.filter(g => g).map((g) => (
-          <Button key={g} size="sm" variant={activeGroup === g ? 'default' : 'outline'} onClick={() => setActiveGroup(g)} className="gap-1.5">
+      {/* Group filter tabs */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button size="sm" variant={activeGroup === '' ? 'default' : 'outline'} onClick={() => setActiveGroup('')} className="gap-1">
+          {t('accounts.allGroups', { defaultValue: '全部' })}
+          <Badge variant={activeGroup === '' ? 'secondary' : 'outline'} className="px-1 text-[10px]">{accounts?.length || 0}</Badge>
+        </Button>
+        {ungroupedCount > 0 && (
+          <Button size="sm" variant={activeGroup === '__ungrouped__' ? 'default' : 'outline'} onClick={() => setActiveGroup('__ungrouped__')} className="gap-1">
+            未分组 <Badge variant={activeGroup === '__ungrouped__' ? 'secondary' : 'outline'} className="px-1 text-[10px]">{ungroupedCount}</Badge>
+          </Button>
+        )}
+        {existingGroups.map((g) => (
+          <Button key={g} size="sm" variant={activeGroup === g ? 'default' : 'outline'} onClick={() => setActiveGroup(g)} className="gap-1">
             <Users className="h-3 w-3" />{g}
+            <Badge variant={activeGroup === g ? 'secondary' : 'outline'} className="px-1 text-[10px]">{groupCounts[g] || 0}</Badge>
           </Button>
         ))}
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCreateGroupOpen(true)}>
-          <FolderPlus className="h-3.5 w-3.5" />新建分组
-        </Button>
         <div className="ml-auto flex items-center gap-2">
-          {/* View mode toggle */}
           <div className="flex rounded-md border p-0.5">
             <button onClick={() => setViewMode('flat')} className={cn('flex h-7 w-7 items-center justify-center rounded-sm transition-colors', viewMode === 'flat' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')} title="列表视图"><List className="h-3.5 w-3.5" /></button>
             <button onClick={() => setViewMode('grouped')} className={cn('flex h-7 w-7 items-center justify-center rounded-sm transition-colors', viewMode === 'grouped' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')} title="分组视图"><LayoutGrid className="h-3.5 w-3.5" /></button>
@@ -252,18 +256,26 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      {/* Batch action bar */}
+      {/* Batch action bar - shows when accounts selected */}
       {selectedIds.length > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2.5">
-          <span className="text-sm font-medium">已选 {selectedIds.length} 项</span>
-          <Select value={batchGroupTarget} onValueChange={(v) => handleBatchAssign(v)}>
-            <SelectTrigger className="h-8 w-40 text-sm"><FolderPlus className="mr-1 h-3 w-3" /><SelectValue placeholder="移至分组..." /></SelectTrigger>
-            <SelectContent>
-              {groups?.filter(g => g).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-primary/5 px-4 py-3">
+          <span className="text-sm font-bold">已选 {selectedIds.length} 项</span>
+          <div className="h-4 w-px bg-border" />
+          <span className="text-xs text-muted-foreground">移至分组：</span>
+          {existingGroups.length > 0 && (
+            <Select value="" onValueChange={(v) => v && handleBatchAssign(v)}>
+              <SelectTrigger className="h-8 w-36 text-sm"><FolderInput className="mr-1 h-3 w-3" /><SelectValue placeholder="选择已有分组" /></SelectTrigger>
+              <SelectContent>
+                {existingGroups.map(g => <SelectItem key={g} value={g}>{g}（{groupCounts[g] || 0}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="flex items-center gap-1">
+            <Input value={batchNewGroup} onChange={(e) => setBatchNewGroup(e.target.value)} placeholder="或输入新分组名" className="h-8 w-36 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && batchNewGroup.trim()) handleBatchAssign(batchNewGroup.trim()) }} />
+            {batchNewGroup.trim() && <Button size="sm" className="h-8" onClick={() => handleBatchAssign(batchNewGroup.trim())}>确定</Button>}
+          </div>
           <Button variant="outline" size="sm" className="h-8" onClick={() => handleBatchAssign('')}>移出分组</Button>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消</Button>
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
         </div>
       )}
 
@@ -298,16 +310,11 @@ export default function AccountsPage() {
               <TBody>{sortedAccounts.map(renderAccountRow)}</TBody>
             </Table>
           ) : (
-            /* Grouped view */
             <Accordion type="multiple" defaultValue={groupedAccounts.map(([g]) => g || 'ungrouped')} className="w-full">
               {groupedAccounts.map(([groupName, accs]) => (
                 <AccordionItem key={groupName || 'ungrouped'} value={groupName || 'ungrouped'}>
                   <AccordionTrigger className="px-4 hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{groupName || '未分组'}</span>
-                      <Badge variant="secondary" className="text-xs">{accs.length}</Badge>
-                    </div>
+                    <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{groupName || '未分组'}</span><Badge variant="secondary" className="text-xs">{accs.length}</Badge></div>
                   </AccordionTrigger>
                   <AccordionContent>
                     <Table>
@@ -340,7 +347,18 @@ export default function AccountsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.notesOptional')}</label><Input value={importData.note} onChange={(e) => setImportData({ ...importData, note: e.target.value })} placeholder={t('accounts.notePlaceholderExample')} /></div>
-            <div className="space-y-2"><label className="text-sm font-medium">分组</label><Input value={importData.group} onChange={(e) => setImportData({ ...importData, group: e.target.value })} placeholder="如：主号、备用" /></div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">分组</label>
+              {existingGroups.length > 0 ? (
+                <Select value={importData.group} onValueChange={(v) => setImportData({ ...importData, group: v === '__none__' ? '' : v })}>
+                  <SelectTrigger><SelectValue placeholder="选择分组" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">无分组</SelectItem>
+                    {existingGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              ) : <Input value={importData.group} onChange={(e) => setImportData({ ...importData, group: e.target.value })} placeholder="如：主号、备用" />}
+            </div>
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button><Button disabled={importing} onClick={handleImport}>{importing ? t('accounts.importing') : t('accounts.import')}</Button></DialogFooter>
@@ -351,29 +369,29 @@ export default function AccountsPage() {
         <DialogTitle>{t('accounts.editNote', { name: noteAcc ? getDisplayName(noteAcc) : '' })}</DialogTitle>
         <div className="space-y-3">
           <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.notesOptional')}</label><Input value={noteValue} onChange={(e) => setNoteValue(e.target.value)} placeholder={t('accounts.notePlaceholderExample')} /></div>
-          <div className="space-y-2"><label className="text-sm font-medium">分组</label>
-            {groups && groups.filter(g => g).length > 0 ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">分组</label>
+              {existingGroups.length > 0 && (
+                <button onClick={() => setEditGroupMode(editGroupMode === 'select' ? 'input' : 'select')} className="text-xs text-primary hover:underline">
+                  {editGroupMode === 'select' ? '输入新分组 →' : '← 选择已有'}
+                </button>
+              )}
+            </div>
+            {editGroupMode === 'select' && existingGroups.length > 0 ? (
               <Select value={groupValue} onValueChange={setGroupValue}>
-                <SelectTrigger><SelectValue placeholder="选择或输入分组" /></SelectTrigger>
-                <SelectContent>{groups.filter(g => g).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}<SelectItem value="">无分组</SelectItem></SelectContent>
+                <SelectTrigger><SelectValue placeholder="选择分组" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">无分组</SelectItem>
+                  {existingGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                </SelectContent>
               </Select>
-            ) : <Input value={groupValue} onChange={(e) => setGroupValue(e.target.value)} placeholder="输入分组名称" />}
+            ) : (
+              <Input value={groupValue} onChange={(e) => setGroupValue(e.target.value)} placeholder="输入分组名称" />
+            )}
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setNoteOpen(false)}>{t('common.cancel')}</Button><Button onClick={handleSaveNote}>{t('common.save')}</Button></DialogFooter>
-      </Dialog>
-
-      {/* Create group dialog */}
-      <Dialog open={createGroupOpen} onClose={() => setCreateGroupOpen(false)} className="max-w-sm">
-        <DialogTitle>新建分组</DialogTitle>
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">创建分组后，可以在账户列表中勾选多个账户，然后批量移入该分组。</p>
-          <Input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="分组名称（如：主号、备用）" onKeyDown={(e) => { if (e.key === 'Enter' && newGroupName.trim()) { setCreateGroupOpen(false); setActiveGroup(newGroupName.trim()); setNewGroupName(''); toast.success('分组已创建，请勾选账户后移入') }}} autoFocus />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { setCreateGroupOpen(false); setNewGroupName('') }}>取消</Button>
-          <Button onClick={() => { if (newGroupName.trim()) { setCreateGroupOpen(false); setActiveGroup(newGroupName.trim()); setNewGroupName(''); toast.success(`分组「${newGroupName.trim()}」已创建，请勾选账户后批量移入`) } }}>创建</Button>
-        </DialogFooter>
       </Dialog>
 
       {/* Recycle bin dialog */}
