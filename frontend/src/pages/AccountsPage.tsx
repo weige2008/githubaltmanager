@@ -35,7 +35,7 @@ export default function AccountsPage() {
   const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [importData, setImportData] = useState({ token: '', password: '', recovery_email: '', note: '' })
+  const [importData, setImportData] = useState({ token: '', password: '', recovery_email: '', note: '', group: '' })
   const [importing, setImporting] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
   const [noteAcc, setNoteAcc] = useState<Account | null>(null)
@@ -135,7 +135,7 @@ export default function AccountsPage() {
       const acc = await accountApi.import(importData)
       toast.success(t('accounts.importSuccess', { name: acc.github_login }))
       setDialogOpen(false)
-      setImportData({ token: '', password: '', recovery_email: '', note: '' })
+      setImportData({ token: '', password: '', recovery_email: '', note: '', group: '' })
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
       try { await repoApi.refreshRepos(acc.id); toast.success(t('accounts.syncSuccess')) } catch {}
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
@@ -299,7 +299,7 @@ export default function AccountsPage() {
                             </div>
                             <div className="text-xs text-muted-foreground">{acc.display_name}</div>
                           </div>
-                          <button onClick={() => openNote(acc)} className="ml-1 opacity-30 hover:opacity-100"><Edit3 className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => openNote(acc)} className="ml-1 rounded p-1 text-muted-foreground/60 transition-opacity hover:bg-muted hover:text-foreground"><Edit3 className="h-3.5 w-3.5" /></button>
                         </div>
                       </TD>
                       <TD><Badge variant={sb.variant}>{sb.label}</Badge></TD>
@@ -358,6 +358,8 @@ export default function AccountsPage() {
           </div>
           <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.notesOptional')}</label>
             <Input value={importData.note} onChange={(e) => setImportData({ ...importData, note: e.target.value })} placeholder={t('accounts.notePlaceholderExample')} /></div>
+          <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.group', { defaultValue: '分组' })}</label>
+            <Input value={importData.group} onChange={(e) => setImportData({ ...importData, group: e.target.value })} placeholder={t('accounts.groupPlaceholder', { defaultValue: '输入分组名称（如：主号、备用）' })} /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
