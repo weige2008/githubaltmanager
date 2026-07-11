@@ -91,6 +91,7 @@ export default function AccountsPage() {
 
   // Edit dialog group mode
   const [editGroupMode, setEditGroupMode] = useState<'select' | 'input'>('select')
+  const [importGroupMode, setImportGroupMode] = useState<'select' | 'input'>('select')
 
   const [sortMode, setSortMode] = useState<SortMode>(() => getSortMode() as SortMode)
   const [searchQuery, setSearchQuery] = useState('')
@@ -396,16 +397,25 @@ export default function AccountsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><label className="text-sm font-medium">{t('accounts.notesOptional')}</label><Input value={importData.note} onChange={(e) => setImportData({ ...importData, note: e.target.value })} placeholder={t('accounts.notePlaceholderExample')} /></div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">分组</label>
-              {existingGroups.length > 0 ? (
-                <Select value={importData.group} onValueChange={(v) => setImportData({ ...importData, group: v === '__none__' ? '' : v })}>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">分组</label>
+                {existingGroups.length > 0 && (
+                  <button type="button" onClick={() => setImportGroupMode(importGroupMode === 'select' ? 'input' : 'select')} className="text-xs text-primary hover:underline">
+                    {importGroupMode === 'select' ? '输入新分组 →' : '← 选择已有'}
+                  </button>
+                )}
+              </div>
+              {importGroupMode === 'select' && existingGroups.length > 0 ? (
+                <Select value={importData.group || '__none__'} onValueChange={(v) => setImportData({ ...importData, group: v === '__none__' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="选择分组" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">无分组</SelectItem>
                     {existingGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              ) : <Input value={importData.group} onChange={(e) => setImportData({ ...importData, group: e.target.value })} placeholder="如：主号、备用" />}
+              ) : (
+                <Input value={importData.group} onChange={(e) => setImportData({ ...importData, group: e.target.value })} placeholder="如：主号、备用" />
+              )}
             </div>
           </div>
         </div>
