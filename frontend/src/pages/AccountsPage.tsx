@@ -36,7 +36,43 @@ export default function AccountsPage() {
   const { data: accounts, isLoading, isError } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
   const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
 
-  const existingGroups = useMemo(() => (groups || []).filter(g => g), [groups])
+  // Merge DB groups with localStorage custom groups (so empty groups show in tabs)
+  const allGroupNames = useMemo(() => {
+    const dbGroups = (groups || []).filter(g => g)
+    let custom: string[] = []
+    try { custom = JSON.parse(localStorage.getItem('gam-custom-groups') || '[]') } catch {}
+    return Array.from(new Set([...dbGroups, ...custom])).sort()
+  }, [groups])
+  const existingGroups = allGroupNames
+
+  const [createGroupOpen, setCreateGroupOpen] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+
+  const handleCreateGroup = () => {
+    const name = newGroupName.trim()
+    if (!name) return
+    let custom: string[] = []
+    try { custom = JSON.parse(localStorage.getItem('gam-custom-groups') || '[]') } catch {}
+    if (!custom.includes(name)) {
+      custom.push(name)
+      localStorage.setItem('gam-custom-groups', JSON.stringify(custom))
+    }
+    setCreateGroupOpen(false)
+    setNewGroupName('')
+    setActiveGroup(name)
+    queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
+    toast.success(`分组「${name}」已创建，请在列表中勾选账户后移入`)
+  }
+
+  const handleDeleteGroup = (groupName: string) => {
+    let custom: string[] = []
+    try { custom = JSON.parse(localStorage.getItem('gam-custom-groups') || '[]') } catch {}
+    custom = custom.filter(g => g !== groupName)
+    localStorage.setItem('gam-custom-groups', JSON.stringify(custom))
+    if (activeGroup === groupName) setActiveGroup('')
+    queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
+    toast.success(`分组「${groupName}」已删除`)
+  }
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importData, setImportData] = useState({ token: '', password: '', recovery_email: '', note: '', group: '' })
@@ -242,11 +278,23 @@ export default function AccountsPage() {
           </Button>
         )}
         {existingGroups.map((g) => (
-          <Button key={g} size="sm" variant={activeGroup === g ? 'default' : 'outline'} onClick={() => setActiveGroup(g)} className="gap-1">
-            <Users className="h-3 w-3" />{g}
-            <Badge variant={activeGroup === g ? 'secondary' : 'outline'} className="px-1 text-[10px]">{groupCounts[g] || 0}</Badge>
-          </Button>
+          <div key={g} className="group relative inline-flex">
+            <Button size="sm" variant={activeGroup === g ? 'default' : 'outline'} onClick={() => setActiveGroup(g)} className="gap-1 pr-7">
+              <Users className="h-3 w-3" />{g}
+              <Badge variant={activeGroup === g ? 'secondary' : 'outline'} className="px-1 text-[10px]">{groupCounts[g] || 0}</Badge>
+            </Button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g) }}
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/0 hover:bg-destructive/10 hover:text-destructive group-hover:text-muted-foreground/60"
+              title="删除分组"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
         ))}
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => setCreateGroupOpen(true)}>
+          <FolderPlus className="h-3.5 w-3.5" />新建分组
+        </Button>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex rounded-md border p-0.5">
             <button onClick={() => setViewMode('flat')} className={cn('flex h-7 w-7 items-center justify-center rounded-sm transition-colors', viewMode === 'flat' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')} title="列表视图"><List className="h-3.5 w-3.5" /></button>
@@ -392,6 +440,25 @@ export default function AccountsPage() {
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={() => setNoteOpen(false)}>{t('common.cancel')}</Button><Button onClick={handleSaveNote}>{t('common.save')}</Button></DialogFooter>
+      </Dialog>
+
+      {/* Create group dialog */}
+      <Dialog open={createGroupOpen} onClose={() => { setCreateGroupOpen(false); setNewGroupName('') }} className="max-w-sm">
+        <DialogTitle>新建分组</DialogTitle>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">输入分组名称，创建后可在列表中勾选账户批量移入该分组。</p>
+          <Input
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="分组名称（如：主号、备用）"
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCreateGroup() }}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setCreateGroupOpen(false); setNewGroupName('') }}>取消</Button>
+          <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>创建</Button>
+        </DialogFooter>
       </Dialog>
 
       {/* Recycle bin dialog */}
