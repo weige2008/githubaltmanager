@@ -161,12 +161,3 @@ func (s *TaskService) RunNow(c *Container, id uint) error {
 	return nil
 }
 
-// nextRunTime 计算 cron 表达式的下次触发时间
-// 使用 robfig/cron 解析（5 段表达式：分 时 日 月 周）
-func nextRunTime(expr string) (time.Time, error) {
-	sched, err := cronParser.Parse(expr)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid cron '%s': %w", expr, err)
-	}
-	return sched.Next(time.Now()), nil
-}

@@ -255,16 +255,23 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 	return acc, nil
 }
 
-// List 列出全部账户
+// List 列出全部活跃账户（排除回收站）
 func (s *AccountService) List() ([]model.Account, error) {
 	var accs []model.Account
-	err := s.DB.Order("id DESC").Find(&accs).Error
+	err := s.DB.Where("deleted_at IS NULL").Order("id DESC").Find(&accs).Error
 	return accs, err
 }
 
-// Get 获取单个账户
+// Get 获取单个账户（含回收站中的，供详情/恢复使用）
 func (s *AccountService) Get(id uint) (*model.Account, error) {
 	var acc model.Account
 	err := s.DB.First(&acc, id).Error
+	return &acc, err
+}
+
+// GetActive 获取单个活跃账户（排除回收站）
+func (s *AccountService) GetActive(id uint) (*model.Account, error) {
+	var acc model.Account
+	err := s.DB.Where("id = ? AND deleted_at IS NULL", id).First(&acc).Error
 	return &acc, err
 }

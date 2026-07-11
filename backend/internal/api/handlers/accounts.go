@@ -67,8 +67,8 @@ func (h *AccountHandler) Import(c *gin.Context) {
 		return
 	}
 	if p.Group != "" {
-		acc.Group = p.Group
 		h.c.DB.Model(&model.Account{}).Where("id = ?", acc.ID).Update("account_group", p.Group)
+		acc.Group = p.Group
 	}
 	resp.Created(c, h.s.ToOut(acc))
 }
@@ -93,7 +93,7 @@ func (h *AccountHandler) List(c *gin.Context) {
 
 func (h *AccountHandler) Get(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	acc, err := h.s.Get(uint(id))
+	acc, err := h.s.GetActive(uint(id))
 	if err != nil {
 		resp.NotFound(c, "账户不存在")
 		return
@@ -103,7 +103,7 @@ func (h *AccountHandler) Get(c *gin.Context) {
 
 func (h *AccountHandler) GetSecrets(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	acc, err := h.s.Get(uint(id))
+	acc, err := h.s.GetActive(uint(id))
 	if err != nil {
 		resp.NotFound(c, "账户不存在")
 		return
@@ -201,6 +201,10 @@ func (h *AccountHandler) Restore(c *gin.Context) {
 
 func (h *AccountHandler) CheckStatus(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if _, err := h.s.GetActive(uint(id)); err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
 	acc, err := h.s.CheckStatus(h.c, uint(id))
 	if err != nil {
 		resp.Internal(c, "检测失败: "+err.Error(), err)
