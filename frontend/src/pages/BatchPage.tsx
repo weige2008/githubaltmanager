@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, repoApi, batchApi, type Repo, type Account, type Workflow } from '@/api'
+import { accountApi, repoApi, batchApi, type Repo, type Account, type Workflow, type WorkflowInput } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,7 @@ import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -47,6 +48,10 @@ export default function BatchPage() {
   const [wfContent, setWfContent] = useState(DEFAULT_WORKFLOW)
   const [commitMsg, setCommitMsg] = useState('Batch create workflow')
   const [dispatchFilename, setDispatchFilename] = useState('keepalive.yml')
+  const [dispatchRef, setDispatchRef] = useState('')
+  const [dispatchInputs, setDispatchInputs] = useState<Record<string, string>>({})
+  const [workflowInputs, setWorkflowInputs] = useState<WorkflowInput[]>([])
+  const [loadingInputs, setLoadingInputs] = useState(false)
   const [results, setResults] = useState<{ success: any[]; failed: any[] } | null>(null)
 
   const { data: accounts, isLoading: accLoading, isError: accError, refetch: accRefetch } = useQuery({
@@ -174,6 +179,33 @@ export default function BatchPage() {
     return () => clearTimeout(timer)
   }, [selectedRepoIds])
 
+  // Fetch workflow inputs when dispatch filename changes
+  useEffect(() => {
+    if (mode !== 'dispatch' || !dispatchFilename.trim() || selectedRepoIds.length === 0) {
+      setWorkflowInputs([])
+      setDispatchInputs({})
+      return
+    }
+    const timer = setTimeout(async () => {
+      setLoadingInputs(true)
+      try {
+        const res = await repoApi.getWorkflowInputs(selectedRepoIds[0], dispatchFilename.trim())
+        setWorkflowInputs(res.inputs || [])
+        // Pre-fill defaults
+        const defaults: Record<string, string> = {}
+        ;(res.inputs || []).forEach(inp => {
+          if (inp.default) defaults[inp.name] = inp.default
+        })
+        setDispatchInputs(defaults)
+      } catch {
+        setWorkflowInputs([])
+      } finally {
+        setLoadingInputs(false)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [dispatchFilename, mode, selectedRepoIds])
+
   const b64 = useCallback((s: string) => btoa(unescape(encodeURIComponent(s))), [])
 
   const createMut = useMutation({
@@ -194,6 +226,8 @@ export default function BatchPage() {
     mutationFn: () => batchApi.dispatch({
       repo_ids: selectedRepoIds,
       filename: dispatchFilename,
+      ref: dispatchRef || undefined,
+      inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined,
     }),
     onSuccess: (data) => {
       setResults(data)
@@ -471,6 +505,59 @@ export default function BatchPage() {
                     <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.dispatchFilename')}</label>
                     <Input value={dispatchFilename} onChange={(e) => setDispatchFilename(e.target.value)} placeholder="keepalive.yml" className="font-mono text-sm" />
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">分支 Ref（可选，默认 main）</label>
+                    <Input value={dispatchRef} onChange={(e) => setDispatchRef(e.target.value)} placeholder="main" className="font-mono text-sm" />
+                  </div>
+                  {/* Workflow inputs */}
+                  {loadingInputs && <p className="text-xs text-muted-foreground animate-pulse">正在获取工作流参数...</p>}
+                  {workflowInputs.length > 0 && (
+                    <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-xs font-medium text-primary">工作流参数（workflow_dispatch inputs）</p>
+                      <p className="text-[11px] text-muted-foreground">参数将应用于所有选中的仓库。已自动填充默认值。</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {workflowInputs.map((inp) => (
+                          <div key={inp.name} className="space-y-1">
+                            <label className="flex items-center gap-1 text-xs font-medium">
+                              {inp.name}
+                              {inp.required && <span className="text-destructive">*</span>}
+                              {inp.type === 'choice' && <Badge variant="secondary" className="px-1 text-[10px]">{inp.type}</Badge>}
+                            </label>
+                            {inp.description && <p className="text-[10px] text-muted-foreground">{inp.description}</p>}
+                            {inp.type === 'choice' && inp.options ? (
+                              <Select
+                                value={dispatchInputs[inp.name] || ''}
+                                onValueChange={(v) => setDispatchInputs(prev => ({ ...prev, [inp.name]: v }))}
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="选择..." /></SelectTrigger>
+                                <SelectContent>
+                                  {inp.options.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            ) : inp.type === 'boolean' ? (
+                              <Select
+                                value={dispatchInputs[inp.name] || 'false'}
+                                onValueChange={(v) => setDispatchInputs(prev => ({ ...prev, [inp.name]: v }))}
+                              >
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="true">true</SelectItem>
+                                  <SelectItem value="false">false</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={dispatchInputs[inp.name] || ''}
+                                onChange={(e) => setDispatchInputs(prev => ({ ...prev, [inp.name]: e.target.value }))}
+                                placeholder={inp.default || `输入 ${inp.name}`}
+                                className="h-8 text-xs"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <Alert>
                     <AlertDescription className="space-y-1">
                       <p>{t('batchWorkflow.dispatchHint')}</p>

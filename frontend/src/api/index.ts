@@ -140,7 +140,7 @@ export interface SecretEntry {
 export const batchApi = {
   createWorkflows: (data: { repo_ids: number[]; filename: string; content: string; commit_message: string }) =>
     http.post<unknown, any>('/batch/create-workflows', data),
-  dispatch: (data: { repo_ids: number[]; filename: string; ref?: string }) =>
+  dispatch: (data: { repo_ids: number[]; filename: string; ref?: string; inputs?: Record<string, string> }) =>
     http.post<unknown, any>('/batch/dispatch', data),
   fetchTemplate: (data: { account_id: number; owner: string; repo: string; ref?: string }) =>
     http.post<unknown, { files: TemplateFile[]; count: number }>('/batch/fetch-template', data),
