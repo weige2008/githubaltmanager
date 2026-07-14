@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { autoTaskApi, authApi, accountApi, type AutoTaskConfig } from '@/api'
+import { autoTaskApi, authApi, accountApi, apiKeyApi, type AutoTaskConfig, type APIKey } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText, Trash2, Filter } from 'lucide-react'
+import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText, Trash2, Filter, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { zhCN, enUS } from 'date-fns/locale'
@@ -16,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore, type ThemeMode } from '@/store/theme'
@@ -164,6 +167,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="automation">
         <TabsList>
           <TabsTrigger value="automation"><Activity className="mr-2 h-4 w-4" />{t('settings.automation')}</TabsTrigger>
+          <TabsTrigger value="apikeys"><KeyRound className="mr-2 h-4 w-4" />API Keys</TabsTrigger>
           <TabsTrigger value="security"><Lock className="mr-2 h-4 w-4" />{t('settings.security')}</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="mr-2 h-4 w-4" />{t('settings.system')}</TabsTrigger>
           <TabsTrigger value="about"><Info className="mr-2 h-4 w-4" />{t('settings.about')}</TabsTrigger>
@@ -373,6 +377,10 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="apikeys">
+          <APIKeysTab />
+        </TabsContent>
+
         <TabsContent value="security">
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Lock className="h-4 w-4" /> {t('settings.changePassword')}</CardTitle></CardHeader>
@@ -542,6 +550,189 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function APIKeysTab() {
+  const queryClient = useQueryClient()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newKeyName, setNewKeyName] = useState('')
+  const [newKeyDays, setNewKeyDays] = useState('0')
+  const [createdKey, setCreatedKey] = useState<string | null>(null)
+
+  const { data: keys, isLoading } = useQuery({
+    queryKey: ['apikeys'],
+    queryFn: () => apiKeyApi.list(),
+  })
+
+  const createMut = useMutation({
+    mutationFn: () => apiKeyApi.create({ name: newKeyName, expires_in_days: Number(newKeyDays) || 0 }),
+    onSuccess: (data) => {
+      setCreatedKey(data.key)
+      setCreateOpen(false)
+      setNewKeyName('')
+      setNewKeyDays('0')
+      queryClient.invalidateQueries({ queryKey: ['apikeys'] })
+    },
+    onError: (e: any) => toast.error(e?.message || '创建失败'),
+  })
+
+  const deleteMut = useMutation({
+    mutationFn: (id: number) => apiKeyApi.remove(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['apikeys'] }); toast.success('已删除') },
+  })
+
+  const toggleMut = useMutation({
+    mutationFn: (id: number) => apiKeyApi.toggle(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['apikeys'] }),
+  })
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader><CardTitle className="flex items-center justify-between text-base">
+          <span className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> API Keys</span>
+          <Button size="sm" className="gap-1.5" onClick={() => setCreateOpen(true)}><Plus className="h-3.5 w-3.5" />新建</Button>
+        </CardTitle></CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? <LoadingState /> : keys && keys.length > 0 ? (
+            <Table>
+              <THead><TR><TH>名称</TH><TH>密钥前缀</TH><TH>状态</TH><TH>最后使用</TH><TH>过期时间</TH><TH className="text-right">操作</TH></TR></THead>
+              <TBody>
+                {keys.map(k => (
+                  <TR key={k.id}>
+                    <TD className="font-medium">{k.name}</TD>
+                    <TD><code className="text-xs font-mono">{k.key_prefix}...</code></TD>
+                    <TD><Badge variant={k.enabled ? 'success' : 'secondary'}>{k.enabled ? '启用' : '禁用'}</Badge></TD>
+                    <TD className="text-sm text-muted-foreground">{k.last_used_at ? format(new Date(k.last_used_at), 'MM-dd HH:mm') : '从未'}</TD>
+                    <TD className="text-sm text-muted-foreground">{k.expires_at ? format(new Date(k.expires_at), 'yyyy-MM-dd') : '永久'}</TD>
+                    <TD>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => toggleMut.mutate(k.id)}>{k.enabled ? '禁用' : '启用'}</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm(`删除密钥「${k.name}」？`)) deleteMut.mutate(k.id) }}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TD>
+                  </TR>
+                ))}
+              </TBody>
+            </Table>
+          ) : <EmptyState title="还没有 API Key" description="创建 API Key 后可通过 HTTP API 远程操作" action={<Button size="sm" onClick={() => setCreateOpen(true)}>创建 API Key</Button>} />}
+        </CardContent>
+      </Card>
+
+      {/* API Documentation */}
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> API 使用文档</CardTitle></CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <Alert>
+            <AlertDescription>
+              <p className="mb-2 font-medium">认证方式</p>
+              <p className="mb-1">所有 API 请求需要携带以下任一认证头：</p>
+              <pre className="rounded bg-muted p-2 text-xs">X-API-Key: gam_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+              <p className="mt-1 text-xs text-muted-foreground">或</p>
+              <pre className="rounded bg-muted p-2 text-xs">Authorization: Bearer &lt;jwt_token&gt;</pre>
+            </AlertDescription>
+          </Alert>
+          <div className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 text-xs font-medium">账户管理</div>
+            <div className="divide-y text-xs font-mono">
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/accounts</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/accounts/:id</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/accounts/import</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-orange-600">PUT</span><span>/api/accounts/:id</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-red-600">DEL</span><span>/api/accounts/:id</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/accounts/:id/check</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/accounts/batch-check</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/accounts/batch-check-group</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/accounts/groups</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/accounts/recycle-bin</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/accounts/:id/restore</span></div>
+            </div>
+          </div>
+          <div className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 text-xs font-medium">批量操作</div>
+            <div className="divide-y text-xs font-mono">
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/batch/create-workflows</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/batch/dispatch</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/batch/create-repos</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/batch/fetch-template</span></div>
+            </div>
+          </div>
+          <div className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 text-xs font-medium">仓库 / 工作流</div>
+            <div className="divide-y text-xs font-mono">
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/repos/:id/contents</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/repos/:id/file</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-orange-600">PUT</span><span>/api/repos/:id/file</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/repos/:id/workflows</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/repos/:id/workflows</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/repos/:id/dispatch</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/repos/:id/workflow-inputs</span></div>
+            </div>
+          </div>
+          <div className="rounded-md border">
+            <div className="border-b bg-muted/30 px-3 py-2 text-xs font-medium">自动化 / 统计</div>
+            <div className="divide-y text-xs font-mono">
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/stats/overview</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/autotask</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-orange-600">PUT</span><span>/api/autotask</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/autotask/check-now</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-blue-600">POST</span><span>/api/autotask/sync-now</span></div>
+              <div className="flex justify-between px-3 py-1.5"><span className="text-green-600">GET</span><span>/api/autotask/logs</span></div>
+            </div>
+          </div>
+          <div className="rounded-md border bg-muted/20 p-3">
+            <p className="mb-1 text-xs font-medium">示例：批量触发工作流</p>
+            <pre className="overflow-x-auto text-xs">{`curl -X POST http://localhost:19527/api/batch/dispatch \\
+  -H "X-API-Key: gam_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{"repo_ids":[1,2,3],"filename":"keepalive.yml"}'`}</pre>
+          </div>
+          <div className="rounded-md border bg-muted/20 p-3">
+            <p className="mb-1 text-xs font-medium">示例：批量创建仓库</p>
+            <pre className="overflow-x-auto text-xs">{`curl -X POST http://localhost:19527/api/batch/create-repos \\
+  -H "X-API-Key: gam_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{"account_ids":[1,2],"repo_name":"my-repo","private":true,
+       "files":[{"path":"README.md","content":"aGVsbG8="}]}'`}</pre>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Create dialog */}
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setCreateOpen(false)}>
+          <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg" onClick={e => e.stopPropagation()}>
+            <h2 className="mb-4 text-lg font-semibold">新建 API Key</h2>
+            <div className="space-y-3">
+              <div className="space-y-1.5"><label className="text-sm font-medium">名称</label><Input value={newKeyName} onChange={e => setNewKeyName(e.target.value)} placeholder="如：CI/CD 脚本" autoFocus /></div>
+              <div className="space-y-1.5"><label className="text-sm font-medium">过期天数（0=永久）</label><Input type="number" value={newKeyDays} onChange={e => setNewKeyDays(e.target.value)} placeholder="0" /></div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
+              <Button disabled={!newKeyName.trim()} onClick={() => createMut.mutate()}>创建</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Show created key */}
+      {createdKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setCreatedKey(null)}>
+          <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg" onClick={e => e.stopPropagation()}>
+            <h2 className="mb-2 text-lg font-semibold text-warning">API Key 已创建</h2>
+            <p className="mb-3 text-sm text-muted-foreground">请立即保存，此密钥不会再次显示。</p>
+            <div className="flex items-center gap-2 rounded-md border bg-muted p-3">
+              <code className="flex-1 break-all font-mono text-xs">{createdKey}</code>
+              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(createdKey); toast.success('已复制') }}>复制</Button>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => setCreatedKey(null)}>已保存</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

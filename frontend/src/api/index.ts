@@ -43,6 +43,24 @@ export const accountApi = {
   cleanRecycleBin: () => http.post<unknown, { ok: boolean; cleaned_before: string }>('/accounts/recycle-bin/clean'),
 }
 
+export interface APIKey {
+  id: number
+  name: string
+  key_prefix: string
+  enabled: boolean
+  last_used_at: string | null
+  expires_at: string | null
+  created_at: string
+}
+
+export const apiKeyApi = {
+  list: () => http.get<unknown, APIKey[]>('/apikeys'),
+  create: (data: { name: string; expires_in_days?: number }) =>
+    http.post<unknown, APIKey & { key: string; note: string }>('/apikeys', data),
+  remove: (id: number) => http.delete<unknown, { ok: boolean }>(`/apikeys/${id}`),
+  toggle: (id: number) => http.put<unknown, { ok: boolean; enabled: boolean }>(`/apikeys/${id}/toggle`),
+}
+
 export const authApi = {
   status: () => http.get<unknown, { isInitialized: boolean }>('/auth/status'),
   setup: (pw: string) => http.post<unknown, { token: string }>('/auth/setup', { masterPassword: pw }),

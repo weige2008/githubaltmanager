@@ -132,3 +132,16 @@ type AuditLog struct {
 }
 
 func (AuditLog) TableName() string { return "audit_logs" }
+
+// APIKey 外部 API 密钥
+type APIKey struct {
+	BaseModel
+	Name      string     `gorm:"column:name;size:100;not null" json:"name"`
+	KeyHash   string     `gorm:"column:key_hash;size:64;not null;uniqueIndex" json:"-"`
+	KeyPrefix string     `gorm:"column:key_prefix;size:12;not null" json:"key_prefix"` // gam_xxxxxx
+	LastUsedAt *time.Time `gorm:"column:last_used_at" json:"last_used_at"`
+	ExpiresAt  *time.Time `gorm:"column:expires_at" json:"expires_at"`
+	Enabled    bool       `gorm:"column:enabled;not null;default:true" json:"enabled"`
+}
+
+func (APIKey) TableName() string { return "api_keys" }
