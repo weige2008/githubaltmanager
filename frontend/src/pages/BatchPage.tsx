@@ -16,7 +16,7 @@ import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search } from 'lucide-react'
+import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MatchedRepo extends Repo {
@@ -337,6 +337,56 @@ export default function BatchPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Common workflows quick-select (shows when repos selected) */}
+          {selectedRepoIds.length > 0 && commonWorkflows.length > 0 && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-3">
+                <div className="mb-2 flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium text-primary">
+                    发现 {commonWorkflows.length} 个共有工作流（{selectedRepoIds.length} 个仓库）— 点击直接触发
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {commonWorkflows.map((wf) => {
+                    const isFull = wf.count === selectedRepoIds.length
+                    return (
+                      <button
+                        key={wf.filename}
+                        onClick={() => {
+                          setDispatchFilename(wf.filename)
+                          setMode('dispatch')
+                          toast.info(`已选择「${wf.filename}」，切换到触发模式`)
+                        }}
+                        className={cn(
+                          'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-all hover:scale-105',
+                          dispatchFilename === wf.filename && mode === 'dispatch'
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : isFull
+                            ? 'border-success/40 bg-success/10 text-success hover:bg-success/20'
+                            : 'border-border bg-background hover:bg-accent'
+                        )}
+                        title={`${wf.count}/${selectedRepoIds.length} 个仓库有此工作流`}
+                      >
+                        {isFull && <CircleCheck className="h-3 w-3" />}
+                        {wf.filename}
+                        <span className={cn(
+                          'ml-0.5 text-[10px]',
+                          dispatchFilename === wf.filename && mode === 'dispatch' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        )}>
+                          {wf.count}/{selectedRepoIds.length}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  绿色 = 全部仓库都有 · 点击后自动填充文件名并切换到触发模式
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Workflow operations */}
           <Card>
