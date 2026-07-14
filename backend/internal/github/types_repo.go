@@ -155,6 +155,37 @@ func (c *Client) CreateOrUpdateFile(owner, repo, path string, payload UpdateFile
 	return &res, code, err
 }
 
+// DeleteFilePayload 删除文件请求体
+type DeleteFilePayload struct {
+	Message string `json:"message"`
+	Sha     string `json:"sha"`
+	Branch  string `json:"branch,omitempty"`
+}
+
+// DeleteFile 删除文件
+func (c *Client) DeleteFile(owner, repo, path, sha, branch string) (int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/contents/%s", owner, repo, path)
+	payload := DeleteFilePayload{
+		Message: "Delete: " + path,
+		Sha:     sha,
+		Branch:  branch,
+	}
+	return c.DeleteWithBody(p, payload)
+}
+
+// DeleteWithBody 发送带 body 的 DELETE 请求
+func (c *Client) DeleteWithBody(path string, body interface{}) (int, error) {
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return 0, err
+	}
+	statusCode, respBody, err := c.rawRequest("DELETE", path, jsonData, nil)
+	if statusCode >= 400 {
+		return statusCode, &APIError{Status: statusCode, Body: string(respBody)}
+	}
+	return statusCode, err
+}
+
 // Workflow GitHub Actions workflow
 type Workflow struct {
 	ID    int64  `json:"id"`

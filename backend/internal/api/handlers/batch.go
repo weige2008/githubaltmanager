@@ -25,6 +25,7 @@ func RegisterBatchRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/dispatch", h.Dispatch)
 		grp.POST("/create-repos", h.CreateRepos)
 		grp.POST("/fetch-template", h.FetchTemplate)
+		grp.POST("/update-repos", h.UpdateRepos)
 	}
 }
 
@@ -141,6 +142,36 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 			failed = append(failed, gin.H{"account_id": aid, "error": err.Error()})
 		} else {
 			success = append(success, gin.H{"account_id": aid, "repo": repo.FullName})
+		}
+	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+type BatchUpdateReposPayload struct {
+	RepoIDs       []uint `json:"repo_ids" binding:"required"`
+	TemplateOwner string `json:"template_owner" binding:"required"`
+	TemplateRepo  string `json:"template_repo" binding:"required"`
+	TemplateRef   string `json:"template_ref"`
+}
+
+func (h *BatchHandler) UpdateRepos(c *gin.Context) {
+	var p BatchUpdateReposPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+		return
+	}
+	success := []gin.H{}
+	failed := []gin.H{}
+	for _, rid := range p.RepoIDs {
+		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef)
+		if err != nil {
+			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+		} else {
+			success = append(success, gin.H{"repo_id": rid})
 		}
 	}
 	resp.OK(c, gin.H{"success": success, "failed": failed})

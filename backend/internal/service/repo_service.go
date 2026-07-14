@@ -600,3 +600,66 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 	s.DB.Where("github_id = ?", repo.ID).Assign(model).FirstOrCreate(model)
 	return repo, nil
 }
+
+// UpdateRepoFromTemplate 清空目标仓库所有文件，然后从模板仓库拉取所有文件写入
+func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, templateOwner, templateRepo, templateRef string) error {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return err
+	}
+	owner := r.OwnerLogin
+	repoName := r.Name
+	branch := r.DefaultBranch
+	if branch == "" {
+		branch = "main"
+	}
+
+	// Step 1: Get current file tree of target repo
+	currentTree, _, err := ghc.GetTreeRecursive(owner, repoName, branch)
+	if err != nil {
+		return fmt.Errorf("获取目标仓库文件树失败: %w", err)
+	}
+
+	// Step 2: Delete all existing files (skip .github if needed, but we clear everything)
+	deletedCount := 0
+	for _, entry := range currentTree.Tree {
+		if entry.Type != "blob" {
+			continue
+		}
+		// Get file SHA for deletion
+		fc, _, gErr := ghc.GetFile(owner, repoName, entry.Path, branch)
+		if gErr != nil {
+			continue
+		}
+		_, dErr := ghc.DeleteFile(owner, repoName, entry.Path, fc.SHA, branch)
+		if dErr == nil {
+			deletedCount++
+		}
+		time.Sleep(100 * time.Millisecond) // avoid rate limit
+	}
+
+	// Step 3: Fetch template files
+	templateFiles, err := s.FetchTemplateFiles(c, r.AccountID, templateOwner, templateRepo, templateRef)
+	if err != nil {
+		return fmt.Errorf("获取模板文件失败: %w", err)
+	}
+
+	// Step 4: Push all template files
+	failedFiles := []string{}
+	for _, f := range templateFiles {
+		_, _, fErr := ghc.CreateOrUpdateFile(owner, repoName, f.Path, github.UpdateFilePayload{
+			Message: "Update from template: " + f.Path,
+			Content: f.Content,
+			Branch:  branch,
+		})
+		if fErr != nil {
+			failedFiles = append(failedFiles, f.Path)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if len(failedFiles) > 0 {
+		return fmt.Errorf("更新完成但 %d 个文件失败: %s", len(failedFiles), strings.Join(failedFiles, ", "))
+	}
+	return nil
+}
