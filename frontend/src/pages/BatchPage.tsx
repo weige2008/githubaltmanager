@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, repoApi, batchApi, type Repo, type Account } from '@/api'
+import { accountApi, repoApi, batchApi, type Repo, type Account, type Workflow } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -125,6 +125,54 @@ export default function BatchPage() {
   }
 
   const selectAllMatched = () => setSelectedRepoIds(matchedRepos.map((r) => r.id))
+
+  // Auto-scan workflows from selected repos
+  const [scanningWf, setScanningWf] = useState(false)
+  const [commonWorkflows, setCommonWorkflows] = useState<{ filename: string; count: number }[]>([])
+
+  const scanWorkflows = async () => {
+    if (selectedRepoIds.length === 0) return
+    setScanningWf(true)
+    try {
+      const results = await Promise.all(
+        selectedRepoIds.map(async (rid) => {
+          try {
+            const wfs = await repoApi.listWorkflows(rid)
+            return wfs.map(w => w.filename)
+          } catch {
+            return [] as string[]
+          }
+        })
+      )
+      // Count how many repos have each workflow filename
+      const countMap = new Map<string, number>()
+      for (const filenames of results) {
+        const unique = new Set(filenames)
+        for (const fn of unique) {
+          countMap.set(fn, (countMap.get(fn) || 0) + 1)
+        }
+      }
+      // Sort: most common first, then by name
+      const sorted = Array.from(countMap.entries())
+        .map(([filename, count]) => ({ filename, count }))
+        .sort((a, b) => b.count - a.count || a.filename.localeCompare(b.filename))
+      setCommonWorkflows(sorted)
+    } catch {
+      toast.error('扫描工作流失败')
+    } finally {
+      setScanningWf(false)
+    }
+  }
+
+  // Auto-scan when repo selection changes
+  useEffect(() => {
+    if (selectedRepoIds.length === 0) {
+      setCommonWorkflows([])
+      return
+    }
+    const timer = setTimeout(() => scanWorkflows(), 500)
+    return () => clearTimeout(timer)
+  }, [selectedRepoIds])
 
   const b64 = useCallback((s: string) => btoa(unescape(encodeURIComponent(s))), [])
 
@@ -305,6 +353,27 @@ export default function BatchPage() {
                 </TabsList>
 
                 <TabsContent value="create" className="space-y-3">
+                  {commonWorkflows.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">已有工作流（点击填充文件名）</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {commonWorkflows.map((wf) => (
+                          <button
+                            key={wf.filename}
+                            onClick={() => setWfFilename(wf.filename)}
+                            className={cn(
+                              'rounded-md border px-2 py-0.5 text-xs transition-colors',
+                              wfFilename === wf.filename ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent'
+                            )}
+                            title={`${wf.count}/${selectedRepoIds.length} 个仓库有此工作流`}
+                          >
+                            {wf.filename}
+                            <span className="ml-1 text-muted-foreground">{wf.count}/{selectedRepoIds.length}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.workflowFilename')}</label>
@@ -327,6 +396,27 @@ export default function BatchPage() {
                 </TabsContent>
 
                 <TabsContent value="dispatch" className="space-y-3">
+                  {commonWorkflows.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">已有工作流（点击填充文件名）</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {commonWorkflows.map((wf) => (
+                          <button
+                            key={wf.filename}
+                            onClick={() => setDispatchFilename(wf.filename)}
+                            className={cn(
+                              'rounded-md border px-2 py-0.5 text-xs transition-colors',
+                              dispatchFilename === wf.filename ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent'
+                            )}
+                            title={`${wf.count}/${selectedRepoIds.length} 个仓库有此工作流`}
+                          >
+                            {wf.filename}
+                            <span className="ml-1 text-muted-foreground">{wf.count}/{selectedRepoIds.length}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t('batchWorkflow.dispatchFilename')}</label>
                     <Input value={dispatchFilename} onChange={(e) => setDispatchFilename(e.target.value)} placeholder="keepalive.yml" className="font-mono text-sm" />
