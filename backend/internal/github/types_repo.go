@@ -1,6 +1,7 @@
 package github
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -179,7 +180,7 @@ func (c *Client) DeleteWithBody(path string, body interface{}) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	statusCode, respBody, err := c.rawRequest("DELETE", path, jsonData, nil)
+	statusCode, respBody, _, err := c.rawRequest("DELETE", path, bytes.NewReader(jsonData), map[string]string{"Content-Type": "application/json"})
 	if statusCode >= 400 {
 		return statusCode, &APIError{Status: statusCode, Body: string(respBody)}
 	}
