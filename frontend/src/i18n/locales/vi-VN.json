@@ -70,7 +70,8 @@
     "batch": "Thao tác hàng loạt",
     "batchRepos": "Tạo kho hàng loạt",
     "automationLogs": "Nhật ký tự động hóa",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "workflowRuns": "Lịch sử chạy"
   },
   "auth": {
     "login": "Đăng nhập",

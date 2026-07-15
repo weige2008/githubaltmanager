@@ -70,7 +70,8 @@
     "batch": "Пакетные операции",
     "batchRepos": "Создание репозиториев",
     "automationLogs": "Журнал автоматизации",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "workflowRuns": "Запуски workflow"
   },
   "auth": {
     "login": "Вход",

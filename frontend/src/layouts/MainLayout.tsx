@@ -43,6 +43,7 @@ const navGroups: NavGroupDef[] = [
     items: [
       { to: '/accounts', labelKey: 'nav.accounts', icon: Users },
       { to: '/repos', labelKey: 'nav.repos', icon: FolderGit2 },
+      { to: '/workflow-runs', labelKey: 'nav.workflowRuns', icon: Activity },
     ],
   },
   {
@@ -51,7 +52,6 @@ const navGroups: NavGroupDef[] = [
       { to: '/tasks', labelKey: 'nav.tasks', icon: Clock },
       { to: '/batch', labelKey: 'nav.batch', icon: Layers },
       { to: '/batch-repos', labelKey: 'nav.batchRepos', icon: FolderPlus },
-      { to: '/workflow-runs', labelKey: 'nav.workflowRuns', icon: Activity },
       { to: '/automation', labelKey: 'nav.automationLogs', icon: Timer },
     ],
   },

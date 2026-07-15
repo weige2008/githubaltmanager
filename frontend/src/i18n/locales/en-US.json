@@ -70,7 +70,8 @@
     "batch": "Batch Operations",
     "batchRepos": "Batch Create Repos",
     "automationLogs": "Automation Logs",
-    "settings": "Settings"
+    "settings": "Settings",
+    "workflowRuns": "Workflow Runs"
   },
   "auth": {
     "login": "Login",

@@ -70,7 +70,8 @@
     "batch": "Opérations en lot",
     "batchRepos": "Création de dépôts en lot",
     "automationLogs": "Journaux d'automatisation",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "workflowRuns": "Exécutions de workflow"
   },
   "auth": {
     "login": "Connexion",
