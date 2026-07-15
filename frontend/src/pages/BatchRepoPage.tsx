@@ -31,6 +31,7 @@ export default function BatchRepoPage() {
   const [repoCount, setRepoCount] = useState(1)
   const [sourceMode, setSourceMode] = useState<'clone' | 'manual'>('clone')
   const [cloneUrl, setCloneUrl] = useState('')
+  const [skipReadme, setSkipReadme] = useState(true)
   const [manualFiles, setManualFiles] = useState<ManualFile[]>([{ path: '', content: '' }])
   const [templateFiles, setTemplateFiles] = useState<TemplateFile[]>([])
   const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
@@ -50,8 +51,16 @@ export default function BatchRepoPage() {
   }, [accounts])
 
   const buildFiles = () => {
-    if (sourceMode === 'clone') return templateFiles
-    return manualFiles.filter(f => f.path.trim()).map(f => ({ path: f.path, content: btoa(unescape(encodeURIComponent(f.content))) }))
+    let files: TemplateFile[]
+    if (sourceMode === 'clone') {
+      files = [...templateFiles]
+    } else {
+      files = manualFiles.filter(f => f.path.trim()).map(f => ({ path: f.path, content: btoa(unescape(encodeURIComponent(f.content))) }))
+    }
+    if (skipReadme) {
+      files = files.filter(f => !f.path.toLowerCase().includes('readme'))
+    }
+    return files
   }
 
   const fetchTemplateMut = useMutation({
@@ -260,7 +269,12 @@ export default function BatchRepoPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">{t('batchRepo.fileSource')}</CardTitle></CardHeader>
+            <CardHeader className="flex-row items-center justify-between"><CardTitle className="text-base">{t('batchRepo.fileSource')}</CardTitle>
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                <Checkbox checked={skipReadme} onCheckedChange={(v) => setSkipReadme(!!v)} />
+                跳过 README.md
+              </label>
+            </CardHeader>
             <CardContent>
               <Tabs value={sourceMode} onValueChange={(v) => setSourceMode(v as 'clone' | 'manual')}>
                 <TabsList className="mb-4">

@@ -556,7 +556,7 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 		Name:        repoName,
 		Description: description,
 		Private:     private,
-		AutoInit:    true,
+		AutoInit:    len(files) == 0, // Only auto-init if no files to push
 	})
 	if err != nil {
 		return nil, fmt.Errorf("创建仓库失败: %w (code=%d)", err, code)
