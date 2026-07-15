@@ -283,18 +283,42 @@ type WorkflowStep struct {
 	Number     int    `json:"number"`
 }
 
-// ListWorkflowJobs 列出工作流运行的任务
+// ListWorkflowJobs 列出工作流运行的任务（自动分页，获取全部）
 func (c *Client) ListWorkflowJobs(owner, repo string, runID int64) (struct {
 	TotalCount int            `json:"total_count"`
 	Jobs       []WorkflowJob  `json:"jobs"`
 }, int, error) {
-	var out struct {
+	var allJobs []WorkflowJob
+	var totalCount int
+	page := 1
+	perPage := 100
+	for {
+		p := fmt.Sprintf("/repos/%s/%s/actions/runs/%d/jobs?per_page=%d&page=%d", owner, repo, runID, perPage, page)
+		var out struct {
+			TotalCount int            `json:"total_count"`
+			Jobs       []WorkflowJob  `json:"jobs"`
+		}
+		code, err := c.Get(p, &out)
+		if err != nil {
+			return struct {
+				TotalCount int            `json:"total_count"`
+				Jobs       []WorkflowJob  `json:"jobs"`
+			}{totalCount, allJobs}, code, err
+		}
+		totalCount = out.TotalCount
+		allJobs = append(allJobs, out.Jobs...)
+		if len(out.Jobs) < perPage {
+			break
+		}
+		page++
+		if page > 20 {
+			break
+		}
+	}
+	return struct {
 		TotalCount int            `json:"total_count"`
 		Jobs       []WorkflowJob  `json:"jobs"`
-	}
-	p := fmt.Sprintf("/repos/%s/%s/actions/runs/%d/jobs", owner, repo, runID)
-	code, err := c.Get(p, &out)
-	return out, code, err
+	}{totalCount, allJobs}, 200, nil
 }
 
 // GetWorkflowRunLogs 获取工作流运行日志（返回 ZIP 下载 URL）
