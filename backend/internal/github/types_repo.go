@@ -342,6 +342,12 @@ func (c *Client) GetWorkflowRunLogsURL(owner, repo string, runID int64) (string,
 // 避免未使用 import
 var _ = json.Marshal
 
+// CancelWorkflowRun 取消工作流运行
+func (c *Client) CancelWorkflowRun(owner, repo string, runID int64) (int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/runs/%d/cancel", owner, repo, runID)
+	return c.PostJSON(p, nil, nil)
+}
+
 // GetJobLogs 获取单个 Job 的日志文本
 func (c *Client) GetJobLogs(owner, repo string, jobID int64) (string, int, error) {
 	p := fmt.Sprintf("/repos/%s/%s/actions/jobs/%d/logs", owner, repo, jobID)

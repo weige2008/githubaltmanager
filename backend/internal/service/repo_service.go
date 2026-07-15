@@ -729,3 +729,13 @@ func (s *RepoService) GetJobLogs(c *Container, repoID uint, jobID int64) (string
 	}
 	return logs, nil
 }
+
+// CancelWorkflowRun 取消工作流运行
+func (s *RepoService) CancelWorkflowRun(c *Container, repoID uint, runID int64) error {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return err
+	}
+	_, err = ghc.CancelWorkflowRun(r.OwnerLogin, r.Name, runID)
+	return err
+}

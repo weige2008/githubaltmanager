@@ -25,6 +25,7 @@ func RegisterRunsRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.GET("/:runId/jobs", h.ListJobs)
 		grp.GET("/:runId/logs", h.GetLogsURL)
 		grp.GET("/:runId/jobs/:jobId/logs", h.GetJobLogs)
+		grp.POST("/:runId/cancel", h.CancelRun)
 	}
 }
 
@@ -73,4 +74,15 @@ func (h *RunsHandler) GetJobLogs(c *gin.Context) {
 		return
 	}
 	resp.OK(c, gin.H{"logs": logs})
+}
+
+func (h *RunsHandler) CancelRun(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	runId, _ := strconv.ParseInt(c.Param("runId"), 10, 64)
+	err := h.s.CancelWorkflowRun(h.c, uint(id), runId)
+	if err != nil {
+		resp.Internal(c, "取消失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, gin.H{"ok": true})
 }

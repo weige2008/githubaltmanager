@@ -109,6 +109,8 @@ export const runsApi = {
     http.get<unknown, { url: string }>(`/repos/${repoId}/runs/${runId}/logs`),
   jobLogs: (repoId: number, runId: number, jobId: number) =>
     http.get<unknown, { logs: string }>(`/repos/${repoId}/runs/${runId}/jobs/${jobId}/logs`),
+  cancel: (repoId: number, runId: number) =>
+    http.post<unknown, { ok: boolean }>(`/repos/${repoId}/runs/${runId}/cancel`),
 }
 
 export const systemApi = {
