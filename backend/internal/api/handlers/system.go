@@ -180,5 +180,10 @@ func fetchLatestRelease() (version, releaseURL, body string, err error) {
 		return "", "", "", err
 	}
 
-	return release.TagName, release.HTMLURL, release.Body, nil
+	// Strip 'v' prefix from tag name (v2.8.2 -> 2.8.2)
+	version = release.TagName
+	if len(version) > 0 && version[0] == 'v' {
+		version = version[1:]
+	}
+	return version, release.HTMLURL, release.Body, nil
 }
