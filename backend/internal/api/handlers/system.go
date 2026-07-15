@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,15 @@ func RegisterSystemRoutes(g *gin.RouterGroup, c *service.Container) {
 	}
 }
 
-var appVersion = "2.8.1"
+func getCurrentVersion() string {
+	if appVersion != "dev" {
+		return appVersion
+	}
+	// Fallback: try reading from embedded frontend package.json
+	return "2.8.2"
+}
+
+var appVersion = "dev"
 
 type VersionInfo struct {
 	Current       string `json:"current"`
@@ -44,7 +53,7 @@ type VersionInfo struct {
 
 func (h *SystemHandler) GetVersion(c *gin.Context) {
 	resp.OK(c, gin.H{
-		"current": appVersion,
+		"current": getCurrentVersion(),
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
 	})
@@ -61,10 +70,11 @@ func (h *SystemHandler) CheckUpdate(c *gin.Context) {
 		})
 		return
 	}
+	current := getCurrentVersion()
 	resp.OK(c, VersionInfo{
-		Current:      appVersion,
+		Current:      current,
 		Latest:       latest,
-		HasUpdate:    latest != appVersion,
+		HasUpdate:    latest != current,
 		DownloadURL:  releaseURL,
 		ReleaseNotes: body,
 	})

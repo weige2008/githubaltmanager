@@ -40,7 +40,8 @@ jobs:
         working-directory: backend
         run: |
           go mod tidy
-          LDFLAGS="-s -w"
+          VERSION=$(grep '"version"' ../frontend/package.json | head -1 | sed 's/.*"version": *"//' | sed 's/".*//')
+          LDFLAGS="-s -w -X githubaltmanager/internal/api/handlers.appVersion=${VERSION}"
           mkdir -p /tmp/release
           for target in linux/amd64 linux/arm64 windows/amd64 darwin/amd64 darwin/arm64; do
             GOOS="${target%%/*}"
