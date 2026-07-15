@@ -35,7 +35,6 @@ export default function BatchRepoPage() {
   const [templateFiles, setTemplateFiles] = useState<TemplateFile[]>([])
   const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
   const [results, setResults] = useState<{ success: any[]; failed: any[] } | null>(null)
-  const [retrying, setRetrying] = useState(false)
 
   const { data: accounts, isLoading, isError, refetch } = useQuery({
     queryKey: ['accounts'],
@@ -65,59 +64,61 @@ export default function BatchRepoPage() {
     onError: () => toast.error(t('batchRepo.fetchFailed')),
   })
 
-  const createReposMut = useMutation({
-    mutationFn: (opts?: { retryFailed?: any[] }) => {
-      const files = buildFiles()
-      const ids = opts?.retryFailed ? opts.retryFailed.map((f: any) => f.account_id) : accountIds
-      const count = opts?.retryFailed ? 1 : repoCount
-      return batchApi.createRepos({
-        account_ids: Array.from(new Set(ids)),
-        repo_name: repoName,
-        description,
-        private: isPrivate,
-        files,
-        count,
-        secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
-      })
-    },
-    onSuccess: (data, vars) => {
-      if (vars?.retryFailed) {
-        setResults(prev => {
-          if (!prev) return data
-          return {
-            success: [...prev.success, ...data.success],
-            failed: data.failed,
-          }
+  const [executing, setExecuting] = useState(false)
+  const [progress, setProgress] = useState<{ current: number; total: number; currentName: string } | null>(null)
+
+  const executeBatch = async (ids: number[], isRetry = false) => {
+    const files = buildFiles()
+    const secretsData = secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value }))
+    const allSuccess: any[] = isRetry ? (results?.success || []) : []
+    const allFailed: any[] = []
+
+    setExecuting(true)
+    if (!isRetry) setResults(null)
+
+    for (let idx = 0; idx < ids.length; idx++) {
+      const aid = ids[idx]
+      const accName = accNameMap.get(aid) || `账户 ${aid}`
+      setProgress({ current: idx + 1, total: ids.length, currentName: accName })
+
+      try {
+        const data = await batchApi.createRepos({
+          account_ids: [aid],
+          repo_name: repoName,
+          description,
+          private: isPrivate,
+          files,
+          count: isRetry ? 1 : repoCount,
+          secrets: secretsData,
         })
-        const sCount = data.success.length
-        const fCount = data.failed.length
-        if (fCount === 0) {
-          toast.success(`重试成功：${sCount} 个之前失败的仓库已创建`)
-        } else {
-          toast.warning(`重试完成：${sCount} 成功，${fCount} 仍然失败`)
-        }
-        setRetrying(false)
-      } else {
-        setResults(data)
-        const sCount = data.success.length
-        const fCount = data.failed.length
-        if (fCount === 0) {
-          toast.success(t('batchRepo.successMsg', { count: sCount }))
-        } else {
-          toast.warning(t('batchRepo.partialMsg', { success: sCount, failed: fCount }))
-        }
+        allSuccess.push(...data.success)
+        allFailed.push(...data.failed)
+      } catch (e: any) {
+        allFailed.push({ account_id: aid, repo_name: repoName, error: e?.message || '请求失败' })
       }
-    },
-    onError: (e: any, vars) => {
-      if (vars?.retryFailed) { setRetrying(false) }
-      toast.error(e?.message || t('batchRepo.failed'))
-    },
-  })
+
+      // Update results in real-time
+      setResults({ success: [...allSuccess], failed: [...allFailed] })
+    }
+
+    setExecuting(false)
+    setProgress(null)
+
+    const sCount = allSuccess.length - (isRetry ? (results?.success?.length || 0) : 0)
+    const fCount = allFailed.length
+    if (isRetry) {
+      if (fCount === 0) toast.success(`重试成功：${sCount} 个已创建`)
+      else toast.warning(`重试完成：${sCount} 成功，${fCount} 仍然失败`)
+    } else {
+      if (fCount === 0) toast.success(`全部成功：${allSuccess.length} 个仓库已创建`)
+      else toast.warning(`完成：${allSuccess.length} 成功，${fCount} 失败`)
+    }
+  }
 
   const handleRetry = () => {
     if (!results?.failed?.length) return
-    setRetrying(true)
-    createReposMut.mutate({ retryFailed: results.failed })
+    const failedIds = Array.from(new Set(results.failed.map(f => f.account_id)))
+    executeBatch(failedIds, true)
   }
 
   const handleFetchTemplate = () => {
@@ -380,6 +381,22 @@ export default function BatchRepoPage() {
             </CardContent>
           </Card>
 
+          {/* Progress indicator */}
+          {progress && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  正在创建：{progress.currentName}
+                </span>
+                <span className="text-xs text-muted-foreground">{progress.current} / {progress.total}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
+              </div>
+            </div>
+          )}
+
             {results && (
             <Alert>
               <AlertTitle>执行结果（成功 {results.success.length} / 失败 {results.failed.length}）</AlertTitle>
@@ -410,19 +427,19 @@ export default function BatchRepoPage() {
             <Button variant="outline" onClick={() => { setResults(null); setTemplateFiles([]) }}>
               {t('ui.reset')}
             </Button>
-            {results && results.failed.length > 0 && (
-              <Button variant="outline" onClick={handleRetry} disabled={retrying || createReposMut.isPending} className="gap-1.5">
-                {retrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {results && results.failed.length > 0 && !executing && (
+              <Button variant="outline" onClick={handleRetry} className="gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" />
                 重试失败的 {results.failed.length} 个
               </Button>
             )}
             <Button
-              onClick={() => createReposMut.mutate(undefined)}
-              disabled={!canExecute || createReposMut.isPending}
+              onClick={() => executeBatch(accountIds)}
+              disabled={!canExecute || executing}
               size="lg"
             >
-              {createReposMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
-              创建 {totalRepos} 个仓库（{accountIds.length} 账户 × {repoCount}）
+              {executing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
+              {executing ? '创建中...' : `创建 ${totalRepos} 个仓库（${accountIds.length} 账户 × ${repoCount}）`}
             </Button>
           </div>
         </div>

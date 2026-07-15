@@ -32,7 +32,7 @@ func RegisterSystemRoutes(g *gin.RouterGroup, c *service.Container) {
 	}
 }
 
-var appVersion = "2.7.3"
+var appVersion = "2.8.1"
 
 type VersionInfo struct {
 	Current       string `json:"current"`

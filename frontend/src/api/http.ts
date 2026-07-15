@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const http = axios.create({ baseURL: '/api', timeout: 30000 })
+const http = axios.create({ baseURL: '/api', timeout: 300000 })
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('gam_token')
