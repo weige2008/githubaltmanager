@@ -107,6 +107,8 @@ export const runsApi = {
     http.get<unknown, { total_count: number; jobs: WorkflowJob[] }>(`/repos/${repoId}/runs/${runId}/jobs`),
   logs: (repoId: number, runId: number) =>
     http.get<unknown, { url: string }>(`/repos/${repoId}/runs/${runId}/logs`),
+  jobLogs: (repoId: number, runId: number, jobId: number) =>
+    http.get<unknown, { logs: string }>(`/repos/${repoId}/runs/${runId}/jobs/${jobId}/logs`),
 }
 
 export const systemApi = {

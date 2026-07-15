@@ -716,3 +716,16 @@ func (s *RepoService) GetWorkflowRunLogsURL(c *Container, repoID uint, runID int
 	}
 	return url, nil
 }
+
+// GetJobLogs 获取单个 Job 的日志
+func (s *RepoService) GetJobLogs(c *Container, repoID uint, jobID int64) (string, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return "", err
+	}
+	logs, _, err := ghc.GetJobLogs(r.OwnerLogin, r.Name, jobID)
+	if err != nil {
+		return "", err
+	}
+	return logs, nil
+}

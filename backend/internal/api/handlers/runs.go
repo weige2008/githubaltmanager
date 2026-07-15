@@ -24,6 +24,7 @@ func RegisterRunsRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.GET("", h.ListRuns)
 		grp.GET("/:runId/jobs", h.ListJobs)
 		grp.GET("/:runId/logs", h.GetLogsURL)
+		grp.GET("/:runId/jobs/:jobId/logs", h.GetJobLogs)
 	}
 }
 
@@ -61,4 +62,15 @@ func (h *RunsHandler) GetLogsURL(c *gin.Context) {
 		return
 	}
 	resp.OK(c, gin.H{"url": url})
+}
+
+func (h *RunsHandler) GetJobLogs(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	jobId, _ := strconv.ParseInt(c.Param("jobId"), 10, 64)
+	logs, err := h.s.GetJobLogs(h.c, uint(id), jobId)
+	if err != nil {
+		resp.Internal(c, "获取Job日志失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, gin.H{"logs": logs})
 }

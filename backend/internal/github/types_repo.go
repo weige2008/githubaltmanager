@@ -318,6 +318,29 @@ func (c *Client) GetWorkflowRunLogsURL(owner, repo string, runID int64) (string,
 // 避免未使用 import
 var _ = json.Marshal
 
+// GetJobLogs 获取单个 Job 的日志文本
+func (c *Client) GetJobLogs(owner, repo string, jobID int64) (string, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/jobs/%d/logs", owner, repo, jobID)
+	code, data, header, err := c.rawRequest("GET", p, nil, nil)
+	if err != nil {
+		return "", code, err
+	}
+	// Follow redirect
+	if code == 302 {
+		loc := header.Get("Location")
+		if loc != "" {
+			code, data, _, err = c.rawRequest("GET", loc, nil, nil)
+			if err != nil {
+				return "", code, err
+			}
+		}
+	}
+	if code >= 400 {
+		return "", code, &APIError{Status: code, Body: string(data)}
+	}
+	return string(data), code, nil
+}
+
 // CreateRepoPayload 创建仓库请求
 type CreateRepoPayload struct {
 	Name        string `json:"name"`
