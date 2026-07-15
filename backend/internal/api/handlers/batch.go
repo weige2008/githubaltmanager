@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/service"
@@ -122,6 +124,7 @@ type BatchCreateReposPayload struct {
 	Private     bool                       `json:"private"`
 	Files       []service.TemplateFile     `json:"files"`
 	Secrets     []service.SecretEntry      `json:"secrets"`
+	Count       int                        `json:"count"` // 每个账户创建的仓库数量，默认1
 }
 
 func (h *BatchHandler) CreateRepos(c *gin.Context) {
@@ -134,14 +137,26 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 		resp.BadRequest(c, "account_ids 数量必须在 1-100 之间", nil)
 		return
 	}
+	if p.Count <= 0 {
+		p.Count = 1
+	}
+	if p.Count > 50 {
+		p.Count = 50
+	}
 	success := []gin.H{}
 	failed := []gin.H{}
 	for _, aid := range p.AccountIDs {
-		repo, err := h.s.CreateRepoForAccount(h.c, aid, p.RepoName, p.Description, p.Private, p.Files, p.Secrets)
-		if err != nil {
-			failed = append(failed, gin.H{"account_id": aid, "error": err.Error()})
-		} else {
-			success = append(success, gin.H{"account_id": aid, "repo": repo.FullName})
+		for i := 0; i < p.Count; i++ {
+			name := p.RepoName
+			if p.Count > 1 {
+				name = fmt.Sprintf("%s-%d", p.RepoName, i+1)
+			}
+			repo, err := h.s.CreateRepoForAccount(h.c, aid, name, p.Description, p.Private, p.Files, p.Secrets)
+			if err != nil {
+				failed = append(failed, gin.H{"account_id": aid, "repo_name": name, "error": err.Error()})
+			} else {
+				success = append(success, gin.H{"account_id": aid, "repo": repo.FullName})
+			}
 		}
 	}
 	resp.OK(c, gin.H{"success": success, "failed": failed})

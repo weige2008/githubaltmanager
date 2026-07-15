@@ -28,6 +28,7 @@ export default function BatchRepoPage() {
   const [repoName, setRepoName] = useState('')
   const [description, setDescription] = useState('')
   const [isPrivate, setIsPrivate] = useState(true)
+  const [repoCount, setRepoCount] = useState(1)
   const [sourceMode, setSourceMode] = useState<'clone' | 'manual'>('clone')
   const [cloneUrl, setCloneUrl] = useState('')
   const [manualFiles, setManualFiles] = useState<ManualFile[]>([{ path: '', content: '' }])
@@ -68,6 +69,7 @@ export default function BatchRepoPage() {
         description,
         private: isPrivate,
         files,
+        count: repoCount,
         secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
       })
     },
@@ -119,6 +121,7 @@ export default function BatchRepoPage() {
     setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, show: !s.show } : s))
 
   const canExecute = accountIds.length > 0 && repoName.trim() && (sourceMode === 'manual' || templateFiles.length > 0)
+  const totalRepos = accountIds.length * repoCount
 
   if (isLoading) return <LoadingState />
   if (isError) return <ErrorState retry={refetch} />
@@ -178,10 +181,20 @@ export default function BatchRepoPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('batchRepo.repoName')}</label>
                 <Input value={repoName} onChange={e => setRepoName(e.target.value)} placeholder="my-repo" />
+                {repoCount > 1 && <p className="text-xs text-muted-foreground">将创建为 {repoName}-1, {repoName}-2 ... {repoName}-{repoCount}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('batchRepo.descriptionLabel')}</label>
                 <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Repository description" />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-sm font-medium">每个账户创建数量</label>
+                <div className="flex items-center gap-3">
+                  <Input type="number" min={1} max={50} value={repoCount} onChange={e => setRepoCount(Math.max(1, Math.min(50, Number(e.target.value) || 1)))} className="w-24" />
+                  <span className="text-sm text-muted-foreground">
+                    共将为 {accountIds.length} 个账户创建 <span className="font-bold text-primary">{totalRepos}</span> 个仓库
+                  </span>
+                </div>
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <label className="text-sm font-medium">{t('batchRepo.visibility')}</label>
@@ -365,7 +378,7 @@ export default function BatchRepoPage() {
               size="lg"
             >
               {createReposMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
-              {t('batchRepo.create', { count: accountIds.length })}
+              创建 {totalRepos} 个仓库（{accountIds.length} 账户 × {repoCount}）
             </Button>
           </div>
         </div>
