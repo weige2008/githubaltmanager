@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, repoApi, batchApi, type TemplateFile, type SecretEntry, type Repo } from '@/api'
@@ -35,6 +35,7 @@ export default function BatchRepoPage() {
   const [templateFiles, setTemplateFiles] = useState<TemplateFile[]>([])
   const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
   const [results, setResults] = useState<{ success: any[]; failed: any[] } | null>(null)
+  const [retrying, setRetrying] = useState(false)
 
   const { data: accounts, isLoading, isError, refetch } = useQuery({
     queryKey: ['accounts'],
@@ -42,6 +43,17 @@ export default function BatchRepoPage() {
   })
   const { data: groups } = useQuery({ queryKey: ['accounts', 'groups'], queryFn: () => accountApi.listGroups() })
   const [groupFilter, setGroupFilter] = useState<string>('')
+
+  const accNameMap = useMemo(() => {
+    const m = new Map<number, string>()
+    ;(accounts || []).forEach(a => m.set(a.id, displayName(a)))
+    return m
+  }, [accounts])
+
+  const buildFiles = () => {
+    if (sourceMode === 'clone') return templateFiles
+    return manualFiles.filter(f => f.path.trim()).map(f => ({ path: f.path, content: btoa(unescape(encodeURIComponent(f.content))) }))
+  }
 
   const fetchTemplateMut = useMutation({
     mutationFn: (vars: { accountId: number; owner: string; repo: string }) =>
@@ -54,37 +66,59 @@ export default function BatchRepoPage() {
   })
 
   const createReposMut = useMutation({
-    mutationFn: () => {
-      let files: TemplateFile[] = []
-      if (sourceMode === 'clone') {
-        files = templateFiles
-      } else {
-        files = manualFiles
-          .filter(f => f.path.trim())
-          .map(f => ({ path: f.path, content: btoa(unescape(encodeURIComponent(f.content))) }))
-      }
+    mutationFn: (opts?: { retryFailed?: any[] }) => {
+      const files = buildFiles()
+      const ids = opts?.retryFailed ? opts.retryFailed.map((f: any) => f.account_id) : accountIds
+      const count = opts?.retryFailed ? 1 : repoCount
       return batchApi.createRepos({
-        account_ids: accountIds,
+        account_ids: Array.from(new Set(ids)),
         repo_name: repoName,
         description,
         private: isPrivate,
         files,
-        count: repoCount,
+        count,
         secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
       })
     },
-    onSuccess: (data) => {
-      setResults(data)
-      const sCount = data.success.length
-      const fCount = data.failed.length
-      if (fCount === 0) {
-        toast.success(t('batchRepo.successMsg', { count: sCount }))
+    onSuccess: (data, vars) => {
+      if (vars?.retryFailed) {
+        setResults(prev => {
+          if (!prev) return data
+          return {
+            success: [...prev.success, ...data.success],
+            failed: data.failed,
+          }
+        })
+        const sCount = data.success.length
+        const fCount = data.failed.length
+        if (fCount === 0) {
+          toast.success(`重试成功：${sCount} 个之前失败的仓库已创建`)
+        } else {
+          toast.warning(`重试完成：${sCount} 成功，${fCount} 仍然失败`)
+        }
+        setRetrying(false)
       } else {
-        toast.warning(t('batchRepo.partialMsg', { success: sCount, failed: fCount }))
+        setResults(data)
+        const sCount = data.success.length
+        const fCount = data.failed.length
+        if (fCount === 0) {
+          toast.success(t('batchRepo.successMsg', { count: sCount }))
+        } else {
+          toast.warning(t('batchRepo.partialMsg', { success: sCount, failed: fCount }))
+        }
       }
     },
-    onError: () => toast.error(t('batchRepo.failed')),
+    onError: (e: any, vars) => {
+      if (vars?.retryFailed) { setRetrying(false) }
+      toast.error(e?.message || t('batchRepo.failed'))
+    },
   })
+
+  const handleRetry = () => {
+    if (!results?.failed?.length) return
+    setRetrying(true)
+    createReposMut.mutate({ retryFailed: results.failed })
+  }
 
   const handleFetchTemplate = () => {
     const match = cloneUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
@@ -346,21 +380,25 @@ export default function BatchRepoPage() {
             </CardContent>
           </Card>
 
-          {results && (
+            {results && (
             <Alert>
-              <AlertTitle>{t('ui.results')}</AlertTitle>
+              <AlertTitle>执行结果（成功 {results.success.length} / 失败 {results.failed.length}）</AlertTitle>
               <AlertDescription>
-                <div className="mt-2 space-y-1">
+                <div className="mt-2 max-h-[300px] space-y-1 overflow-y-auto">
                   {results.success.map((s, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <CircleCheck className="h-4 w-4 text-success" />
-                      <span>{s.repo}</span>
+                    <div key={`s${i}`} className="flex items-center gap-2 text-sm">
+                      <CircleCheck className="h-4 w-4 shrink-0 text-success" />
+                      <span className="font-medium">{accNameMap.get(s.account_id) || `账户 ${s.account_id}`}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-mono text-xs">{s.repo || s.repo_name}</span>
                     </div>
                   ))}
                   {results.failed.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <CircleX className="h-4 w-4 text-destructive" />
-                      <span>{f.account_id}: {f.error}</span>
+                    <div key={`f${i}`} className="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 text-sm">
+                      <CircleX className="h-4 w-4 shrink-0 text-destructive" />
+                      <span className="font-medium">{accNameMap.get(f.account_id) || `账户 ${f.account_id}`}</span>
+                      {f.repo_name && <><span className="text-muted-foreground">→</span><span className="font-mono text-xs">{f.repo_name}</span></>}
+                      <span className="ml-auto text-xs text-destructive">{f.error}</span>
                     </div>
                   ))}
                 </div>
@@ -372,8 +410,14 @@ export default function BatchRepoPage() {
             <Button variant="outline" onClick={() => { setResults(null); setTemplateFiles([]) }}>
               {t('ui.reset')}
             </Button>
+            {results && results.failed.length > 0 && (
+              <Button variant="outline" onClick={handleRetry} disabled={retrying || createReposMut.isPending} className="gap-1.5">
+                {retrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                重试失败的 {results.failed.length} 个
+              </Button>
+            )}
             <Button
-              onClick={() => createReposMut.mutate()}
+              onClick={() => createReposMut.mutate(undefined)}
               disabled={!canExecute || createReposMut.isPending}
               size="lg"
             >

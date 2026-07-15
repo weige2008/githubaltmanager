@@ -17,7 +17,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap } from 'lucide-react'
+import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MatchedRepo extends Repo {
@@ -206,6 +206,46 @@ export default function BatchPage() {
     }, 500)
     return () => clearTimeout(timer)
   }, [dispatchFilename, mode, selectedRepoIds])
+
+  // Repo info map for results display
+  const repoInfoMap = useMemo(() => {
+    const m = new Map<number, { login: string; name: string }>()
+    ;(matchedRepos || []).forEach(r => m.set(r.id, { login: r.accountLogin, name: r.name }))
+    return m
+  }, [matchedRepos])
+
+  const formatRepoLabel = (repoId: number) => {
+    const info = repoInfoMap.get(repoId)
+    return info ? `${info.login}/${info.name}` : `repo_id: ${repoId}`
+  }
+
+  // Retry handlers
+  const retryCreateMut = useMutation({
+    mutationFn: (repoIds: number[]) => batchApi.createWorkflows({ repo_ids: repoIds, filename: wfFilename, content: b64(wfContent), commit_message: commitMsg }),
+    onSuccess: (data) => {
+      setResults(prev => prev ? { success: [...prev.success, ...data.success], failed: data.failed } : data)
+      toast.success(`重试完成：${data.success.length} 成功，${data.failed.length} 仍然失败`)
+      setRetrying(false)
+    },
+    onError: () => { toast.error('重试失败'); setRetrying(false) },
+  })
+  const retryDispatchMut = useMutation({
+    mutationFn: (repoIds: number[]) => batchApi.dispatch({ repo_ids: repoIds, filename: dispatchFilename, ref: dispatchRef || undefined, inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined }),
+    onSuccess: (data) => {
+      setResults(prev => prev ? { success: [...prev.success, ...data.success], failed: data.failed } : data)
+      toast.success(`重试完成：${data.success.length} 成功，${data.failed.length} 仍然失败`)
+      setRetrying(false)
+    },
+    onError: () => { toast.error('重试失败'); setRetrying(false) },
+  })
+  const [retrying, setRetrying] = useState(false)
+  const handleRetry = () => {
+    if (!results?.failed?.length) return
+    setRetrying(true)
+    const failedIds = results.failed.map((f: any) => f.repo_id)
+    if (mode === 'create') retryCreateMut.mutate(failedIds)
+    else retryDispatchMut.mutate(failedIds)
+  }
 
   const b64 = useCallback((s: string) => btoa(unescape(encodeURIComponent(s))), [])
 
@@ -586,19 +626,20 @@ export default function BatchPage() {
               {/* Execution results */}
               {results && (
                 <Alert className="mt-4">
-                  <AlertTitle>{t('ui.results')}</AlertTitle>
+                  <AlertTitle>执行结果（成功 {results.success.length} / 失败 {results.failed.length}）</AlertTitle>
                   <AlertDescription>
-                    <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto">
+                    <div className="mt-2 max-h-[250px] space-y-1 overflow-y-auto">
                       {results.success.map((s, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
+                        <div key={'s'+i} className="flex items-center gap-2 text-sm">
                           <CircleCheck className="h-4 w-4 shrink-0 text-success" />
-                          <span>repo_id: {s.repo_id}</span>
+                          <span>{formatRepoLabel(s.repo_id)}</span>
                         </div>
                       ))}
                       {results.failed.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
+                        <div key={'f'+i} className="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 text-sm">
                           <CircleX className="h-4 w-4 shrink-0 text-destructive" />
-                          <span>repo_id: {f.repo_id} — {f.error}</span>
+                          <span className="font-medium">{formatRepoLabel(f.repo_id)}</span>
+                          <span className="ml-auto text-xs text-destructive">{f.error}</span>
                         </div>
                       ))}
                     </div>
@@ -611,6 +652,12 @@ export default function BatchPage() {
                 <Button variant="outline" onClick={() => { setResults(null); setSelectedRepoIds([]) }}>
                   {t('ui.reset')}
                 </Button>
+                {results && results.failed.length > 0 && (
+                  <Button variant="outline" onClick={handleRetry} disabled={retrying || isExecuting} className="gap-1.5">
+                    {retrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    重试失败的 {results.failed.length} 个
+                  </Button>
+                )}
                 <Button
                   size="lg"
                   disabled={!canExecute || isExecuting}
