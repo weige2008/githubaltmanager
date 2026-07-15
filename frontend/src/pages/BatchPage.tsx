@@ -52,6 +52,7 @@ export default function BatchPage() {
   const [dispatchInputs, setDispatchInputs] = useState<Record<string, string>>({})
   const [workflowInputs, setWorkflowInputs] = useState<WorkflowInput[]>([])
   const [loadingInputs, setLoadingInputs] = useState(false)
+  const [dispatchCount, setDispatchCount] = useState(1)
   const [results, setResults] = useState<{ success: any[]; failed: any[] } | null>(null)
 
   const { data: accounts, isLoading: accLoading, isError: accError, refetch: accRefetch } = useQuery({
@@ -223,12 +224,18 @@ export default function BatchPage() {
   })
 
   const dispatchMut = useMutation({
-    mutationFn: () => batchApi.dispatch({
-      repo_ids: selectedRepoIds,
-      filename: dispatchFilename,
-      ref: dispatchRef || undefined,
-      inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined,
-    }),
+    mutationFn: async () => {
+      const allRepoIds: number[] = []
+      for (let i = 0; i < dispatchCount; i++) {
+        allRepoIds.push(...selectedRepoIds)
+      }
+      return batchApi.dispatch({
+        repo_ids: allRepoIds,
+        filename: dispatchFilename,
+        ref: dispatchRef || undefined,
+        inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined,
+      })
+    },
     onSuccess: (data) => {
       setResults(data)
       toast.success(t('batchWorkflow.partialMsg', { success: data.success?.length || 0, failed: data.failed?.length || 0 }))
@@ -509,6 +516,15 @@ export default function BatchPage() {
                     <label className="text-xs font-medium text-muted-foreground">分支 Ref（可选，默认 main）</label>
                     <Input value={dispatchRef} onChange={(e) => setDispatchRef(e.target.value)} placeholder="main" className="font-mono text-sm" />
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">每个仓库触发次数</label>
+                    <div className="flex items-center gap-3">
+                      <Input type="number" min={1} max={20} value={dispatchCount} onChange={(e) => setDispatchCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} className="w-24" />
+                      <span className="text-xs text-muted-foreground">
+                        共将触发 <span className="font-bold text-primary">{selectedRepoIds.length * dispatchCount}</span> 次（{selectedRepoIds.length} 个仓库 × {dispatchCount}）
+                      </span>
+                    </div>
+                  </div>
                   {/* Workflow inputs */}
                   {loadingInputs && <p className="text-xs text-muted-foreground animate-pulse">正在获取工作流参数...</p>}
                   {workflowInputs.length > 0 && (
@@ -605,7 +621,7 @@ export default function BatchPage() {
                   ) : mode === 'create' ? (
                     <><FileCode className="mr-2 h-4 w-4" /> {t('batchWorkflow.createForN', { count: selectedRepoIds.length })}</>
                   ) : (
-                    <><Play className="mr-2 h-4 w-4" /> {t('batchWorkflow.dispatchForN', { count: selectedRepoIds.length })}</>
+                    <><Play className="mr-2 h-4 w-4" /> 触发 {selectedRepoIds.length * dispatchCount} 次（{selectedRepoIds.length} 仓库 × {dispatchCount}）</>
                   )}
                 </Button>
               </div>
