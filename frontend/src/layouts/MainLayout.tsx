@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore } from '@/store/theme'
 import { useSearchStore } from '@/store/search'
+import { systemApi } from '@/api'
 import { Button } from '@/components/ui/button'
+import { ArrowUpCircle } from 'lucide-react'
 import { RouteProgress } from '@/components/RouteProgress'
 import { ThemeDrawer } from '@/components/ThemeDrawer'
 import { cn } from '@/lib/utils'
@@ -61,12 +63,20 @@ const navGroups: NavGroupDef[] = [
 export default function MainLayout() {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const { contentLayout, sidebarMode } = useThemeStore()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { isOpen: commandOpen, setOpen: setCommandOpen } = useSearchStore()
   const reducedMotion = useReducedMotion()
+
+  // Check for updates
+  const [hasUpdate, setHasUpdate] = useState(false)
+  const [latestVersion, setLatestVersion] = useState('')
+  useEffect(() => {
+    systemApi.checkUpdate().then(info => { if (info.has_update) { setHasUpdate(true); setLatestVersion(info.latest) } }).catch(() => {})
+  }, [])
 
   const toggleSidebar = () => {
     const next = !collapsed
@@ -156,6 +166,21 @@ export default function MainLayout() {
           <Button variant="ghost" size="icon" className="size-8" onClick={() => setDrawerOpen(true)}>
             <Palette className="size-4" />
           </Button>
+          {/* Update badge */}
+          {hasUpdate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => navigate('/settings')} className="relative flex size-8 items-center justify-center rounded-md text-warning hover:bg-muted">
+                  <ArrowUpCircle className="h-4 w-4" />
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>新版本可用：{latestVersion}</TooltipContent>
+            </Tooltip>
+          )}
           <ProfileDropdown />
         </div>
       </header>

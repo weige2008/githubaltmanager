@@ -61,6 +61,20 @@ export const apiKeyApi = {
   toggle: (id: number) => http.put<unknown, { ok: boolean; enabled: boolean }>(`/apikeys/${id}/toggle`),
 }
 
+export interface VersionInfo {
+  current: string
+  latest: string
+  has_update: boolean
+  download_url: string
+  release_notes: string
+}
+
+export const systemApi = {
+  getVersion: () => http.get<unknown, { current: string; os: string; arch: string }>('/system/version'),
+  checkUpdate: () => http.get<unknown, VersionInfo>('/system/check-update'),
+  selfUpdate: () => http.post<unknown, { ok: boolean; message: string; release: string }>('/system/update'),
+}
+
 export const authApi = {
   status: () => http.get<unknown, { isInitialized: boolean }>('/auth/status'),
   setup: (pw: string) => http.post<unknown, { token: string }>('/auth/setup', { masterPassword: pw }),

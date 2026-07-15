@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { autoTaskApi, authApi, accountApi, apiKeyApi, type AutoTaskConfig, type APIKey } from '@/api'
+import { autoTaskApi, authApi, accountApi, apiKeyApi, systemApi, type AutoTaskConfig, type APIKey } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText, Trash2, Filter, Plus } from 'lucide-react'
+import { Clock, Lock, Info, Settings as SettingsIcon, Activity, RefreshCw, Database, Github, Tag, AlertCircle, ShieldAlert, KeyRound, CheckCircle2, AlertTriangle, Layers, Palette, Languages, Users, FolderPlus, GitBranch, FolderGit2, FileText, Trash2, Filter, Plus, Download, ArrowUpCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { zhCN, enUS } from 'date-fns/locale'
@@ -458,6 +458,9 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2"><span className="font-medium text-foreground">{t('settings.embedMethod')}：</span> go:embed（单二进制，无需 Nginx）</div>
               </div>
               <Separator />
+              {/* Update check */}
+              <UpdateCheckSection />
+              <Separator />
               <div className="flex flex-wrap gap-2">
                 <a href="https://github.com/weige2008/githubaltmanager" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent">
                   <Github className="h-3.5 w-3.5" /> {t('settings.githubRepo')}
@@ -550,6 +553,72 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+function UpdateCheckSection() {
+  const queryClient = useQueryClient()
+  const { data: updateInfo, isLoading, refetch } = useQuery({
+    queryKey: ['system-update'],
+    queryFn: () => systemApi.checkUpdate(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
+
+  const [updating, setUpdating] = useState(false)
+
+  const handleUpdate = async () => {
+    if (!confirm(`确定要更新到 ${updateInfo?.latest}？服务将短暂中断。`)) return
+    setUpdating(true)
+    toast.info('正在下载并更新...')
+    try {
+      await systemApi.selfUpdate()
+      toast.success('更新成功！服务正在重启，请稍后刷新页面')
+      setTimeout(() => window.location.reload(), 5000)
+    } catch (e: any) {
+      toast.error(e?.message || '更新失败，请手动下载')
+      setUpdating(false)
+    }
+  }
+
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isLoading ? (
+            <><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /><span className="text-sm text-muted-foreground">检查更新中...</span></>
+          ) : updateInfo?.has_update ? (
+            <><ArrowUpCircle className="h-5 w-5 text-warning" /><div><span className="text-sm font-medium text-warning">发现新版本！</span><span className="ml-2 text-xs text-muted-foreground">{updateInfo.current} → {updateInfo.latest}</span></div></>
+          ) : (
+            <><CheckCircle2 className="h-4 w-4 text-success" /><span className="text-sm text-muted-foreground">已是最新版本 {updateInfo?.current || __APP_VERSION__}</span></>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="gap-1.5">
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            检查更新
+          </Button>
+          {updateInfo?.has_update && (
+            <Button size="sm" onClick={handleUpdate} disabled={updating} className="gap-1.5">
+              {updating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              {updating ? '更新中...' : '一键更新'}
+            </Button>
+          )}
+        </div>
+      </div>
+      {updateInfo?.has_update && updateInfo?.release_notes && (
+        <div className="mt-3 rounded-md bg-muted/30 p-3">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">更新内容</p>
+          <pre className="whitespace-pre-wrap text-xs text-muted-foreground">{updateInfo.release_notes.slice(0, 500)}</pre>
+          {updateInfo.release_notes.length > 500 && <p className="mt-1 text-xs text-primary">...</p>}
+        </div>
+      )}
+      {updateInfo?.has_update && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          也可以<a href={updateInfo.download_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">手动下载</a>更新
+        </p>
+      )}
     </div>
   )
 }
