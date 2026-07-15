@@ -180,6 +180,8 @@ export const batchApi = {
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/create-repos', data),
   updateRepos: (data: { repo_ids: number[]; template_owner: string; template_repo: string; template_ref?: string }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/update-repos', data),
+  toggleVisibility: (data: { repo_ids: number[]; is_private: boolean }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/toggle-visibility', data),
 }
 
 export interface Stats {

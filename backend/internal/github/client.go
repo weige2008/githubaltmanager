@@ -185,3 +185,28 @@ func (c *Client) Delete(path string) (int, error) {
 	}
 	return code, nil
 }
+
+// PatchJSON PATCH JSON 请求
+func (c *Client) PatchJSON(path string, payload any, out any) (int, error) {
+	var body io.Reader
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return 0, err
+		}
+		body = strings.NewReader(string(b))
+	}
+	code, data, _, err := c.rawRequest("PATCH", path, body, map[string]string{"Content-Type": "application/json"})
+	if err != nil {
+		return code, err
+	}
+	if code >= 400 {
+		return code, &APIError{Status: code, Body: string(data)}
+	}
+	if out != nil && len(data) > 0 {
+		if err := json.Unmarshal(data, out); err != nil {
+			return code, fmt.Errorf("unmarshal: %w", err)
+		}
+	}
+	return code, nil
+}

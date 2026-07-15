@@ -274,6 +274,14 @@ func (c *Client) CreateRepo(payload CreateRepoPayload) (*Repo, int, error) {
 	return &repo, code, err
 }
 
+// UpdateRepoVisibility 切换仓库公有/私有
+func (c *Client) UpdateRepoVisibility(owner, repo string, isPrivate bool) (int, error) {
+	p := fmt.Sprintf("/repos/%s/%s", owner, repo)
+	payload := map[string]bool{"private": isPrivate}
+	code, err := c.PatchJSON(p, payload, nil)
+	return code, err
+}
+
 // TreeEntry Git tree 条目
 type TreeEntry struct {
 	Path string `json:"path"`

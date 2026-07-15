@@ -28,6 +28,7 @@ func RegisterBatchRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/create-repos", h.CreateRepos)
 		grp.POST("/fetch-template", h.FetchTemplate)
 		grp.POST("/update-repos", h.UpdateRepos)
+		grp.POST("/toggle-visibility", h.ToggleVisibility)
 	}
 }
 
@@ -187,6 +188,36 @@ func (h *BatchHandler) UpdateRepos(c *gin.Context) {
 			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
 		} else {
 			success = append(success, gin.H{"repo_id": rid})
+		}
+	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+type BatchToggleVisibilityPayload struct {
+	RepoIDs   []uint `json:"repo_ids" binding:"required"`
+	IsPrivate bool   `json:"is_private"`
+}
+
+func (h *BatchHandler) ToggleVisibility(c *gin.Context) {
+	var p BatchToggleVisibilityPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+		return
+	}
+	success := []gin.H{}
+	failed := []gin.H{}
+	for _, rid := range p.RepoIDs {
+		err := h.s.ToggleRepoVisibility(h.c, rid, p.IsPrivate)
+		if err != nil {
+			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+		} else {
+			vis := "public"
+			if p.IsPrivate { vis = "private" }
+			success = append(success, gin.H{"repo_id": rid, "visibility": vis})
 		}
 	}
 	resp.OK(c, gin.H{"success": success, "failed": failed})

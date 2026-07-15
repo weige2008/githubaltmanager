@@ -663,3 +663,18 @@ func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, template
 	}
 	return nil
 }
+
+// ToggleRepoVisibility 切换仓库公有/私有
+func (s *RepoService) ToggleRepoVisibility(c *Container, repoID uint, isPrivate bool) error {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return err
+	}
+	_, err = ghc.UpdateRepoVisibility(r.OwnerLogin, r.Name, isPrivate)
+	if err != nil {
+		return fmt.Errorf("切换可见性失败: %w", err)
+	}
+	// Update local cache
+	s.DB.Model(&model.Repository{}).Where("id = ?", repoID).Update("private", isPrivate)
+	return nil
+}
