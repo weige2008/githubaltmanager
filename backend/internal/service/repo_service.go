@@ -674,7 +674,45 @@ func (s *RepoService) ToggleRepoVisibility(c *Container, repoID uint, isPrivate 
 	if err != nil {
 		return fmt.Errorf("切换可见性失败: %w", err)
 	}
-	// Update local cache
 	s.DB.Model(&model.Repository{}).Where("id = ?", repoID).Update("private", isPrivate)
 	return nil
+}
+
+// ListWorkflowRuns 获取仓库的工作流运行记录
+func (s *RepoService) ListWorkflowRuns(c *Container, repoID uint, perPage int) (interface{}, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return nil, err
+	}
+	runs, _, err := ghc.ListWorkflowRuns(r.OwnerLogin, r.Name, perPage)
+	if err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
+// ListWorkflowJobs 获取工作流运行的任务列表
+func (s *RepoService) ListWorkflowJobs(c *Container, repoID uint, runID int64) (interface{}, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return nil, err
+	}
+	jobs, _, err := ghc.ListWorkflowJobs(r.OwnerLogin, r.Name, runID)
+	if err != nil {
+		return nil, err
+	}
+	return jobs, nil
+}
+
+// GetWorkflowRunLogsURL 获取工作流运行日志下载 URL
+func (s *RepoService) GetWorkflowRunLogsURL(c *Container, repoID uint, runID int64) (string, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return "", err
+	}
+	url, _, err := ghc.GetWorkflowRunLogsURL(r.OwnerLogin, r.Name, runID)
+	if err != nil {
+		return "", err
+	}
+	return url, nil
 }

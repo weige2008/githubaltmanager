@@ -232,28 +232,88 @@ func (c *Client) GetWorkflowByID(owner, repo, filename string) (*Workflow, int, 
 
 // WorkflowRun 最近一次运行
 type WorkflowRun struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	CreatedAt  string `json:"created_at"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	HeadBranch   string `json:"head_branch"`
+	Status       string `json:"status"`       // queued / in_progress / completed
+	Conclusion   string `json:"conclusion"`   // success / failure / cancelled / null
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+	HTMLOutputURL string `json:"html_url"`
+	Event        string `json:"event"`
+	HeadCommit   struct {
+		Message string `json:"message"`
+		ID      string `json:"id"`
+	} `json:"head_commit"`
 }
 
 // ListWorkflowRuns 列出运行记录
 func (c *Client) ListWorkflowRuns(owner, repo string, perPage int) (struct {
-	TotalCount int           `json:"total_count"`
+	TotalCount   int           `json:"total_count"`
 	WorkflowRuns []WorkflowRun `json:"workflow_runs"`
 }, int, error) {
 	var out struct {
-		TotalCount int             `json:"total_count"`
-		WorkflowRuns []WorkflowRun `json:"workflow_runs"`
+		TotalCount     int           `json:"total_count"`
+		WorkflowRuns   []WorkflowRun `json:"workflow_runs"`
 	}
 	if perPage <= 0 {
-		perPage = 1
+		perPage = 10
 	}
-	p := fmt.Sprintf("/repos/%s/%s/actions/runs?per_page=%s", owner, repo, strconv.Itoa(perPage))
+	p := fmt.Sprintf("/repos/%s/%s/actions/runs?per_page=%d", owner, repo, perPage)
 	code, err := c.Get(p, &out)
 	return out, code, err
+}
+
+// WorkflowJob 工作流任务
+type WorkflowJob struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Status      string `json:"status"`
+	Conclusion  string `json:"conclusion"`
+	StartedAt   string `json:"started_at"`
+	CompletedAt string `json:"completed_at"`
+	HTMLOutputURL string `json:"html_url"`
+	Steps       []WorkflowStep `json:"steps"`
+}
+
+// WorkflowStep 工作流步骤
+type WorkflowStep struct {
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Conclusion string `json:"conclusion"`
+	Number     int    `json:"number"`
+}
+
+// ListWorkflowJobs 列出工作流运行的任务
+func (c *Client) ListWorkflowJobs(owner, repo string, runID int64) (struct {
+	TotalCount int            `json:"total_count"`
+	Jobs       []WorkflowJob  `json:"jobs"`
+}, int, error) {
+	var out struct {
+		TotalCount int            `json:"total_count"`
+		Jobs       []WorkflowJob  `json:"jobs"`
+	}
+	p := fmt.Sprintf("/repos/%s/%s/actions/runs/%d/jobs", owner, repo, runID)
+	code, err := c.Get(p, &out)
+	return out, code, err
+}
+
+// GetWorkflowRunLogs 获取工作流运行日志（返回 ZIP 下载 URL）
+func (c *Client) GetWorkflowRunLogsURL(owner, repo string, runID int64) (string, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/runs/%d/logs", owner, repo, runID)
+	code, data, header, err := c.rawRequest("GET", p, nil, nil)
+	if err != nil {
+		return "", code, err
+	}
+	if code >= 400 {
+		return "", code, &APIError{Status: code, Body: string(data)}
+	}
+	// GitHub returns 302 redirect to the logs download URL
+	loc := header.Get("Location")
+	if loc == "" {
+		return "", code, fmt.Errorf("no redirect URL for logs")
+	}
+	return loc, code, nil
 }
 
 // 避免未使用 import

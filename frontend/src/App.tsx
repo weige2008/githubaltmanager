@@ -10,6 +10,7 @@ import ReposPage from './pages/ReposPage'
 import TasksPage from './pages/TasksPage'
 import BatchPage from './pages/BatchPage'
 import BatchRepoPage from './pages/BatchRepoPage'
+import WorkflowRunsPage from './pages/WorkflowRunsPage'
 import AutomationPage from './pages/AutomationPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/batch" element={<BatchPage />} />
         <Route path="/batch-repos" element={<BatchRepoPage />} />
+        <Route path="/workflow-runs" element={<WorkflowRunsPage />} />
         <Route path="/automation" element={<AutomationPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

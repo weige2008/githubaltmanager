@@ -69,6 +69,46 @@ export interface VersionInfo {
   release_notes: string
 }
 
+export interface WorkflowRun {
+  id: number
+  name: string
+  head_branch: string
+  status: string
+  conclusion: string | null
+  created_at: string
+  updated_at: string
+  html_url: string
+  event: string
+  head_commit: { message: string; id: string }
+}
+
+export interface WorkflowStep {
+  name: string
+  status: string
+  conclusion: string | null
+  number: number
+}
+
+export interface WorkflowJob {
+  id: number
+  name: string
+  status: string
+  conclusion: string | null
+  started_at: string
+  completed_at: string | null
+  html_url: string
+  steps: WorkflowStep[]
+}
+
+export const runsApi = {
+  list: (repoId: number, perPage?: number) =>
+    http.get<unknown, { total_count: number; workflow_runs: WorkflowRun[] }>(`/repos/${repoId}/runs`, { params: { per_page: perPage || 20 } }),
+  jobs: (repoId: number, runId: number) =>
+    http.get<unknown, { total_count: number; jobs: WorkflowJob[] }>(`/repos/${repoId}/runs/${runId}/jobs`),
+  logs: (repoId: number, runId: number) =>
+    http.get<unknown, { url: string }>(`/repos/${repoId}/runs/${runId}/logs`),
+}
+
 export const systemApi = {
   getVersion: () => http.get<unknown, { current: string; os: string; arch: string }>('/system/version'),
   checkUpdate: () => http.get<unknown, VersionInfo>('/system/check-update'),

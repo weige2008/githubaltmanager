@@ -14,7 +14,7 @@ import { MOTION_TRANSITION } from '@/lib/motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
   LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings,
-  Github, PanelLeft, X, FolderPlus,
+  Github, PanelLeft, X, FolderPlus, Activity,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { SearchBox } from '@/components/search-box'
@@ -51,6 +51,7 @@ const navGroups: NavGroupDef[] = [
       { to: '/tasks', labelKey: 'nav.tasks', icon: Clock },
       { to: '/batch', labelKey: 'nav.batch', icon: Layers },
       { to: '/batch-repos', labelKey: 'nav.batchRepos', icon: FolderPlus },
+      { to: '/workflow-runs', labelKey: 'nav.workflowRuns', icon: Activity },
       { to: '/automation', labelKey: 'nav.automationLogs', icon: Timer },
     ],
   },
