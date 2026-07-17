@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -215,6 +215,34 @@ export default function AccountsPage() {
     batchAssignMutation.mutate({ ids: [...selectedIds], group: groupName })
   }
 
+  const batchDeleteMut = useMutation({
+    mutationFn: async (ids: number[]) => {
+      for (const id of ids) {
+        try { await accountApi.remove(id) } catch {}
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'groups'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+      toast.success(`已删除 ${selectedIds.length} 个账户`)
+      setSelectedIds([])
+    },
+    onError: () => toast.error('删除失败'),
+  })
+
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<number[] | null>(null)
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  const confirmBatchDelete = async () => {
+    if (!batchDeleteTarget) return
+    setBatchDeleteTarget(null)
+    batchDeleteMut.mutate(batchDeleteTarget)
+  }
+
   const renderAccountRow = (acc: Account) => {
     const sb = statusBadge(acc.status)
     const isPinned = pinnedIds.includes(acc.id)
@@ -324,6 +352,10 @@ export default function AccountsPage() {
             {batchNewGroup.trim() && <Button size="sm" className="h-8" onClick={() => handleBatchAssign(batchNewGroup.trim())}>确定</Button>}
           </div>
           <Button variant="outline" size="sm" className="h-8" onClick={() => handleBatchAssign('')}>移出分组</Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1 text-destructive hover:text-destructive" disabled={batchDeleteMut.isPending} onClick={handleBatchDelete}>
+            {batchDeleteMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            批量删除 ({selectedIds.length})
+          </Button>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
         </div>
       )}
@@ -383,6 +415,8 @@ export default function AccountsPage() {
 
       <ConfirmDialog open={!!deleteTarget} onConfirm={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} title={t('accounts.deleteConfirm', { name: deleteTarget?.github_login })} />
       <ConfirmDialog open={!!permDeleteTarget} onConfirm={() => { if (permDeleteTarget) permDeleteMutation.mutate(permDeleteTarget.id); setPermDeleteTarget(null) }} onCancel={() => setPermDeleteTarget(null)} title={`永久删除 ${permDeleteTarget?.github_login}?`} />
+
+      <ConfirmDialog open={!!batchDeleteTarget} onConfirm={confirmBatchDelete} onCancel={() => setBatchDeleteTarget(null)} title={`批量删除 ${batchDeleteTarget?.length || 0} 个账户？`} />
 
       {/* Import dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>

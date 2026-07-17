@@ -118,18 +118,27 @@ export default function DashboardPage() {
 
       {accounts && accounts.length > 0 && (
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>
-          <Card><CardHeader><CardTitle className="text-base">{t('nav.accounts')}</CardTitle></CardHeader>
+          <Card><CardHeader><CardTitle className="flex items-center justify-between text-base">
+            <span>{t('nav.accounts')}</span>
+            <a href="/accounts" className="text-xs text-muted-foreground hover:text-primary transition-colors">全部 {accounts.length} 个 →</a>
+          </CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {sortAccounts(accounts).slice(0, 9).map((acc) => (
-                  <div key={acc.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                    <span>{displayName(acc)}</span>
-                    <span className={cn('text-xs font-medium',
-                      acc.status === 'active' ? 'text-green-500' : acc.status === 'banned' ? 'text-red-500' : 'text-muted-foreground')}>
-                      {acc.status}
-                    </span>
-                  </div>
-                ))}
+                {sortAccounts(accounts).slice(0, 9).map((acc) => {
+                  const statusMap: Record<string, { color: string; label: string }> = {
+                    active: { color: 'text-green-500', label: '正常' },
+                    banned: { color: 'text-red-500', label: '封禁' },
+                    error: { color: 'text-yellow-500', label: '错误' },
+                    unknown: { color: 'text-muted-foreground', label: '未知' },
+                  }
+                  const s = statusMap[acc.status] || statusMap.unknown
+                  return (
+                    <a key={acc.id} href={`/accounts/${acc.id}`} className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:bg-accent">
+                      <span className="truncate">{displayName(acc)}</span>
+                      <span className={cn('ml-2 shrink-0 text-xs font-medium', s.color)}>{s.label}</span>
+                    </a>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
