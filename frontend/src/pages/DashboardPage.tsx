@@ -32,8 +32,10 @@ export default function DashboardPage() {
   ]
 
   const pieData = [
-    { name: t('dashboard.activeAccounts'), value: stats?.active ?? 0, color: '#22c55e' },
-    { name: t('dashboard.inactiveAccounts'), value: (stats?.banned ?? 0) + (stats?.error ?? 0) + (stats?.unknown ?? 0), color: '#a3a3a3' },
+    { name: '正常', value: stats?.active ?? 0, color: '#22c55e' },
+    { name: '封禁', value: stats?.banned ?? 0, color: '#ef4444' },
+    { name: '错误', value: stats?.error ?? 0, color: '#f59e0b' },
+    { name: '未知', value: stats?.unknown ?? 0, color: '#a3a3a3' },
   ].filter((d) => d.value > 0)
 
   const barData = [
@@ -70,17 +72,27 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>
           <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4" /> {t('dashboard.accountDistribution')}</CardTitle></CardHeader>
-            <CardContent className="h-64">
-              {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
-                      {pieData.map((d) => <Cell key={d.name} fill={d.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('dashboard.noChartData')}</div>}
+            <CardContent>
+              <div className="h-56">
+                {pieData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
+                        {pieData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('dashboard.noChartData')}</div>}
+              </div>
+              <div className="mt-2 flex flex-wrap justify-center gap-3">
+                {pieData.map((d) => (
+                  <span key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
+                    {d.name} <span className="font-bold text-foreground">{d.value}</span>
+                  </span>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </motion.div>
