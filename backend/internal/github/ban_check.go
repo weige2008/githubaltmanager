@@ -11,7 +11,7 @@ import (
 
 // AccountStatus 封禁检测结果
 type AccountStatus struct {
-	Status  string // active / banned / unknown / error
+	Status  string // active / banned / token_expired / unknown / error
 	Reason  string // 详细原因
 	Methods []string // 命中的检测方法
 }
@@ -62,6 +62,9 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStat
 				} else {
 					aggregated.Reason = aggregated.Reason + "; " + r.Reason
 				}
+			} else if r.Status == "token_expired" && aggregated.Status == "" {
+				aggregated.Status = "token_expired"
+				aggregated.Reason = r.Reason
 			} else if r.Status == "active" && aggregated.Status == "" {
 				aggregated.Status = "active"
 				if aggregated.Reason == "" {
@@ -109,7 +112,7 @@ func checkViaAPI(c *Client, login string) AccountStatus {
 		}
 		low := strings.ToLower(msg + " " + body)
 		if strings.Contains(low, "bad credentials") || strings.Contains(low, "invalid token") {
-			return AccountStatus{Status: "error", Reason: "token 无效或已吊销: " + msg}
+			return AccountStatus{Status: "token_expired", Reason: "token 无效或已过期: " + msg}
 		}
 		return AccountStatus{Status: "banned", Reason: "API 返回 401: " + msg}
 	case code == 403:

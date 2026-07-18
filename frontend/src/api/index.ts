@@ -232,6 +232,7 @@ export interface Stats {
   total: number
   active: number
   banned: number
+  token_expired: number
   error: number
   unknown: number
   repos: number

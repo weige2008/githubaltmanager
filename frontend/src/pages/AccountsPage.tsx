@@ -201,6 +201,7 @@ export default function AccountsPage() {
     const map: Record<string, { variant: 'success' | 'destructive' | 'warning' | 'secondary'; label: string }> = {
       active: { variant: 'success', label: t('accounts.statusActive') },
       banned: { variant: 'destructive', label: t('accounts.statusBanned') },
+      token_expired: { variant: 'warning', label: 'Token过期' },
       error: { variant: 'warning', label: t('accounts.statusError') },
       unknown: { variant: 'secondary', label: t('accounts.statusUnknown') },
     }
@@ -357,6 +358,9 @@ export default function AccountsPage() {
             批量删除 ({selectedIds.length})
           </Button>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'banned').map(a => a.id))}>全选封禁</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'active').map(a => a.id))}>全选正常</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'token_expired').map(a => a.id))}>全选Token过期</Button>
         </div>
       )}
 

@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const pieData = [
     { name: '正常', value: stats?.active ?? 0, color: '#22c55e' },
     { name: '封禁', value: stats?.banned ?? 0, color: '#ef4444' },
+    { name: 'Token过期', value: stats?.token_expired ?? 0, color: '#f97316' },
     { name: '错误', value: stats?.error ?? 0, color: '#f59e0b' },
     { name: '未知', value: stats?.unknown ?? 0, color: '#a3a3a3' },
   ].filter((d) => d.value > 0)
@@ -140,6 +141,7 @@ export default function DashboardPage() {
                   const statusMap: Record<string, { color: string; label: string }> = {
                     active: { color: 'text-green-500', label: '正常' },
                     banned: { color: 'text-red-500', label: '封禁' },
+                    token_expired: { color: 'text-orange-500', label: 'Token过期' },
                     error: { color: 'text-yellow-500', label: '错误' },
                     unknown: { color: 'text-muted-foreground', label: '未知' },
                   }
