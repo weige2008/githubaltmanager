@@ -258,7 +258,7 @@ func (h *AccountHandler) BatchCheckByGroup(c *gin.Context) {
 		query = query.Where("account_group = ?", p.Group)
 	}
 	var accs []model.Account
-	query.Limit(500).Find(&accs)
+	query.Find(&accs)
 	results := make([]gin.H, 0, len(accs))
 	for _, acc := range accs {
 		result, err := h.s.CheckStatus(h.c, acc.ID)

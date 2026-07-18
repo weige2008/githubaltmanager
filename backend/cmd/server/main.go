@@ -152,11 +152,12 @@ func main() {
 	srv := &http.Server{
 		Addr:              cfg.Addr(),
 		Handler:           r,
-		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      360 * time.Second, // 长以支持批量任务，但防 Slowloris
-		IdleTimeout:       120 * time.Second,
-		MaxHeaderBytes:    1 << 20, // 1 MB
+		ReadHeaderTimeout: 10 * time.Second, // 防 Slowloris
+		ReadTimeout:       60 * time.Second, // 请求体读取（POST body 都很小）
+		// WriteTimeout 不设：批量任务（BatchCreateRepos/UpdateRepos 等）会长时间同步执行，
+		// server 级 WriteTimeout 会切断它们。Slowloris 写保护由 ReadHeaderTimeout 覆盖。
+		IdleTimeout:    120 * time.Second,
+		MaxHeaderBytes: 1 << 20, // 1 MB
 	}
 
 	go func() {
