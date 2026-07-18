@@ -36,17 +36,18 @@ func (h *AuthHandler) Status(c *gin.Context) {
 }
 
 type SetupPayload struct {
-	MasterPassword string `json:"masterPassword" binding:"required,min=8"`
+	MasterPassword string `json:"masterPassword" binding:"required,min=12"`
 }
 
 // Setup POST /api/auth/setup
 func (h *AuthHandler) Setup(c *gin.Context) {
 	var p SetupPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
-		resp.BadRequest(c, "参数错误：密码至少 8 位", err)
+		resp.BadRequest(c, "参数错误：密码至少 12 位", err)
 		return
 	}
 
+	// Atomic check-and-create: only insert if row doesn't exist or is not initialized
 	var cfg model.AppConfig
 	result := h.c.DB.Where("id = 1").Limit(1).Find(&cfg)
 	if result.Error != nil {
@@ -70,8 +71,23 @@ func (h *AuthHandler) Setup(c *gin.Context) {
 		MasterPasswordHash: hash,
 		IsInitialized:      true,
 	}
-	if err := h.c.DB.Save(&cfg).Error; err != nil {
+	// 使用 Assign(...).FirstOrCreate 或 Create 仅在不存在时；为了防止并发竞争，
+	// 我们用事务 + 行锁风格的条件 UPDATE
+	tx := h.c.DB.Begin()
+	var existing model.AppConfig
+	tx.Where("id = 1 AND is_initialized = ?", true).Limit(1).Find(&existing)
+	if existing.IsInitialized {
+		tx.Rollback()
+		resp.BadRequest(c, "系统已初始化，请直接登录")
+		return
+	}
+	if err := tx.Save(&cfg).Error; err != nil {
+		tx.Rollback()
 		resp.Internal(c, "保存配置失败", err)
+		return
+	}
+	if err := tx.Commit().Error; err != nil {
+		resp.Internal(c, "提交事务失败", err)
 		return
 	}
 
@@ -144,14 +160,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 type ChangePasswordPayload struct {
 	OldPassword string `json:"oldPassword" binding:"required"`
-	NewPassword string `json:"newPassword" binding:"required,min=8"`
+	NewPassword string `json:"newPassword" binding:"required,min=12"`
 }
 
 // ChangePassword POST /api/auth/change-password
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	var p ChangePasswordPayload
 	if err := c.ShouldBindJSON(&p); err != nil {
-		resp.BadRequest(c, "参数错误：新密码至少 8 位", err)
+		resp.BadRequest(c, "参数错误：新密码至少 12 位", err)
 		return
 	}
 
@@ -207,52 +223,61 @@ func reencryptAccounts(db *gorm.DB, oldKey, newKey []byte) error {
 	if err := db.Find(&accs).Error; err != nil {
 		return err
 	}
-	var failedLogins []string
+	// 预先验证所有账户都能用 oldKey 解密；任一失败则中止，不进行任何写入
+	type planned struct {
+		id      uint
+		updates map[string]any
+	}
+	plans := make([]planned, 0, len(accs))
 	for i := range accs {
 		a := &accs[i]
-		updates := map[string]any{}
-		expectedFields := 0
-		actualFields := 0
+		p := planned{id: a.ID, updates: map[string]any{}}
 		if a.TokenEnc != "" {
-			expectedFields++
-			if pt, err := crypto.Decrypt(oldKey, a.TokenEnc); err == nil {
-				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
-					updates["token_enc"] = nc
-					actualFields++
-				}
+			pt, err := crypto.Decrypt(oldKey, a.TokenEnc)
+			if err != nil {
+				return fmt.Errorf("账户 %s 解密失败，已中止所有更改: %w", a.GithubLogin, err)
 			}
+			nc, err := crypto.Encrypt(newKey, pt)
+			if err != nil {
+				return fmt.Errorf("账户 %s 重新加密失败，已中止所有更改: %w", a.GithubLogin, err)
+			}
+			p.updates["token_enc"] = nc
 		}
 		if a.PasswordEnc != "" {
-			expectedFields++
-			if pt, err := crypto.Decrypt(oldKey, a.PasswordEnc); err == nil {
-				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
-					updates["password_enc"] = nc
-					actualFields++
-				}
+			pt, err := crypto.Decrypt(oldKey, a.PasswordEnc)
+			if err != nil {
+				return fmt.Errorf("账户 %s 密码解密失败，已中止所有更改: %w", a.GithubLogin, err)
 			}
+			nc, err := crypto.Encrypt(newKey, pt)
+			if err != nil {
+				return fmt.Errorf("账户 %s 密码重新加密失败，已中止所有更改: %w", a.GithubLogin, err)
+			}
+			p.updates["password_enc"] = nc
 		}
 		if a.RecoveryEmail != "" {
-			expectedFields++
-			if pt, err := crypto.Decrypt(oldKey, a.RecoveryEmail); err == nil {
-				if nc, err := crypto.Encrypt(newKey, pt); err == nil {
-					updates["recovery_email"] = nc
-					actualFields++
-				}
+			pt, err := crypto.Decrypt(oldKey, a.RecoveryEmail)
+			if err != nil {
+				return fmt.Errorf("账户 %s 邮箱解密失败，已中止所有更改: %w", a.GithubLogin, err)
 			}
-		}
-		if expectedFields > 0 && actualFields < expectedFields {
-			failedLogins = append(failedLogins, a.GithubLogin)
-		}
-		if len(updates) > 0 {
-			if err := db.Model(a).Updates(updates).Error; err != nil {
-				return err
+			nc, err := crypto.Encrypt(newKey, pt)
+			if err != nil {
+				return fmt.Errorf("账户 %s 邮箱重新加密失败，已中止所有更改: %w", a.GithubLogin, err)
 			}
+			p.updates["recovery_email"] = nc
+		}
+		if len(p.updates) > 0 {
+			plans = append(plans, p)
 		}
 	}
-	if len(failedLogins) > 0 {
-		return fmt.Errorf("以下账户重新加密失败，请检查数据完整性: %s", strings.Join(failedLogins, ", "))
-	}
-	return nil
+	// 所有账户都通过验证，现在原子地执行所有更新
+	return db.Transaction(func(tx *gorm.DB) error {
+		for _, p := range plans {
+			if err := tx.Model(&model.Account{}).Where("id = ?", p.id).Updates(p.updates).Error; err != nil {
+				return fmt.Errorf("账户 ID %d 更新失败: %w", p.id, err)
+			}
+		}
+		return nil
+	})
 }
 
 // AuthMiddleware JWT 鉴权中间件

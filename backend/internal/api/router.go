@@ -21,8 +21,13 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
+	// CORS: 默认同源不需要 CORS；如果用户在 GAM_CORS_ORIGINS 中配置了允许的来源，则启用
+	corsOrigins := cfg.Security.CORSOrigins
+	if len(corsOrigins) == 0 {
+		corsOrigins = []string{"*"} // 默认允许（无凭证，仅 Authorization 头部）
+	}
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     corsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Requested-With", "X-API-Key"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -34,6 +39,13 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		// CSP: same-origin scripts/styles/fonts, GitHub API + img/connection only
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+		if cfg.IsProd() {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
 		c.Next()
 	})
 
@@ -47,8 +59,8 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	authGrp := api.Group("/auth")
 	{
 		authGrp.GET("/status", authH.Status)
-		authGrp.POST("/setup", authH.Setup)
-		authGrp.POST("/login", authH.Login)
+		authGrp.POST("/setup", handlers.AuthRateLimit(), authH.Setup)
+		authGrp.POST("/login", handlers.AuthRateLimit(), authH.Login)
 	}
 
 	// Protected routes: JWT or API Key
@@ -56,7 +68,7 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	protected.Use(handlers.DualAuthMiddleware(cfg.Security.JWTSecret, c.DB))
 	protected.Use(handlers.UnlockGuard())
 	{
-		protected.POST("/auth/change-password", authH.ChangePassword)
+		protected.POST("/auth/change-password", handlers.AuthRateLimit(), authH.ChangePassword)
 	}
 
 	handlers.RegisterAccountRoutes(protected, c)

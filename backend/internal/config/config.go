@@ -34,6 +34,7 @@ type SecurityConfig struct {
 	TokenIterations uint32 // Argon2id 迭代次数
 	TokenMemory     uint32 // Argon2id 内存 (KB)
 	TokenParallel   uint8  // Argon2id 并行度
+	CORSOrigins     []string // 允许的 CORS 来源；默认仅同源（"*" 表示完全开放）
 }
 
 type GitHubConfig struct {
@@ -78,6 +79,7 @@ func Load() (*Config, error) {
 			TokenIterations: uint32(envInt("GAM_ARGON2_ITER", 3)),
 			TokenMemory:     uint32(envInt("GAM_ARGON2_MEM", 64*1024)),
 			TokenParallel:   uint8(envInt("GAM_ARGON2_PARALLEL", 2)),
+			CORSOrigins:     envList("GAM_CORS_ORIGINS", []string{}),
 		},
 		GitHub: GitHubConfig{
 			APIBaseURL:     envStr("GAM_GH_API", "https://api.github.com"),
@@ -140,4 +142,20 @@ func envInt(key string, def int) int {
 		}
 	}
 	return def
+}
+
+// envList reads a comma-separated env var into a trimmed slice. Returns def if unset.
+func envList(key string, def []string) []string {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return def
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }

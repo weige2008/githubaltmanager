@@ -153,6 +153,10 @@ func main() {
 		Addr:              cfg.Addr(),
 		Handler:           r,
 		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      360 * time.Second, // 长以支持批量任务，但防 Slowloris
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MB
 	}
 
 	go func() {

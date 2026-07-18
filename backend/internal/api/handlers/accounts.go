@@ -192,7 +192,14 @@ func (h *AccountHandler) Delete(c *gin.Context) {
 
 func (h *AccountHandler) Restore(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.c.DB.Model(&model.Account{}).Where("id = ?", id).Update("deleted_at", nil).Error; err != nil {
+	// Restore account AND re-enable its scheduled tasks (which were disabled on soft-delete)
+	err := h.c.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Account{}).Where("id = ?", id).Update("deleted_at", nil).Error; err != nil {
+			return err
+		}
+		return tx.Model(&model.ScheduledTask{}).Where("account_id = ?", id).Update("enabled", true).Error
+	})
+	if err != nil {
 		resp.Internal(c, "恢复失败", err)
 		return
 	}
@@ -251,7 +258,7 @@ func (h *AccountHandler) BatchCheckByGroup(c *gin.Context) {
 		query = query.Where("account_group = ?", p.Group)
 	}
 	var accs []model.Account
-	query.Find(&accs)
+	query.Limit(500).Find(&accs)
 	results := make([]gin.H, 0, len(accs))
 	for _, acc := range accs {
 		result, err := h.s.CheckStatus(h.c, acc.ID)

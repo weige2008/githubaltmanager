@@ -531,6 +531,9 @@ func (s *RepoService) FetchTemplateFiles(c *Container, accountID uint, owner, re
 		if entry.Type != "blob" {
 			continue
 		}
+		if len(files) >= 500 {
+			return nil, fmt.Errorf("源仓库文件数量超过 500 上限")
+		}
 		if entry.Size > 1024*1024 {
 			continue
 		}
