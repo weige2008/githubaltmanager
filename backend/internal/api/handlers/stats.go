@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/service"
+	"gorm.io/gorm"
 )
 
 type StatsHandler struct {
@@ -32,12 +33,13 @@ type Overview struct {
 // Overview 仪表盘概览数据
 func (h *StatsHandler) Overview(c *gin.Context) {
 	var o Overview
-	db := h.c.DB.Table("accounts").Where("deleted_at IS NULL")
-	db.Count(&o.Total)
-	db.Where("status = ?", "active").Count(&o.Active)
-	db.Where("status = ?", "banned").Count(&o.Banned)
-	db.Where("status = ?", "error").Count(&o.Error)
-	db.Where("status = ?", "unknown").Count(&o.Unknown)
+	base := h.c.DB.Table("accounts").Where("deleted_at IS NULL")
+
+	base.Session(&gorm.Session{}).Count(&o.Total)
+	base.Session(&gorm.Session{}).Where("status = ?", "active").Count(&o.Active)
+	base.Session(&gorm.Session{}).Where("status = ?", "banned").Count(&o.Banned)
+	base.Session(&gorm.Session{}).Where("status = ?", "error").Count(&o.Error)
+	base.Session(&gorm.Session{}).Where("status = ?", "unknown").Count(&o.Unknown)
 
 	h.c.DB.Table("repositories").Count(&o.Repos)
 	h.c.DB.Table("workflows").Count(&o.Workflows)
