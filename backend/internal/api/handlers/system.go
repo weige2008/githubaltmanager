@@ -103,7 +103,7 @@ func (h *SystemHandler) SelfUpdate(c *gin.Context) {
 		switch a.Name {
 		case assetName:
 			binaryURL = a.BrowserDownloadURL
-		case "checksums.txt":
+		case "SHA256SUMS.txt", "checksums.txt":
 			checksumsURL = a.BrowserDownloadURL
 		}
 	}
