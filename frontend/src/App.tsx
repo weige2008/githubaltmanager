@@ -12,6 +12,7 @@ import BatchPage from './pages/BatchPage'
 import BatchRepoPage from './pages/BatchRepoPage'
 import WorkflowRunsPage from './pages/WorkflowRunsPage'
 import AutomationPage from './pages/AutomationPage'
+import ApiDocsPage from './pages/ApiDocsPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/batch-repos" element={<BatchRepoPage />} />
         <Route path="/workflow-runs" element={<WorkflowRunsPage />} />
         <Route path="/automation" element={<AutomationPage />} />
+        <Route path="/api-docs" element={<ApiDocsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

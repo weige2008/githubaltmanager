@@ -14,7 +14,7 @@ import { MOTION_TRANSITION } from '@/lib/motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import {
   LayoutDashboard, Users, FolderGit2, Clock, Layers, Timer, Settings,
-  Github, PanelLeft, X, FolderPlus, Activity,
+  Github, PanelLeft, X, FolderPlus, Activity, FileCode2,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { SearchBox } from '@/components/search-box'
@@ -57,7 +57,10 @@ const navGroups: NavGroupDef[] = [
   },
   {
     titleKey: 'nav.system',
-    items: [{ to: '/settings', labelKey: 'nav.settings', icon: Settings }],
+    items: [
+      { to: '/api-docs', labelKey: 'nav.apiDocs', icon: FileCode2 },
+      { to: '/settings', labelKey: 'nav.settings', icon: Settings },
+    ],
   },
 ]
 

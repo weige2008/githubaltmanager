@@ -692,7 +692,10 @@ function APIKeysTab() {
 
       {/* API Documentation */}
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> API 使用文档</CardTitle></CardHeader>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> API 使用文档</CardTitle>
+          <a href="/api-docs" className="text-xs font-medium text-primary hover:underline">API 文档 →</a>
+        </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <Alert>
             <AlertDescription>
