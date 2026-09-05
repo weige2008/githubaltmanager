@@ -1,1 +1,0 @@
-{"version":3,"file":"index.mjs","names":["ElTableColumn"],"sources":["../../../../../../../packages/components/table/src/table-column/index.ts"],"sourcesContent":["import ElTableColumn from './index.vue'\n\nexport default ElTableColumn\n"],"mappings":";;AAEA,IAAA,uBAAeA"}
