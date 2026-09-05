@@ -107,7 +107,293 @@
     "dangerConfirm": "This will really execute. Continue?",
     "fillPathParams": "Fill in path params first",
     "invalidJson": "Body is not valid JSON",
-    "curlLabel": "Equivalent cURL"
+    "curlLabel": "Equivalent cURL",
+    "ep": {
+      "healthz": {
+        "summary": "Health check",
+        "detail": "No auth required. Returns ok, the service name and a server timestamp. Use it for liveness probes, monitoring and systemd/Docker health checks."
+      },
+      "health_alias": {
+        "summary": "Health check (alias)",
+        "detail": "Identical to /healthz."
+      },
+      "auth_status": {
+        "summary": "Initialization status",
+        "detail": "No auth required. Returns isInitialized: false means the master password is not set yet (call setup first); true means use login."
+      },
+      "auth_setup": {
+        "summary": "First-time setup of the master password",
+        "detail": "Only works before initialization (repeat calls get 400). Master password min 12 chars, stored as an Argon2id hash; on success a JWT is returned and you are logged in. Rate limited to 10/min/IP."
+      },
+      "auth_login": {
+        "summary": "Login and get a JWT",
+        "detail": "Verifies the master password, derives the AES key that unlocks encrypted fields, and issues a 7-day HS256 JWT. Wrong password returns 401. Send Authorization: Bearer afterwards. Rate limited as above."
+      },
+      "auth_change_password": {
+        "summary": "Change the master password",
+        "detail": "Verifies the old password, then re-encrypts every account token/password/email with the new key — any failure rolls everything back. Requires auth. New password min 12 chars."
+      },
+      "accounts_list": {
+        "summary": "List accounts",
+        "detail": "Returns all non-deleted accounts. Raw token/password/email never appear — only masked fields. ?group= filters by group; sorting and pinning are handled client-side."
+      },
+      "accounts_get": {
+        "summary": "Account details",
+        "detail": "Single account (same fields as the list, masked secrets), including accounts in the recycle bin."
+      },
+      "accounts_secrets": {
+        "summary": "Decrypt and view secrets",
+        "detail": "Decrypts and returns the plaintext GitHub token, password and recovery email. Fails while the master key is locked (after a restart, before login). Never expose this to untrusted scripts."
+      },
+      "accounts_import": {
+        "summary": "Import an account",
+        "detail": "Submits a GitHub PAT: the backend validates it against /user (login, avatar, scopes) and stores it encrypted. A soft-deleted account with the same login is revived and its token updated. password/recovery_email/note/group are optional."
+      },
+      "accounts_update": {
+        "summary": "Update an account",
+        "detail": "note and group are cleared when set to an empty string; password and recovery_email are only updated when non-empty (cannot be cleared). Omitted fields stay unchanged."
+      },
+      "accounts_delete": {
+        "summary": "Delete an account (to recycle bin)",
+        "detail": "Soft delete: moves the account to the recycle bin and disables all its scheduled tasks. Recoverable within the retention window; cleaned up permanently afterwards."
+      },
+      "accounts_restore": {
+        "summary": "Restore from recycle bin",
+        "detail": "Clears the deleted flag and re-enables all scheduled tasks of the account."
+      },
+      "accounts_check": {
+        "summary": "Check ban status",
+        "detail": "Runs ban detection: concurrent GitHub /user API call and profile page fetch. Any abnormal signal marks banned; 401 bad credentials marks token_expired. Result and reason are persisted and returned."
+      },
+      "accounts_batch_check": {
+        "summary": "Batch check (by IDs)",
+        "detail": "Runs detection for ids (max 100) sequentially and returns per-id results. Large batches can take minutes."
+      },
+      "accounts_batch_check_group": {
+        "summary": "Batch check (by group)",
+        "detail": "Runs detection for every account in a group; empty group = all accounts. Returns results and total."
+      },
+      "accounts_groups": {
+        "summary": "List groups",
+        "detail": "Returns all group names in use (deduplicated, empty excluded)."
+      },
+      "accounts_repos": {
+        "summary": "Cached repo list",
+        "detail": "Local repository cache for the account — no live GitHub call. Call refresh first for fresh data."
+      },
+      "accounts_repos_refresh": {
+        "summary": "Sync repos from GitHub",
+        "detail": "Fetches every repo visible to the token (personal + orgs + collaborations) with pagination, upserts them, then scans workflows automatically. Returns the total."
+      },
+      "accounts_scan_workflows": {
+        "summary": "Scan workflows",
+        "detail": "Walks all repos (skips archived/disabled), stores workflow definitions and latest run status."
+      },
+      "accounts_recycle_bin": {
+        "summary": "Recycle bin list",
+        "detail": "Returns all soft-deleted accounts."
+      },
+      "accounts_recycle_bin_delete": {
+        "summary": "Permanent delete (recycle bin)",
+        "detail": "Physically deletes the account together with its repos/workflows/tasks. Not recoverable."
+      },
+      "accounts_recycle_bin_clean": {
+        "summary": "Clean expired recycle bin",
+        "detail": "Permanently deletes accounts soft-deleted longer than the retention period (default 30 days). Returns the cutoff date."
+      },
+      "repos_contents": {
+        "summary": "Browse a directory",
+        "detail": "path is relative to the repo root (empty = root); ref defaults to the default branch. :id is the local repo record ID (from accounts/:id/repos), not the GitHub ID."
+      },
+      "repos_file_get": {
+        "summary": "Read a file",
+        "detail": "Returns path, sha, content (base64) and encoding — the basis of the built-in file editor."
+      },
+      "repos_file_put": {
+        "summary": "Create/update a file",
+        "detail": "content is base64; message is the commit message; existing files are updated by sha automatically. Returns the new commit sha."
+      },
+      "repos_workflows_list": {
+        "summary": "Workflow list (cached)",
+        "detail": "Locally cached workflows with their latest run status; populated by refresh / scan-workflows."
+      },
+      "repos_workflows_create": {
+        "summary": "Create a workflow",
+        "detail": "Creates a file under .github/workflows/. filename must be a bare .yml/.yaml name (no paths, no ..)."
+      },
+      "repos_dispatch": {
+        "summary": "Dispatch a workflow",
+        "detail": "Triggers workflow_dispatch. inputs must match the workflow definition (query workflow-inputs first); the workflow must declare the workflow_dispatch trigger."
+      },
+      "repos_workflow_inputs": {
+        "summary": "Parse workflow inputs",
+        "detail": "Parses the workflow YAML and returns the workflow_dispatch.inputs definition (name/description/required/default/type/choices). Returns an empty array when parsing fails."
+      },
+      "runs_list": {
+        "summary": "Workflow runs",
+        "detail": "Returns total_count and the latest runs. status: queued/in_progress/completed; conclusion: success/failure/cancelled/skipped."
+      },
+      "runs_jobs": {
+        "summary": "Jobs of a run",
+        "detail": "All jobs of one run, including each step's status and conclusion."
+      },
+      "runs_logs_url": {
+        "summary": "Run log download URL",
+        "detail": "The zip log URL obtained from GitHub's 302 redirect — a short-lived signed link; use it promptly."
+      },
+      "runs_job_logs": {
+        "summary": "Single job log",
+        "detail": "The backend follows the redirect and returns the full plain-text log of one job."
+      },
+      "runs_cancel": {
+        "summary": "Cancel a run",
+        "detail": "Only queued/in_progress/waiting runs can be cancelled; finished runs return an error."
+      },
+      "tasks_list": {
+        "summary": "List scheduled tasks",
+        "detail": "All tasks with cron, next_run_at, latest result (success/failed/running) and error text."
+      },
+      "tasks_create": {
+        "summary": "Create a scheduled task",
+        "detail": "Fires a workflow_dispatch on schedule. cron is a 5-field expression (min hour dom mon dow); the scheduler scans every 30s; next_run_at is computed on creation."
+      },
+      "tasks_update": {
+        "summary": "Update a scheduled task",
+        "detail": "Partial update of ref/cron_expr/inputs_json/enabled/workflow_filename; changing cron or enabled recomputes next_run_at."
+      },
+      "tasks_delete": {
+        "summary": "Delete a scheduled task",
+        "detail": "Physically deletes the task record."
+      },
+      "tasks_toggle": {
+        "summary": "Enable/disable a task",
+        "detail": "Toggles enabled; disabling clears next_run_at, re-enabling recomputes it. Body: {\"enabled\": bool}."
+      },
+      "tasks_run": {
+        "summary": "Run a task now",
+        "detail": "Fires one run asynchronously — watch last_run_result (running → success/failed). Requires the keystore to be unlocked."
+      },
+      "batch_create_workflows": {
+        "summary": "Batch create workflows",
+        "detail": "Commits the same workflow file to each repo in repo_ids (≤100), synchronously and serially; content is base64. Failed ids can be retried alone."
+      },
+      "batch_dispatch": {
+        "summary": "Batch dispatch workflows",
+        "detail": "Triggers workflow_dispatch on each repo. repo_ids total length ≤100 (the UI's per-repo repeat count simply duplicates ids)."
+      },
+      "batch_create_repos": {
+        "summary": "Batch create repos",
+        "detail": "Creates count (1-50) repos per account (names get -1, -2… suffixes), optionally pushing template files and secrets (encrypted with the repo public key). Synchronous; large batches take minutes."
+      },
+      "batch_fetch_template": {
+        "summary": "Fetch template files",
+        "detail": "Pulls every blob of a template repo via the recursive git tree (max 500 files, ≤1MB each) as base64, for use with create-repos."
+      },
+      "batch_update_repos": {
+        "summary": "Batch sync from template (wipe & rewrite)",
+        "detail": "For each repo: deletes all existing files, then copies every file from the template. Two upstream calls per file — slow for big repos. Original content cannot be recovered."
+      },
+      "batch_toggle_visibility": {
+        "summary": "Batch toggle visibility",
+        "detail": "Switches all listed repos to the given visibility and updates the local cache. No file changes."
+      },
+      "autotask_get": {
+        "summary": "Get automation config",
+        "detail": "Auto check/sync switches and intervals (minutes), group filters, recycle-bin settings and last-run timestamps."
+      },
+      "autotask_update": {
+        "summary": "Update automation config",
+        "detail": "Intervals are minutes (invalid values fall back to 1440); groups are comma-separated, empty = all; recycle_bin_days is the retention. Takes effect within 30s."
+      },
+      "autotask_check_now": {
+        "summary": "Trigger auto check now",
+        "detail": "Starts one detection round asynchronously and returns ok immediately. A package-level lock prevents overlap — a still-running round causes a skip. Progress via running/logs."
+      },
+      "autotask_sync_now": {
+        "summary": "Trigger auto sync now",
+        "detail": "Starts one repo-sync round asynchronously; same anti-overlap behaviour."
+      },
+      "autotask_logs": {
+        "summary": "Automation logs",
+        "detail": "Recent runs: type check/sync, status, total/success/failed counts, duration and detail text. limit ≤200, default 50."
+      },
+      "autotask_running": {
+        "summary": "Currently running task",
+        "detail": "Returns running plus the in-flight log entry; the UI polls every 5s."
+      },
+      "stats_overview": {
+        "summary": "Dashboard stats",
+        "detail": "Account counts by status (recycle bin excluded), repo/workflow/task counts and enabled tasks. No parameters."
+      },
+      "apikeys_list": {
+        "summary": "List API keys",
+        "detail": "Prefixes only (first 14 chars) — no full keys, no hashes."
+      },
+      "apikeys_create": {
+        "summary": "Create an API key",
+        "detail": "The full key is returned exactly once; only its SHA-256 hash is stored. expires_in_days 0/omitted = never expires."
+      },
+      "apikeys_delete": {
+        "summary": "Delete an API key",
+        "detail": "Physically removes the key; scripts using it get 401 immediately."
+      },
+      "apikeys_toggle": {
+        "summary": "Enable/disable an API key",
+        "detail": "Disabling blocks authentication instantly; re-enable any time."
+      },
+      "system_version": {
+        "summary": "Current version",
+        "detail": "current is injected at build time via -ldflags (dev for local go run), plus GOOS/GOARCH."
+      },
+      "system_check_update": {
+        "summary": "Check for updates",
+        "detail": "Queries the latest GitHub release and compares version strings (not semver); returns has_update, the release URL and notes. Network failure yields has_update:false plus error."
+      },
+      "system_update": {
+        "summary": "Self-update",
+        "detail": "Downloads the matching platform binary (≤200MB), verifies SHA256SUMS.txt, atomically replaces the binary (keeps .old) and exits for systemd to restart. Brief downtime; not suitable for Docker."
+      }
+    },
+    "danger": {
+      "d_change_password": "The master password will be changed now and all encrypted fields re-encrypted",
+      "d_account_delete": "The account moves to the recycle bin and its scheduled tasks are disabled now",
+      "d_recycle_delete": "The account and its related data will be permanently deleted",
+      "d_recycle_clean": "Accounts past the retention period will be permanently deleted",
+      "d_file_put": "This commits once to the real repository",
+      "d_workflow_create": "This commits a workflow file to the real repository",
+      "d_dispatch": "This really triggers one GitHub Actions run",
+      "d_run_cancel": "This really cancels a running Actions run",
+      "d_tasks_delete": "The task record will be deleted and cannot be recovered",
+      "d_batch_create_workflows": "Files will really be committed to every selected repo",
+      "d_batch_dispatch": "This really triggers up to 100 Actions runs",
+      "d_batch_create_repos": "Repos will really be created under every account and populated",
+      "d_batch_update_repos": "All existing files of the target repos will be deleted and overwritten by the template — unrecoverable",
+      "d_batch_toggle_visibility": "The public/private state of the repos will really change",
+      "d_apikeys_delete": "The key is invalidated immediately; scripts using it get 401",
+      "d_system_update": "The service downloads a new binary and restarts itself — brief downtime"
+    },
+    "p": {
+      "p_id_account": "Account ID (the id from the accounts list)",
+      "p_id_repo": "Local repo record ID (from accounts/:id/repos)",
+      "p_id_task": "Task ID (from the tasks list)",
+      "p_id_key": "API key ID (from the apikeys list)",
+      "p_run_id": "Run ID (from the runs list)",
+      "p_job_id": "Job ID (from the jobs endpoint)",
+      "p_group": "Group name; empty = all",
+      "p_path": "Path relative to the repo root",
+      "p_ref": "Branch or tag; empty = default branch",
+      "p_per_page": "Items per page",
+      "p_filename": "Workflow filename",
+      "p_limit": "Number of entries returned"
+    },
+    "ex": {
+      "ex_stats": "Stats overview",
+      "ex_import": "Import an account",
+      "ex_dispatch": "Batch dispatch workflows",
+      "ex_create_repos": "Batch create repos"
+    },
+    "search": "Search endpoints (path or description)…",
+    "toTop": "Back to top"
   },
   "auth": {
     "login": "Login",

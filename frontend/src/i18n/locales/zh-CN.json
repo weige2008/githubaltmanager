@@ -107,7 +107,293 @@
     "dangerConfirm": "该操作会真实执行，确认继续？",
     "fillPathParams": "请先填写路径参数",
     "invalidJson": "请求体不是合法 JSON",
-    "curlLabel": "等效 cURL"
+    "curlLabel": "等效 cURL",
+    "ep": {
+      "healthz": {
+        "summary": "健康检查",
+        "detail": "无需认证。返回 ok、服务名与服务器时间戳，用于探活、监控与 systemd/Docker 健康检查。"
+      },
+      "health_alias": {
+        "summary": "健康检查（别名）",
+        "detail": "与 /healthz 完全相同。"
+      },
+      "auth_status": {
+        "summary": "是否已初始化",
+        "detail": "无需认证。返回 isInitialized：false 表示尚未设置主密码，应先调用 setup；true 则走 login。"
+      },
+      "auth_setup": {
+        "summary": "首次初始化主密码",
+        "detail": "仅在未初始化时可用（重复调用 400）。主密码 ≥12 位，以 Argon2id 哈希存库；成功即返回 JWT 完成登录。限流 10 次/分/IP。"
+      },
+      "auth_login": {
+        "summary": "登录获取 JWT",
+        "detail": "校验主密码并派生 AES 密钥解锁加密字段，签发 7 天有效的 JWT（HS256）。密码错误 401。之后请求带 Authorization: Bearer。限流同上。"
+      },
+      "auth_change_password": {
+        "summary": "修改主密码",
+        "detail": "验证旧密码后换新（≥12 位）；全部账户的 token/密码/邮箱用新密钥重加密，任一失败整体回滚。需要认证。"
+      },
+      "accounts_list": {
+        "summary": "账户列表",
+        "detail": "返回全部未删除账户。token/密码/邮箱不出现，仅有掩码字段。?group= 按分组过滤；排序与置顶由前端本地处理。"
+      },
+      "accounts_get": {
+        "summary": "账户详情",
+        "detail": "返回单个账户（字段同列表，敏感字段掩码），含回收站中的账户。"
+      },
+      "accounts_secrets": {
+        "summary": "解密查看密钥",
+        "detail": "解密返回明文 token、密码、恢复邮箱，用于复制导出。主密钥未解锁（重启后未登录）时报错。勿暴露给不可信脚本。"
+      },
+      "accounts_import": {
+        "summary": "导入账户",
+        "detail": "提交 GitHub token，先调 /user 验证并读取用户名/头像/scope，再加密入库；同名账户在回收站则恢复并更新 token。password、recovery_email、note、group 可选。"
+      },
+      "accounts_update": {
+        "summary": "更新账户信息",
+        "detail": "note、group 传空字符串即清空；password、recovery_email 仅在非空时更新（不支持置空）。省略的字段不修改。"
+      },
+      "accounts_delete": {
+        "summary": "删除账户（进回收站）",
+        "detail": "软删除：进入回收站并停用其全部定时任务；保留期内可恢复，超期由清理任务永久删除。"
+      },
+      "accounts_restore": {
+        "summary": "从回收站恢复",
+        "detail": "清除删除标记，并重新启用该账户全部定时任务。"
+      },
+      "accounts_check": {
+        "summary": "检测封禁状态",
+        "detail": "并发请求 GitHub /user 与用户主页：任一异常即 banned，401 bad credentials 判 token_expired。结果与原因写库并返回。"
+      },
+      "accounts_batch_check": {
+        "summary": "批量检测（按 ID）",
+        "detail": "对 ids（≤100）逐个同步检测并返回逐条结果。量大时整个请求可能耗时数分钟。"
+      },
+      "accounts_batch_check_group": {
+        "summary": "批量检测（按分组）",
+        "detail": "对分组内全部账户检测；group 留空 = 全部。返回 results 与 total。"
+      },
+      "accounts_groups": {
+        "summary": "分组列表",
+        "detail": "返回全部已用分组名（去重、排除空）。"
+      },
+      "accounts_repos": {
+        "summary": "仓库缓存列表",
+        "detail": "返回该账户仓库的本地缓存，不实时请求 GitHub；要最新数据先调 refresh。"
+      },
+      "accounts_repos_refresh": {
+        "summary": "同步 GitHub 仓库",
+        "detail": "拉取该 token 可见的全部仓库（个人+组织+协作）并 upsert 入库，随后自动扫描 workflow。返回总数。"
+      },
+      "accounts_scan_workflows": {
+        "summary": "扫描 workflow",
+        "detail": "遍历全部（跳过 archived/disabled）仓库，拉取 workflow 定义与最近运行状态入库。"
+      },
+      "accounts_recycle_bin": {
+        "summary": "回收站列表",
+        "detail": "返回全部软删除账户。"
+      },
+      "accounts_recycle_bin_delete": {
+        "summary": "永久删除（回收站）",
+        "detail": "连同仓库/workflow/任务记录物理删除，不可恢复。"
+      },
+      "accounts_recycle_bin_clean": {
+        "summary": "清理过期回收站",
+        "detail": "立即永久删除超过保留期（默认 30 天）的账户，返回清理截止日期。"
+      },
+      "repos_contents": {
+        "summary": "浏览目录",
+        "detail": "path 为相对仓库根路径（空=根目录），ref 缺省默认分支。:id 是本地仓库记录 ID（accounts/:id/repos 返回），非 GitHub ID。"
+      },
+      "repos_file_get": {
+        "summary": "读取文件",
+        "detail": "返回 path、sha、content（base64）、encoding。在线编辑基于此。"
+      },
+      "repos_file_put": {
+        "summary": "创建/修改文件",
+        "detail": "content 为 base64，message 为提交说明；已存在文件自动带 sha 更新。返回 commit sha。"
+      },
+      "repos_workflows_list": {
+        "summary": "workflow 列表（缓存）",
+        "detail": "本地缓存的 workflow 与最近运行状态；数据来自 refresh / scan-workflows。"
+      },
+      "repos_workflows_create": {
+        "summary": "创建 workflow",
+        "detail": "在 .github/workflows/ 下创建文件；filename 只能是 .yml/.yaml 纯文件名（不允许路径与 ..）。"
+      },
+      "repos_dispatch": {
+        "summary": "触发 workflow",
+        "detail": "触发 workflow_dispatch；inputs 需匹配定义（可先查 workflow-inputs）；workflow 必须含 workflow_dispatch 触发器。"
+      },
+      "repos_workflow_inputs": {
+        "summary": "解析 workflow 参数",
+        "detail": "解析 yml 中 inputs 定义（名称/描述/required/default/type/选项），解析失败返回空数组。"
+      },
+      "runs_list": {
+        "summary": "运行记录",
+        "detail": "返回 total_count 与最近运行列表；status: queued/in_progress/completed，conclusion: success/failure/cancelled/skipped。"
+      },
+      "runs_jobs": {
+        "summary": "运行的 job 列表",
+        "detail": "某次运行的全部 job 及每个 step 的状态与结论。"
+      },
+      "runs_logs_url": {
+        "summary": "运行日志下载地址",
+        "detail": "GitHub 302 重定向得到的 zip 日志直链，为有时效签名地址，需尽快使用。"
+      },
+      "runs_job_logs": {
+        "summary": "单个 job 日志",
+        "detail": "后端已跟随重定向，返回 job 的完整文本日志。"
+      },
+      "runs_cancel": {
+        "summary": "取消运行",
+        "detail": "仅 queued/in_progress/waiting 可取消；已完成运行返回错误。"
+      },
+      "tasks_list": {
+        "summary": "定时任务列表",
+        "detail": "返回全部任务：cron、next_run_at、最近结果（success/failed/running）与错误信息。"
+      },
+      "tasks_create": {
+        "summary": "创建定时任务",
+        "detail": "到点触发指定仓库的 workflow_dispatch。cron 为 5 段表达式（分 时 日 月 周）；调度器每 30 秒扫描一次；创建即计算 next_run_at。"
+      },
+      "tasks_update": {
+        "summary": "更新定时任务",
+        "detail": "局部更新 ref/cron_expr/inputs_json/enabled/workflow_filename；改 cron 或 enabled 后自动重算 next_run_at。"
+      },
+      "tasks_delete": {
+        "summary": "删除定时任务",
+        "detail": "物理删除任务记录。"
+      },
+      "tasks_toggle": {
+        "summary": "启用/禁用任务",
+        "detail": "切换 enabled；禁用清空 next_run_at，重新启用立即重算。请求体为 {\"enabled\": bool}。"
+      },
+      "tasks_run": {
+        "summary": "立即执行一次",
+        "detail": "异步触发一次，状态看 last_run_result（running → success/failed）。需要密钥已解锁。"
+      },
+      "batch_create_workflows": {
+        "summary": "批量创建 workflow",
+        "detail": "对 repo_ids（≤100）逐个提交同一文件，同步串行；content 为 base64。failed 的 id 可单独重试。"
+      },
+      "batch_dispatch": {
+        "summary": "批量触发 workflow",
+        "detail": "逐个触发 workflow_dispatch；repo_ids 总长 ≤100（前端“触发次数”即把 ids 重复 N 份）。"
+      },
+      "batch_create_repos": {
+        "summary": "批量创建仓库",
+        "detail": "每个账户创建 count（1-50）个仓库，count>1 时名称追加 -1、-2…；可带模板文件与 secrets（后端用 repo public key 加密）。同步执行，量大耗时数分钟。"
+      },
+      "batch_fetch_template": {
+        "summary": "拉取模板文件",
+        "detail": "git tree 递归拉取全部 blob（≤500 个、单文件 ≤1MB），返回 base64；配合 create-repos 的 files 使用。"
+      },
+      "batch_update_repos": {
+        "summary": "批量同步模板（清空重写）",
+        "detail": "逐个：删除目标仓库全部现有文件，再从模板复制全部文件。每个文件 2 次上游请求，仓库大时很慢；原内容不可恢复。"
+      },
+      "batch_toggle_visibility": {
+        "summary": "批量切换可见性",
+        "detail": "统一切换 public ↔ private 并同步本地缓存，不改文件。"
+      },
+      "autotask_get": {
+        "summary": "读取自动任务配置",
+        "detail": "自动检测/同步的开关与间隔（分钟）、分组过滤、回收站配置及各上次执行时间。"
+      },
+      "autotask_update": {
+        "summary": "更新自动任务配置",
+        "detail": "间隔单位分钟（非法值回落 1440）；groups 逗号分隔，空=全部；recycle_bin_days 为保留天数。改动 30 秒内生效。"
+      },
+      "autotask_check_now": {
+        "summary": "立即自动检测",
+        "detail": "异步触发一轮检测并立即返回；包级锁防并发（上一轮未完则跳过）。进度看 running 与 logs。"
+      },
+      "autotask_sync_now": {
+        "summary": "立即自动同步",
+        "detail": "异步触发一轮仓库同步，同上防并发。"
+      },
+      "autotask_logs": {
+        "summary": "自动任务日志",
+        "detail": "最近执行日志：类型 check/sync、状态、总数/成功/失败、耗时与明细。limit ≤200，缺省 50。"
+      },
+      "autotask_running": {
+        "summary": "正在运行的任务",
+        "detail": "返回 running 与进行中的日志对象，前端 5 秒轮询。"
+      },
+      "stats_overview": {
+        "summary": "仪表盘统计",
+        "detail": "各状态账户数（排除回收站）、仓库/workflow/任务数、启用任务数。无参数。"
+      },
+      "apikeys_list": {
+        "summary": "API Key 列表",
+        "detail": "只含前缀（14 位），不含完整密钥与哈希。"
+      },
+      "apikeys_create": {
+        "summary": "创建 API Key",
+        "detail": "完整明文仅本次响应返回一次，服务端只存 SHA-256。expires_in_days 为 0/缺省 = 永久。"
+      },
+      "apikeys_delete": {
+        "summary": "删除 API Key",
+        "detail": "物理删除；使用该密钥的脚本立即 401。"
+      },
+      "apikeys_toggle": {
+        "summary": "启用/禁用 API Key",
+        "detail": "禁用后立即无法通过认证，可随时恢复。"
+      },
+      "system_version": {
+        "summary": "当前版本",
+        "detail": "current 由构建时 -ldflags 注入（本地 go run 为 dev），附运行平台。"
+      },
+      "system_check_update": {
+        "summary": "检查更新",
+        "detail": "查 GitHub latest release，字符串比较返回 has_update、release 链接与 notes；网络失败时 has_update:false + error。"
+      },
+      "system_update": {
+        "summary": "自更新",
+        "detail": "下载匹配平台二进制（≤200MB）→ SHA256SUMS 校验 → 原子替换（保留 .old）→ 退出由 systemd 拉起。服务中断数秒；Docker 部署不适用。"
+      }
+    },
+    "danger": {
+      "d_change_password": "将立即更换主密码，所有加密字段重新加密",
+      "d_account_delete": "该账户将进入回收站，其定时任务立即停用",
+      "d_recycle_delete": "账户及其关联数据将被物理删除，不可恢复",
+      "d_recycle_clean": "超过保留期的账户将被物理删除，不可恢复",
+      "d_file_put": "会向真实仓库提交一次 commit",
+      "d_workflow_create": "会向真实仓库提交 workflow 文件",
+      "d_dispatch": "将真实触发一次 GitHub Actions 运行",
+      "d_run_cancel": "将真实取消一次运行中的 Actions 运行",
+      "d_tasks_delete": "任务记录将被删除，不可恢复",
+      "d_batch_create_workflows": "将向选中的每个仓库真实提交文件",
+      "d_batch_dispatch": "将真实触发最多 100 次 Actions 运行",
+      "d_batch_create_repos": "将在每个账户名下真实创建仓库并写入内容",
+      "d_batch_update_repos": "目标仓库全部现有文件将被删除并用模板覆盖，不可恢复",
+      "d_batch_toggle_visibility": "将真实修改仓库的公有/私有状态",
+      "d_apikeys_delete": "密钥立即失效，使用它的脚本将 401",
+      "d_system_update": "服务将下载新二进制并自动重启，期间短暂中断"
+    },
+    "p": {
+      "p_id_account": "账户 ID（accounts 列表返回的 id）",
+      "p_id_repo": "仓库记录 ID（accounts/:id/repos 返回）",
+      "p_id_task": "任务 ID（tasks 列表返回）",
+      "p_id_key": "API Key ID（apikeys 列表返回）",
+      "p_run_id": "运行 ID（runs 列表返回）",
+      "p_job_id": "Job ID（jobs 接口返回）",
+      "p_group": "分组名，留空 = 全部",
+      "p_path": "路径（相对仓库根）",
+      "p_ref": "分支/标签，留空 = 默认分支",
+      "p_per_page": "每页条数",
+      "p_filename": "workflow 文件名",
+      "p_limit": "返回条数"
+    },
+    "ex": {
+      "ex_stats": "查看统计",
+      "ex_import": "导入账户",
+      "ex_dispatch": "批量触发工作流",
+      "ex_create_repos": "批量创建仓库"
+    },
+    "search": "搜索接口（路径或说明）…",
+    "toTop": "回到顶部"
   },
   "auth": {
     "login": "登录",

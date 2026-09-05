@@ -107,7 +107,293 @@
     "dangerConfirm": "この操作は実際に実行されます。続行しますか？",
     "fillPathParams": "まずパス引数を入力してください",
     "invalidJson": "ボディが不正な JSON です",
-    "curlLabel": "対応する cURL"
+    "curlLabel": "対応する cURL",
+    "ep": {
+      "healthz": [
+        "ヘルスチェック",
+        "認証不要。ok、サービス名、サーバー時刻を返します。死活監視や systemd/Docker のヘルスチェックに使用します。"
+      ],
+      "health_alias": [
+        "ヘルスチェック（別名）",
+        "/healthz と同一です。"
+      ],
+      "auth_status": [
+        "初期化状態の取得",
+        "認証不要。isInitialized を返します：false はマスターパスワード未設定（先に setup を呼ぶ）、true は login を使用。"
+      ],
+      "auth_setup": [
+        "マスターパスワードの初期設定",
+        "未初期化時のみ使用可能（再呼び出しは 400）。パスワードは 12 文字以上、Argon2id ハッシュで保存。成功すると JWT が返りログイン済みになります。レート制限 10 回/分/IP。"
+      ],
+      "auth_login": [
+        "ログインして JWT を取得",
+        "マスターパスワードを検証し、AES キーを導出して暗号化フィールドを解除、7 日間有効な JWT（HS256）を発行。誤りは 401。以降は Authorization: Bearer を付送。レート制限同上。"
+      ],
+      "auth_change_password": [
+        "マスターパスワードの変更",
+        "旧パスワード検証後、新パスワード（12 文字以上）に変更。全アカウントの token/パスワード/メールを新キーで再暗号化し、一つでも失敗すれば全体ロールバック。認証必要。"
+      ],
+      "accounts_list": [
+        "アカウント一覧",
+        "未削除の全アカウントを返します。token/パスワード/メールは現れず、マスク済みフィールドのみ。?group= でグループ絞り込み。ソートとピン留めはフロント側で処理。"
+      ],
+      "accounts_get": [
+        "アカウント詳細",
+        "単一アカウントを返します（一覧と同じフィールド、機密はマスク）。ゴミ箱内のアカウントも取得可。"
+      ],
+      "accounts_secrets": [
+        "シークレットの復号表示",
+        "平文の token・パスワード・復旧メールを復号して返します。マスターキーがロック中（再起動後未ログイン）はエラー。信頼できないスクリプトに公開しないでください。"
+      ],
+      "accounts_import": [
+        "アカウントのインポート",
+        "GitHub token を送信すると、まず /user で検証しユーザー名/アバター/scope を取得してから暗号化保存。同じログ名のアカウントがゴミ箱にあれば復元し token を更新。password・recovery_email・note・group は任意。"
+      ],
+      "accounts_update": [
+        "アカウント情報の更新",
+        "note・group は空文字でクリア。password・recovery_email は非空の時のみ更新（空にする不可）。省略フィールドは変更なし。"
+      ],
+      "accounts_delete": [
+        "アカウント削除（ゴミ箱へ）",
+        "ソフト削除：ゴミ箱へ移動し、そのアカウントの全定期タスクを無効化。保持期間内は復元可、期間超過でクリーンアップにより完全削除。"
+      ],
+      "accounts_restore": [
+        "ゴミ箱から復元",
+        "削除フラグを解除し、全定期タスクを再度有効化。"
+      ],
+      "accounts_check": [
+        "BAN 状態のチェック",
+        "GitHub /user とユーザーページを並行確認：異常信号が一つでもあれば banned、401 bad credentials は token_expired。結果と理由を保存して返す。"
+      ],
+      "accounts_batch_check": [
+        "一括チェック（ID 指定）",
+        "ids（最大 100）を順次チェックし個別結果を返す。件数が多いと数分かかる場合あり。"
+      ],
+      "accounts_batch_check_group": [
+        "一括チェック（グループ指定）",
+        "グループ内の全アカウントをチェック。group 空 = 全部。results と total を返す。"
+      ],
+      "accounts_groups": [
+        "グループ一覧",
+        "使用中の全グループ名（重複排除、空を除く）を返す。"
+      ],
+      "accounts_repos": [
+        "リポジトリキャッシュ一覧",
+        "当該アカウントのリポジトリローカルキャッシュを返す（GitHub への即時要求なし）。最新データは先に refresh を。"
+      ],
+      "accounts_repos_refresh": [
+        "GitHub からリポジトリ同期",
+        "token で見える全リポジトリ（個人+組織+コラボ）を取得して upsert、その後 workflow を自動スキャン。合計を返す。"
+      ],
+      "accounts_scan_workflows": [
+        "workflow スキャン",
+        "全リポジトリ（archived/disabled を除く）を走査し、workflow 定義と最新実行状態を保存。"
+      ],
+      "accounts_recycle_bin": [
+        "ゴミ箱一覧",
+        "ソフト削除された全アカウントを返す。"
+      ],
+      "accounts_recycle_bin_delete": [
+        "完全削除（ゴミ箱）",
+        "リポジトリ/workflow/タスク記録ごと物理削除。復元不可。"
+      ],
+      "accounts_recycle_bin_clean": [
+        "期限切れゴミ箱のクリーンアップ",
+        "保持期間（既定 30 日）超過のアカウントを即時完全削除し、締切日を返す。"
+      ],
+      "repos_contents": [
+        "ディレクトリ閲覧",
+        "path はリポジトリルート相対（空=ルート）、ref の既定はデフォルトブランチ。:id はローカルのリポジトリレコード ID（accounts/:id/repos の戻り値）で GitHub ID ではない。"
+      ],
+      "repos_file_get": [
+        "ファイル読み取り",
+        "path・sha・content（base64）・encoding を返す。オンライン編集の基盤。"
+      ],
+      "repos_file_put": [
+        "ファイル作成/更新",
+        "content は base64、message はコミットメッセージ。既存ファイルは自動的に sha を付けて更新。commit sha を返す。"
+      ],
+      "repos_workflows_list": [
+        "workflow 一覧（キャッシュ）",
+        "ローカルキャッシュされた workflow と最新実行状態。データは refresh / scan-workflows 由来。"
+      ],
+      "repos_workflows_create": [
+        "workflow の作成",
+        ".github/workflows/ 下にファイルを作成。filename は .yml/.yaml の純ファイル名のみ（パスや .. は不可）。"
+      ],
+      "repos_dispatch": [
+        "workflow の起動",
+        "workflow_dispatch を発火。inputs は定義と一致させる（先に workflow-inputs で確認可）。workflow に workflow_dispatch トリガーが必要。"
+      ],
+      "repos_workflow_inputs": [
+        "workflow 引数の解析",
+        "yml 内の inputs 定義（名前/説明/required/default/type/選択肢）を解析。失敗時は空配列。"
+      ],
+      "runs_list": [
+        "実行記録",
+        "total_count と最新の実行一覧を返す。status: queued/in_progress/completed、conclusion: success/failure/cancelled/skipped。"
+      ],
+      "runs_jobs": [
+        "実行のジョブ一覧",
+        "1 回の実行の全ジョブと、各 step の状態・結果を返す。"
+      ],
+      "runs_logs_url": [
+        "実行ログのダウンロード URL",
+        "GitHub の 302 リダイレクトで得られる zip ログの直リンク。有効期限付きの署名 URL のため早めに使用。"
+      ],
+      "runs_job_logs": [
+        "単一ジョブのログ",
+        "バックエンドがリダイレクトを追跡し、ジョブの完全なテキストログを返す。"
+      ],
+      "runs_cancel": [
+        "実行のキャンセル",
+        "queued/in_progress/waiting のみキャンセル可。完了済みはエラー。"
+      ],
+      "tasks_list": [
+        "定期タスク一覧",
+        "全タスクの cron、next_run_at、最新結果（success/failed/running）とエラー情報を返す。"
+      ],
+      "tasks_create": [
+        "定期タスクの作成",
+        "指定リポジトリの workflow_dispatch を定刻に発火。cron は 5 フィールド式（分 時 日 月 曜）。スケジューラは 30 秒ごとに走査。作成時に next_run_at を計算。"
+      ],
+      "tasks_update": [
+        "定期タスクの更新",
+        "ref/cron_expr/inputs_json/enabled/workflow_filename の部分更新。cron か enabled を変更すると next_run_at を再計算。"
+      ],
+      "tasks_delete": [
+        "定期タスクの削除",
+        "タスクレコードを物理削除。"
+      ],
+      "tasks_toggle": [
+        "タスクの有効/無効",
+        "enabled を切替。無効化で next_run_at をクリア、再有効化で再計算。ボディは {\"enabled\": bool}。"
+      ],
+      "tasks_run": [
+        "今すぐ実行",
+        "非同期で 1 回発火。状態は last_run_result（running → success/failed）で確認。キーストアのロック解除が必要。"
+      ],
+      "batch_create_workflows": [
+        "workflow 一括作成",
+        "repo_ids（≤100）の各リポジトリに同一ファイルを順次コミット（同期・直列）。content は base64。failed の id は個別リトライ可。"
+      ],
+      "batch_dispatch": [
+        "workflow 一括起動",
+        "各リポジトリで workflow_dispatch を発火。repo_ids の合計長 ≤100（UI の「起動回数」は ids の繰り返しで実現）。"
+      ],
+      "batch_create_repos": [
+        "リポジトリ一括作成",
+        "アカウントごとに count（1-50）個作成。count>1 では -1、-2… と接尾。テンプレートファイルや secrets（repo public key で暗号化）も可。同期実行、大量時は数分。"
+      ],
+      "batch_fetch_template": [
+        "テンプレートファイルの取得",
+        "git tree の再帰走査で全 blob（≤500 個、1 ファイル ≤1MB）を base64 で取得。create-repos の files に使用。"
+      ],
+      "batch_update_repos": [
+        "テンプレート同期（全消去・再書き込み）",
+        "各リポジトリ：既存ファイルを全削除し、テンプレートから全ファイルをコピー。1 ファイル 2 リクエストで大容量は遅い。元の内容は復元不可。"
+      ],
+      "batch_toggle_visibility": [
+        "公開状態の一括切替",
+        "指定リポジトリを public ↔ private 一括切替しローカルキャッシュを更新。ファイルは変更しない。"
+      ],
+      "autotask_get": [
+        "自動タスク設定の取得",
+        "自動チェック/同期のスイッチと間隔（分）、グループフィルタ、ゴミ箱設定、各最終実行時刻。"
+      ],
+      "autotask_update": [
+        "自動タスク設定の更新",
+        "間隔は分（不正値は 1440 にフォールバック）。groups はカンマ区切り、空=全部。recycle_bin_days は保持日数。30 秒以内に反映。"
+      ],
+      "autotask_check_now": [
+        "今すぐ自動チェック",
+        "非同期で 1 ラウンド検知を開始し即座に ok を返す。パッケージレベルロックで二重実行を防止（実行中はスキップ）。進捗は running/logs。"
+      ],
+      "autotask_sync_now": [
+        "今すぐ自動同期",
+        "非同期で 1 ラウンドのリポジトリ同期を開始。重複防止は同上。"
+      ],
+      "autotask_logs": [
+        "自動タスクログ",
+        "最近の実行ログ：種別 check/sync、状態、総数/成功/失敗、所要時間と詳細。limit ≤200、既定 50。"
+      ],
+      "autotask_running": [
+        "実行中のタスク",
+        "running と実行中のログオブジェクトを返す。UI は 5 秒ごとにポーリング。"
+      ],
+      "stats_overview": [
+        "ダッシュボード統計",
+        "状態別アカウント数（ゴミ箱を除く）、リポジトリ/workflow/タスク数、有効タスク数。引数なし。"
+      ],
+      "apikeys_list": [
+        "API Key 一覧",
+        "プレフィックス（14 文字）のみ。完全なキーとハッシュは含まない。"
+      ],
+      "apikeys_create": [
+        "API Key の作成",
+        "完全なキーは今回のレスポンスで一度だけ返る。サーバーは SHA-256 のみ保存。expires_in_days 0/省略 = 無期限。"
+      ],
+      "apikeys_delete": [
+        "API Key の削除",
+        "物理削除。そのキーを使うスクリプトは即 401。"
+      ],
+      "apikeys_toggle": [
+        "API Key の有効/無効",
+        "無効化すると即時に認証不可。いつでも再有効化可。"
+      ],
+      "system_version": [
+        "現在のバージョン",
+        "current はビルド時に -ldflags で注入（ローカル go run は dev）。実行プラットフォーム付き。"
+      ],
+      "system_check_update": [
+        "アップデートの確認",
+        "GitHub latest release を照会し文字列比較で has_update・release URL・notes を返す。ネットワーク失敗時は has_update:false + error。"
+      ],
+      "system_update": [
+        "セルフアップデート",
+        "対応プラットフォームのバイナリ（≤200MB）をダウンロード → SHA256SUMS 検証 → 原子的置換（.old 保存）→ 終了後 systemd が再起動。数秒の中断。Docker 運用には不向き。"
+      ]
+    },
+    "danger": {
+      "d_change_password": "マスターパスワードを直ちに変更し、全暗号化フィールドを再暗号化します",
+      "d_account_delete": "アカウントはゴミ箱へ移動し、定期タスクは直ちに無効化されます",
+      "d_recycle_delete": "アカウントと関連データは物理削除され、復元できません",
+      "d_recycle_clean": "保持期間超過のアカウントは完全削除されます",
+      "d_file_put": "実際のリポジトリに 1 回コミットします",
+      "d_workflow_create": "実際のリポジトリに workflow ファイルをコミットします",
+      "d_dispatch": "GitHub Actions の実行を 1 回実際にトリガーします",
+      "d_run_cancel": "実行中の Actions を実際にキャンセルします",
+      "d_tasks_delete": "タスク記録は削除され、復元できません",
+      "d_batch_create_workflows": "選択した各リポジトリに実際にファイルをコミットします",
+      "d_batch_dispatch": "最大 100 回の Actions 実行を実際にトリガーします",
+      "d_batch_create_repos": "各アカウントに実際にリポジトリを作成し内容を書き込みます",
+      "d_batch_update_repos": "対象リポジトリの全ファイルが削除されテンプレートで上書きされます（復元不可）",
+      "d_batch_toggle_visibility": "リポジトリの公開/非公開を実際に変更します",
+      "d_apikeys_delete": "キーは直ちに無効化され、使用中のスクリプトは 401 になります",
+      "d_system_update": "新しいバイナリをダウンロードして自動再起動します（一時停止あり）"
+    },
+    "p": {
+      "p_id_account": "アカウント ID（accounts 一覧の id）",
+      "p_id_repo": "リポジトリレコード ID（accounts/:id/repos の戻り値）",
+      "p_id_task": "タスク ID（tasks 一覧の id）",
+      "p_id_key": "API Key ID（apikeys 一覧の id）",
+      "p_run_id": "実行 ID（runs 一覧の id）",
+      "p_job_id": "ジョブ ID（jobs の戻り値）",
+      "p_group": "グループ名、空 = 全部",
+      "p_path": "パス（リポジトリルート相対）",
+      "p_ref": "ブランチ/タグ、空 = デフォルトブランチ",
+      "p_per_page": "1 ページの件数",
+      "p_filename": "workflow ファイル名",
+      "p_limit": "取得件数"
+    },
+    "ex": {
+      "ex_stats": "統計の照会",
+      "ex_import": "アカウントのインポート",
+      "ex_dispatch": "workflow 一括起動",
+      "ex_create_repos": "リポジトリ一括作成"
+    },
+    "search": "エンドポイントを検索（パスまたは説明）…",
+    "toTop": "トップへ戻る"
   },
   "auth": {
     "login": "ログイン",

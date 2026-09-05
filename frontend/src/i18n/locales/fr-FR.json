@@ -107,7 +107,293 @@
     "dangerConfirm": "Cette opération sera réellement exécutée. Continuer ?",
     "fillPathParams": "Remplissez d'abord les paramètres de chemin",
     "invalidJson": "Le corps n'est pas un JSON valide",
-    "curlLabel": "cURL équivalent"
+    "curlLabel": "cURL équivalent",
+    "ep": {
+      "healthz": [
+        "Sonde de santé",
+        "Sans authentification. Renvoie ok, le nom du service et l'horodatage du serveur. Pour les sondes de vie, la supervision et le health-check systemd/Docker."
+      ],
+      "health_alias": [
+        "Sonde de santé (alias)",
+        "Identique à /healthz."
+      ],
+      "auth_status": [
+        "Statut d’initialisation",
+        "Sans authentification. Renvoie isInitialized : false — le mot de passe maître n’est pas encore défini (appelez setup d’abord) ; true — utilisez login."
+      ],
+      "auth_setup": [
+        "Initialisation du mot de passe maître",
+        "Disponible uniquement avant l'initialisation (rappel : 400). Mot de passe ≥ 12 caractères, stocké en hash Argon2id ; en cas de succès un JWT est renvoyé, vous êtes connecté. Limité à 10 req/min/IP."
+      ],
+      "auth_login": [
+        "Connexion et obtention du JWT",
+        "Vérifie le mot de passe maître, dérive la clé AES qui déverrouille les champs chiffrés et émet un JWT (HS256) valable 7 jours. Mot de passe erroné : 401. Envoyez ensuite Authorization: Bearer. Même limite."
+      ],
+      "auth_change_password": [
+        "Changer le mot de passe maître",
+        "Vérifie l'ancien mot de passe puis réencrypte token/mot de passe/e-mail de tous les comptes avec la nouvelle clé — tout échec annule l'ensemble. Auth requise. Nouveau mot de passe ≥ 12 caractères."
+      ],
+      "accounts_list": [
+        "Liste des comptes",
+        "Renvoie tous les comptes non supprimés. Token/mot de passe/e-mail bruts absents — uniquement des champs masqués. ?group= filtre par groupe ; tri et épinglage côté client."
+      ],
+      "accounts_get": [
+        "Détails d’un compte",
+        "Un seul compte (mêmes champs que la liste, secrets masqués), y compris ceux de la corbeille."
+      ],
+      "accounts_secrets": [
+        "Déchiffrer les secrets",
+        "Déchiffre et renvoie le token GitHub, le mot de passe et l’e-mail de récupération en clair. Échoue tant que la clé maître est verrouillée (après redémarrage, avant connexion). Ne l’exposez pas à des scripts non fiables."
+      ],
+      "accounts_import": [
+        "Importer un compte",
+        "Soumet un PAT GitHub : le backend le valide via /user (login, avatar, scopes) puis le stocke chiffré. Un compte du même login dans la corbeille est restauré avec le token mis à jour. password/recovery_email/note/group optionnels."
+      ],
+      "accounts_update": [
+        "Mettre à jour un compte",
+        "note et group sont effacés par une chaîne vide ; password et recovery_email ne sont mis à jour que si non vides (pas de remise à zéro). Les champs omis restent inchangés."
+      ],
+      "accounts_delete": [
+        "Supprimer un compte (corbeille)",
+        "Suppression logique : va à la corbeille et désactive toutes ses tâches planifiées. Récupérable pendant la période de rétention ; purgé ensuite définitivement."
+      ],
+      "accounts_restore": [
+        "Restaurer depuis la corbeille",
+        "Efface le marqueur de suppression et réactive toutes les tâches planifiées du compte."
+      ],
+      "accounts_check": [
+        "Vérifier le statut de bannissement",
+        "Interroge en parallèle GitHub /user et la page de profil : tout signal anormal → banned ; 401 bad credentials → token_expired. Résultat et raison enregistrés puis renvoyés."
+      ],
+      "accounts_batch_check": [
+        "Vérification par lots (par IDs)",
+        "Vérifie séquentiellement ids (max 100) et renvoie le résultat par id. Les gros volumes peuvent prendre des minutes."
+      ],
+      "accounts_batch_check_group": [
+        "Vérification par lots (par groupe)",
+        "Vérifie tous les comptes du groupe ; groupe vide = tous. Renvoie results et total."
+      ],
+      "accounts_groups": [
+        "Liste des groupes",
+        "Tous les noms de groupes utilisés (dédupliqués, vides exclus)."
+      ],
+      "accounts_repos": [
+        "Cache des dépôts",
+        "Cache local des dépôts du compte — pas d’appel GitHub en direct. Appelez refresh d’abord pour des données fraîches."
+      ],
+      "accounts_repos_refresh": [
+        "Synchroniser les dépôts GitHub",
+        "Récupère tous les dépôts visibles par le token (perso + orgs + collaborations) avec pagination, les met à jour, puis scanne les workflows. Renvoie le total."
+      ],
+      "accounts_scan_workflows": [
+        "Scanner les workflows",
+        "Parcourt tous les dépôts (sauf archived/disabled), enregistre les définitions de workflows et le dernier statut d'exécution."
+      ],
+      "accounts_recycle_bin": [
+        "Corbeille",
+        "Tous les comptes supprimés logiquement."
+      ],
+      "accounts_recycle_bin_delete": [
+        "Suppression définitive (corbeille)",
+        "Supprime physiquement le compte avec ses dépôts/workflows/tâches. Irrécupérable."
+      ],
+      "accounts_recycle_bin_clean": [
+        "Purger la corbeille expirée",
+        "Supprime définitivement les comptes supprimés depuis plus que la rétention (30 jours par défaut). Renvoie la date limite."
+      ],
+      "repos_contents": [
+        "Parcourir un répertoire",
+        "path est relatif à la racine du dépôt (vide = racine) ; ref par défaut = branche par défaut. :id est l’ID local du dépôt (de accounts/:id/repos), pas l’ID GitHub."
+      ],
+      "repos_file_get": [
+        "Lire un fichier",
+        "Renvoie path, sha, content (base64), encoding. Base de l'éditeur intégré."
+      ],
+      "repos_file_put": [
+        "Créer/modifier un fichier",
+        "content en base64 ; message = message de commit ; les fichiers existants sont mis à jour automatiquement via sha. Renvoie le sha du commit."
+      ],
+      "repos_workflows_list": [
+        "Liste des workflows (cache)",
+        "Workflows en cache local avec leur dernier statut ; alimenté par refresh / scan-workflows."
+      ],
+      "repos_workflows_create": [
+        "Créer un workflow",
+        "Crée un fichier sous .github/workflows/. filename : nom seul .yml/.yaml (pas de chemin, pas de ..)."
+      ],
+      "repos_dispatch": [
+        "Déclencher un workflow",
+        "Déclenche workflow_dispatch. inputs doit correspondre à la définition (interrogez workflow-inputs d’abord) ; le workflow doit déclarer le déclencheur workflow_dispatch."
+      ],
+      "repos_workflow_inputs": [
+        "Analyser les entrées du workflow",
+        "Analyse le YAML et renvoie la définition workflow_dispatch.inputs (nom/description/required/default/type/choix). Tableau vide si échec."
+      ],
+      "runs_list": [
+        "Exécutions de workflow",
+        "Renvoie total_count et les dernières exécutions. status : queued/in_progress/completed ; conclusion : success/failure/cancelled/skipped."
+      ],
+      "runs_jobs": [
+        "Jobs d’une exécution",
+        "Tous les jobs d’une exécution, avec le statut et la conclusion de chaque étape."
+      ],
+      "runs_logs_url": [
+        "URL des logs d’exécution",
+        "Lien direct vers le zip de logs obtenu par la redirection 302 de GitHub — signé et éphémère ; utilisez-le vite."
+      ],
+      "runs_job_logs": [
+        "Log d’un job",
+        "Le backend suit la redirection et renvoie le log texte complet du job."
+      ],
+      "runs_cancel": [
+        "Annuler une exécution",
+        "Seules les exécutions queued/in_progress/waiting peuvent être annulées ; les terminées renvoient une erreur."
+      ],
+      "tasks_list": [
+        "Liste des tâches planifiées",
+        "Toutes les tâches : cron, next_run_at, dernier résultat (success/failed/running) et erreur."
+      ],
+      "tasks_create": [
+        "Créer une tâche planifiée",
+        "Déclenche workflow_dispatch à l’heure prévue. cron : expression à 5 champs (min heure jour mois jour_semaine) ; le planificateur scrute toutes les 30 s ; next_run_at calculé dès la création."
+      ],
+      "tasks_update": [
+        "Mettre à jour une tâche",
+        "Mise à jour partielle de ref/cron_expr/inputs_json/enabled/workflow_filename ; changer cron ou enabled recalcule next_run_at."
+      ],
+      "tasks_delete": [
+        "Supprimer une tâche",
+        "Supprime physiquement l’enregistrement."
+      ],
+      "tasks_toggle": [
+        "Activer/désactiver une tâche",
+        "Bascule enabled ; la désactivation efface next_run_at, la réactivation le recalcule. Corps : {\"enabled\": bool}."
+      ],
+      "tasks_run": [
+        "Exécuter maintenant",
+        "Lance une exécution asynchrone — suivez last_run_result (running → success/failed). Le coffre doit être déverrouillé."
+      ],
+      "batch_create_workflows": [
+        "Créer des workflows par lot",
+        "Committe le même fichier sur chaque dépôt de repo_ids (≤100), de façon synchrone et séquentielle ; content en base64. Les id en échec peuvent être retentés seuls."
+      ],
+      "batch_dispatch": [
+        "Déclencher des workflows par lot",
+        "Déclenche workflow_dispatch sur chaque dépôt. Longueur totale de repo_ids ≤100 (les répétitions de l’UI dupliquent simplement les ids)."
+      ],
+      "batch_create_repos": [
+        "Créer des dépôts par lot",
+        "Crée count (1-50) dépôts par compte (suffixes -1, -2…), avec fichiers de gabarit et secrets optionnels (chiffrés via la clé publique du dépôt). Synchrone ; les gros volumes prennent des minutes."
+      ],
+      "batch_fetch_template": [
+        "Récupérer les fichiers du gabarit",
+        "Récupère tous les blobs d’un dépôt gabarit via le git tree récursif (max 500 fichiers, ≤1 Mo chacun) en base64, pour create-repos."
+      ],
+      "batch_update_repos": [
+        "Synchroniser depuis le gabarit (effacer et réécrire)",
+        "Pour chaque dépôt : supprime tous les fichiers existants puis copie tous les fichiers du gabarit. Deux appels par fichier — lent pour les gros dépôts. Contenu d’origine irrécupérable."
+      ],
+      "batch_toggle_visibility": [
+        "Basculer la visibilité par lot",
+        "Passe tous les dépôts listés dans la visibilité indiquée et met à jour le cache. Aucun fichier modifié."
+      ],
+      "autotask_get": [
+        "Config des tâches auto",
+        "Interrupteurs et intervalles (minutes) de vérif/sync auto, filtres de groupes, réglages corbeille et derniers horaires d’exécution."
+      ],
+      "autotask_update": [
+        "Mettre à jour la config auto",
+        "Intervalles en minutes (valeurs invalides → 1440) ; groups séparés par virgules, vide = tous ; recycle_bin_days = rétention. Effectif sous 30 s."
+      ],
+      "autotask_check_now": [
+        "Lancer la vérif auto maintenant",
+        "Démarre un tour de vérification en asynchrone et renvoie ok immédiatement. Un verrou anti-chevauchement saute le tour si le précédent court encore. Progression : running/logs."
+      ],
+      "autotask_sync_now": [
+        "Lancer la synchro auto maintenant",
+        "Démarre un tour de synchronisation des dépôts en asynchrone ; même anti-chevauchement."
+      ],
+      "autotask_logs": [
+        "Logs des tâches auto",
+        "Exécutions récentes : type check/sync, statut, total/succès/échecs, durée et détail. limit ≤200, défaut 50."
+      ],
+      "autotask_running": [
+        "Tâche en cours",
+        "Renvoie running et l’entrée de log en vol ; l’UI interroge toutes les 5 s."
+      ],
+      "stats_overview": [
+        "Statistiques du tableau de bord",
+        "Comptes par statut (corbeille exclue), dépôts/workflows/tâches et tâches activées. Sans paramètres."
+      ],
+      "apikeys_list": [
+        "Liste des clés API",
+        "Préfixes seuls (14 caractères) — pas de clés complètes ni de hash."
+      ],
+      "apikeys_create": [
+        "Créer une clé API",
+        "La clé complète n’est renvoyée qu’une seule fois ; seul son hash SHA-256 est stocké. expires_in_days 0/omis = illimitée."
+      ],
+      "apikeys_delete": [
+        "Supprimer une clé API",
+        "Suppression physique ; les scripts qui l’utilisent reçoivent 401 immédiatement."
+      ],
+      "apikeys_toggle": [
+        "Activer/désactiver une clé API",
+        "La désactivation bloque l’authentification instantanément ; réactivable à tout moment."
+      ],
+      "system_version": [
+        "Version actuelle",
+        "current est injecté au build via -ldflags (dev pour go run local), plus GOOS/GOARCH."
+      ],
+      "system_check_update": [
+        "Vérifier les mises à jour",
+        "Interroge la dernière release GitHub et compare les versions en chaînes (pas sémantique) ; renvoie has_update, l'URL de release et les notes. Échec réseau : has_update:false + erreur."
+      ],
+      "system_update": [
+        "Auto-mise à jour",
+        "Télécharge le binaire de la plateforme (≤200 Mo), vérifie SHA256SUMS.txt, remplace atomiquement le binaire (garde .old) et quitte — systemd relance. Brève coupure ; inadapté à Docker."
+      ]
+    },
+    "danger": {
+      "d_change_password": "Le mot de passe maître sera changé maintenant et tous les champs chiffrés réencryptés",
+      "d_account_delete": "Le compte va à la corbeille et ses tâches planifiées sont désactivées maintenant",
+      "d_recycle_delete": "Le compte et ses données associées seront supprimés définitivement",
+      "d_recycle_clean": "Les comptes au-delà de la rétention seront supprimés définitivement",
+      "d_file_put": "Cela commite une fois dans le vrai dépôt",
+      "d_workflow_create": "Cela committe un fichier workflow dans le vrai dépôt",
+      "d_dispatch": "Cela déclenche réellement une exécution GitHub Actions",
+      "d_run_cancel": "Cela annule réellement une exécution Actions en cours",
+      "d_tasks_delete": "L'enregistrement de la tâche sera supprimé — irrécupérable",
+      "d_batch_create_workflows": "Des fichiers seront réellement commités dans chaque dépôt sélectionné",
+      "d_batch_dispatch": "Cela déclenche réellement jusqu'à 100 exécutions Actions",
+      "d_batch_create_repos": "Des dépôts seront réellement créés sous chaque compte et remplis",
+      "d_batch_update_repos": "Tous les fichiers des dépôts cibles seront supprimés et écrasés par le gabarit — irrécupérable",
+      "d_batch_toggle_visibility": "L'état public/privé des dépôts va réellement changer",
+      "d_apikeys_delete": "La clé est invalidée immédiatement ; les scripts qui l’utilisent reçoivent 401",
+      "d_system_update": "Le service télécharge un nouveau binaire et redémarre — brève coupure"
+    },
+    "p": {
+      "p_id_account": "ID du compte (id de la liste accounts)",
+      "p_id_repo": "ID local du dépôt (de accounts/:id/repos)",
+      "p_id_task": "ID de tâche (de la liste tasks)",
+      "p_id_key": "ID de clé API (de la liste apikeys)",
+      "p_run_id": "ID d'exécution (de la liste runs)",
+      "p_job_id": "ID du job (de jobs)",
+      "p_group": "Nom du groupe ; vide = tous",
+      "p_path": "Chemin relatif à la racine du dépôt",
+      "p_ref": "Branche ou tag ; vide = branche par défaut",
+      "p_per_page": "Éléments par page",
+      "p_filename": "Nom du fichier workflow",
+      "p_limit": "Nombre d'entrées"
+    },
+    "ex": {
+      "ex_stats": "Aperçu des stats",
+      "ex_import": "Importer un compte",
+      "ex_dispatch": "Déclencher des workflows par lot",
+      "ex_create_repos": "Créer des dépôts par lot"
+    },
+    "search": "Rechercher des endpoints (chemin ou description)…",
+    "toTop": "Haut de page"
   },
   "auth": {
     "login": "Connexion",
