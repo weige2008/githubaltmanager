@@ -98,7 +98,16 @@
     "groupAutoTask": "自动任务",
     "groupStats": "统计",
     "groupApiKeys": "API 密钥",
-    "groupSystem": "系统与更新"
+    "groupSystem": "系统与更新",
+    "realCallNote": "测试会以当前登录的管理员身份真实调用本服务接口，产生的是真实请求。",
+    "bodyParams": "请求体（JSON）",
+    "send": "发送请求",
+    "sending": "请求中…",
+    "response": "响应",
+    "dangerConfirm": "该操作会真实执行，确认继续？",
+    "fillPathParams": "请先填写路径参数",
+    "invalidJson": "请求体不是合法 JSON",
+    "curlLabel": "等效 cURL"
   },
   "auth": {
     "login": "登录",

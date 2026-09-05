@@ -98,7 +98,16 @@
     "groupAutoTask": "自動タスク",
     "groupStats": "統計",
     "groupApiKeys": "API キー",
-    "groupSystem": "システムと更新"
+    "groupSystem": "システムと更新",
+    "realCallNote": "このテストは現在のログイン情報で実際に API を呼び出します。",
+    "bodyParams": "ボディ（JSON）",
+    "send": "送信",
+    "sending": "送信中…",
+    "response": "レスポンス",
+    "dangerConfirm": "この操作は実際に実行されます。続行しますか？",
+    "fillPathParams": "まずパス引数を入力してください",
+    "invalidJson": "ボディが不正な JSON です",
+    "curlLabel": "対応する cURL"
   },
   "auth": {
     "login": "ログイン",

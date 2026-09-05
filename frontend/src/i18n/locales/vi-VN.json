@@ -98,7 +98,16 @@
     "groupAutoTask": "Tác vụ tự động",
     "groupStats": "Thống kê",
     "groupApiKeys": "Khóa API",
-    "groupSystem": "Hệ thống & cập nhật"
+    "groupSystem": "Hệ thống & cập nhật",
+    "realCallNote": "Thao tác kiểm thử sẽ gọi API thật tới dịch vụ này bằng phiên đăng nhập hiện tại.",
+    "bodyParams": "Nội dung yêu cầu (JSON)",
+    "send": "Gửi yêu cầu",
+    "sending": "Đang gửi…",
+    "response": "Phản hồi",
+    "dangerConfirm": "Thao tác này sẽ được thực thi thật. Tiếp tục?",
+    "fillPathParams": "Hãy điền tham số đường dẫn trước",
+    "invalidJson": "Nội dung không phải JSON hợp lệ",
+    "curlLabel": "cURL tương đương"
   },
   "auth": {
     "login": "Đăng nhập",

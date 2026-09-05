@@ -98,7 +98,16 @@
     "groupAutoTask": "Tâches automatiques",
     "groupStats": "Statistiques",
     "groupApiKeys": "Clés API",
-    "groupSystem": "Système et mises à jour"
+    "groupSystem": "Système et mises à jour",
+    "realCallNote": "Les requêtes sont réellement exécutées sur ce service avec votre session administrateur.",
+    "bodyParams": "Corps (JSON)",
+    "send": "Envoyer",
+    "sending": "Envoi…",
+    "response": "Réponse",
+    "dangerConfirm": "Cette opération sera réellement exécutée. Continuer ?",
+    "fillPathParams": "Remplissez d'abord les paramètres de chemin",
+    "invalidJson": "Le corps n'est pas un JSON valide",
+    "curlLabel": "cURL équivalent"
   },
   "auth": {
     "login": "Connexion",

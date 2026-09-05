@@ -98,7 +98,16 @@
     "groupAutoTask": "Automation",
     "groupStats": "Stats",
     "groupApiKeys": "API Keys",
-    "groupSystem": "System & Updates"
+    "groupSystem": "System & Updates",
+    "realCallNote": "Requests are executed for real against this deployment using your current admin login.",
+    "bodyParams": "Body (JSON)",
+    "send": "Send request",
+    "sending": "Sending…",
+    "response": "Response",
+    "dangerConfirm": "This will really execute. Continue?",
+    "fillPathParams": "Fill in path params first",
+    "invalidJson": "Body is not valid JSON",
+    "curlLabel": "Equivalent cURL"
   },
   "auth": {
     "login": "Login",
