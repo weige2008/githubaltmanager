@@ -26,6 +26,9 @@ backend/internal/web/dist/*
 .vscode/
 .idea/
 .zcode/
+
+# 本地交接文档（含明文凭据，严禁提交）
+HANDOFF.md
 *.swp
 *.swo
 .DS_Store
