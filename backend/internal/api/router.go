@@ -95,7 +95,7 @@ func registerSPA(r *gin.Engine, staticDir string) {
 			c.Header("Expires", "0")
 			if p == "" { serveEmbeddedIndex(c); return }
 			if data, err := web.Dist.ReadFile("dist/" + p); err == nil { c.Data(http.StatusOK, mimeByExt(p), data); return }
-			if !strings.HasPrefix(c.Request.URL.Path, "/api") { serveEmbeddedIndex(c); return }
+			if !strings.HasPrefix(c.Request.URL.Path, "/api/") && c.Request.URL.Path != "/api" { serveEmbeddedIndex(c); return }
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		})
 		return
@@ -103,7 +103,7 @@ func registerSPA(r *gin.Engine, staticDir string) {
 	if staticDir != "" {
 		fs := http.FileServer(http.Dir(staticDir))
 		r.NoRoute(func(c *gin.Context) {
-			if strings.HasPrefix(c.Request.URL.Path, "/api") { c.JSON(http.StatusNotFound, gin.H{"error": "not found"}); return }
+			if strings.HasPrefix(c.Request.URL.Path, "/api/") || c.Request.URL.Path == "/api" { c.JSON(http.StatusNotFound, gin.H{"error": "not found"}); return }
 			http.StripPrefix("/", fs).ServeHTTP(c.Writer, c.Request)
 		})
 	} else {
