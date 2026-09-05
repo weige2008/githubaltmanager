@@ -25,6 +25,7 @@ backend/internal/web/dist/*
 # IDE
 .vscode/
 .idea/
+.zcode/
 *.swp
 *.swo
 .DS_Store
