@@ -499,7 +499,8 @@
     "sortCreated": "By Created",
     "pin": "Pin",
     "unpin": "Unpin",
-    "pinned": "Pinned"
+    "pinned": "Pinned",
+    "allGroups": "All"
   },
   "repos": {
     "title": "Repositories",
@@ -943,6 +944,8 @@
     "pageError": "Page Error",
     "unknownError": "An unknown error occurred",
     "admin": "Admin",
-    "private": "Private"
+    "private": "Private",
+    "confirmTitle": "Confirm action",
+    "confirmDesc": "This action cannot be undone. Are you sure?"
   }
 }

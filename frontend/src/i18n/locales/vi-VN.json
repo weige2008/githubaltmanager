@@ -109,250 +109,250 @@
     "invalidJson": "Nội dung không phải JSON hợp lệ",
     "curlLabel": "cURL tương đương",
     "ep": {
-      "healthz": [
-        "Kiểm tra sức khỏe",
-        "Không cần xác thực. Trả về ok, tên dịch vụ và mốc thời gian của máy chủ. Dùng cho liveness probe, giám sát và health-check của systemd/Docker."
-      ],
-      "health_alias": [
-        "Kiểm tra sức khỏe (bí danh)",
-        "Giống hệt /healthz."
-      ],
-      "auth_status": [
-        "Trạng thái khởi tạo",
-        "Không cần xác thực. Trả về isInitialized: false nghĩa là chưa đặt master password (gọi setup trước); true thì dùng login."
-      ],
-      "auth_setup": [
-        "Thiết lập master password lần đầu",
-        "Chỉ dùng được khi chưa khởi tạo (gọi lại sẽ 400). Mật khẩu ≥12 ký tự, lưu dưới dạng hash Argon2id; thành công sẽ trả về JWT và bạn đã đăng nhập. Giới hạn 10 lần/phút/IP."
-      ],
-      "auth_login": [
-        "Đăng nhập lấy JWT",
-        "Xác minh master password, dẫn xuất khóa AES mở khóa các trường mã hóa và phát JWT (HS256) hiệu lực 7 ngày. Sai mật khẩu trả 401. Sau đó gửi Authorization: Bearer. Giới hạn như trên."
-      ],
-      "auth_change_password": [
-        "Đổi master password",
-        "Xác minh mật khẩu cũ rồi đặt mật khẩu mới (≥12 ký tự); token/mật khẩu/email của mọi tài khoản được mã hóa lại bằng khóa mới — lỗi bất kỳ sẽ rollback toàn bộ. Cần xác thực."
-      ],
-      "accounts_list": [
-        "Danh sách tài khoản",
-        "Trả về mọi tài khoản chưa xóa. Token/mật khẩu/email gốc không xuất hiện — chỉ có trường đã che. ?group= lọc theo nhóm; sắp xếp và ghim do phía client xử lý."
-      ],
-      "accounts_get": [
-        "Chi tiết tài khoản",
-        "Một tài khoản (cùng trường với danh sách, bí mật đã che), gồm cả tài khoản trong thùng rác."
-      ],
-      "accounts_secrets": [
-        "Giải mã xem bí mật",
-        "Giải mã và trả về token GitHub, mật khẩu, email khôi phục dạng gốc. Lỗi khi khóa chính chưa mở khóa (sau khi khởi động lại, trước khi đăng nhập). Đừng để script không tin cậy dùng API này."
-      ],
-      "accounts_import": [
-        "Nhập tài khoản",
-        "Gửi PAT GitHub: backend xác minh qua /user (login, avatar, scope) rồi lưu đã mã hóa. Tài khoản trùng login trong thùng rác sẽ được phục hồi với token mới. password/recovery_email/note/group là tùy chọn."
-      ],
-      "accounts_update": [
-        "Cập nhật tài khoản",
-        "note và group được xóa khi truyền chuỗi rỗng; password và recovery_email chỉ cập nhật khi khác rỗng (không hỗ trợ xóa trắng). Trường bỏ qua sẽ giữ nguyên."
-      ],
-      "accounts_delete": [
-        "Xóa tài khoản (vào thùng rác)",
-        "Xóa mềm: vào thùng rác và vô hiệu hóa mọi tác vụ định kỳ của tài khoản. Có thể phục hồi trong thời hạn lưu giữ; hết hạn sẽ bị dọn vĩnh viễn."
-      ],
-      "accounts_restore": [
-        "Phục hồi từ thùng rác",
-        "Xóa cờ đã xóa và bật lại mọi tác vụ định kỳ của tài khoản."
-      ],
-      "accounts_check": [
-        "Kiểm tra trạng thái ban",
-        "Đồng thời gọi GitHub /user và trang cá nhân: bất kỳ tín hiệu bất thường nào → banned; 401 bad credentials → token_expired. Kết quả và lý do được lưu và trả về."
-      ],
-      "accounts_batch_check": [
-        "Kiểm tra hàng loạt (theo ID)",
-        "Tuần tự kiểm tra ids (tối đa 100) và trả kết quả từng id. Lô lớn có thể mất vài phút."
-      ],
-      "accounts_batch_check_group": [
-        "Kiểm tra hàng loạt (theo nhóm)",
-        "Kiểm tra mọi tài khoản trong nhóm; group rỗng = tất cả. Trả về results và total."
-      ],
-      "accounts_groups": [
-        "Danh sách nhóm",
-        "Mọi tên nhóm đang dùng (đã khử trùng lặp, loại rỗng)."
-      ],
-      "accounts_repos": [
-        "Danh sách repo (cache)",
-        "Cache cục bộ các repo của tài khoản — không gọi GitHub trực tiếp. Muốn dữ liệu mới hãy gọi refresh trước."
-      ],
-      "accounts_repos_refresh": [
-        "Đồng bộ repo từ GitHub",
-        "Lấy mọi repo mà token nhìn thấy (cá nhân + tổ chức + cộng tác) có phân trang, cập nhật vào cache rồi tự động quét workflow. Trả về tổng số."
-      ],
-      "accounts_scan_workflows": [
-        "Quét workflow",
-        "Duyệt tất cả repo (bỏ qua archived/disabled), lưu định nghĩa workflow và trạng thái chạy gần nhất."
-      ],
-      "accounts_recycle_bin": [
-        "Thùng rác",
-        "Mọi tài khoản đã xóa mềm."
-      ],
-      "accounts_recycle_bin_delete": [
-        "Xóa vĩnh viễn (thùng rác)",
-        "Xóa vật lý tài khoản cùng repo/workflow/tác vụ liên quan. Không thể phục hồi."
-      ],
-      "accounts_recycle_bin_clean": [
-        "Dọn thùng rác hết hạn",
-        "Xóa vĩnh viễn các tài khoản đã xóa quá thời hạn lưu giữ (mặc định 30 ngày). Trả về ngày cắt off."
-      ],
-      "repos_contents": [
-        "Duyệt thư mục",
-        "path tính_relative gốc repo (rỗng = gốc); ref mặc định là nhánh mặc định. :id là ID bản ghi repo cục bộ (từ accounts/:id/repos), không phải GitHub ID."
-      ],
-      "repos_file_get": [
-        "Đọc tệp",
-        "Trả về path, sha, content (base64), encoding — nền tảng của trình soạn thảo tích hợp."
-      ],
-      "repos_file_put": [
-        "Tạo/sửa tệp",
-        "content là base64; message là nội dung commit; tệp đã có sẽ tự cập nhật theo sha. Trả về commit sha."
-      ],
-      "repos_workflows_list": [
-        "Danh sách workflow (cache)",
-        "Workflow trong cache cục bộ cùng trạng thái chạy gần nhất; dữ liệu đến từ refresh / scan-workflows."
-      ],
-      "repos_workflows_create": [
-        "Tạo workflow",
-        "Tạo tệp trong .github/workflows/. filename chỉ được là tên tệp .yml/.yaml thuần (không chứa đường dẫn hay ..)."
-      ],
-      "repos_dispatch": [
-        "Kích hoạt workflow",
-        "Kích hoạt workflow_dispatch. inputs phải khớp định nghĩa (hãy tra workflow-inputs trước); workflow phải khai báo trigger workflow_dispatch."
-      ],
-      "repos_workflow_inputs": [
-        "Phân tích tham số workflow",
-        "Phân tích YAML và trả về định nghĩa workflow_dispatch.inputs (tên/mô tả/required/default/type/các lựa chọn). Trả mảng rỗng nếu lỗi."
-      ],
-      "runs_list": [
-        "Các lượt chạy",
-        "Trả về total_count và các lượt chạy gần nhất. status: queued/in_progress/completed; conclusion: success/failure/cancelled/skipped."
-      ],
-      "runs_jobs": [
-        "Job của một lượt chạy",
-        "Mọi job của lượt chạy, kèm trạng thái và kết luận của từng step."
-      ],
-      "runs_logs_url": [
-        "URL tải log lượt chạy",
-        "Link trực tiếp zip log lấy từ redirect 302 của GitHub — link ký hiệu ngắn hạn, dùng ngay."
-      ],
-      "runs_job_logs": [
-        "Log một job",
-        "Backend đi theo redirect và trả về log văn bản đầy đủ của job."
-      ],
-      "runs_cancel": [
-        "Hủy lượt chạy",
-        "Chỉ hủy được queued/in_progress/waiting; lượt đã xong sẽ trả lỗi."
-      ],
-      "tasks_list": [
-        "Danh sách tác vụ định kỳ",
-        "Mọi tác vụ: cron, next_run_at, kết quả gần nhất (success/failed/running) và lỗi."
-      ],
-      "tasks_create": [
-        "Tạo tác vụ định kỳ",
-        "Đúng giờ sẽ kích hoạt workflow_dispatch của repo chỉ định. cron là biểu thức 5 trường (phút giờ ngày tháng thứ); bộ lập lịch quét mỗi 30 giây; next_run_at được tính ngay khi tạo."
-      ],
-      "tasks_update": [
-        "Cập nhật tác vụ",
-        "Cập nhật một phần ref/cron_expr/inputs_json/enabled/workflow_filename; đổi cron hoặc enabled sẽ tính lại next_run_at."
-      ],
-      "tasks_delete": [
-        "Xóa tác vụ",
-        "Xóa vật lý bản ghi tác vụ."
-      ],
-      "tasks_toggle": [
-        "Bật/tắt tác vụ",
-        "Chuyển enabled; tắt sẽ xóa next_run_at, bật lại sẽ tính lại. Body: {\"enabled\": bool}."
-      ],
-      "tasks_run": [
-        "Chạy ngay",
-        "Kích hoạt không đồng bộ một lượt — theo dõi last_run_result (running → success/failed). Cần keystore đã mở khóa."
-      ],
-      "batch_create_workflows": [
-        "Tạo workflow hàng loạt",
-        "Commit cùng một tệp vào từng repo trong repo_ids (≤100), đồng bộ tuần tự; content là base64. Id thất bại có thể thử lại riêng."
-      ],
-      "batch_dispatch": [
-        "Kích hoạt workflow hàng loạt",
-        "Kích hoạt workflow_dispatch cho từng repo. Tổng độ dài repo_ids ≤100 (số lần kích hoạt trong UI chỉ là lặp lại ids)."
-      ],
-      "batch_create_repos": [
-        "Tạo repo hàng loạt",
-        "Mỗi tài khoản tạo count (1-50) repo (tên thêm hậu tố -1, -2…), có thể kèm tệp mẫu và secrets (mã hóa bằng repo public key). Chạy đồng bộ; lô lớn mất vài phút."
-      ],
-      "batch_fetch_template": [
-        "Lấy tệp từ repo mẫu",
-        "Qua git tree đệ quy lấy mọi blob (tối đa 500 tệp, mỗi tệp ≤1MB) dạng base64, dùng cho create-repos."
-      ],
-      "batch_update_repos": [
-        "Đồng bộ từ mẫu (xóa sạch & ghi đè)",
-        "Với từng repo: xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu. Hai request mỗi tệp — chậm với repo lớn. Nội dung gốc không thể phục hồi."
-      ],
-      "batch_toggle_visibility": [
-        "Đổi chế độ hiển thị hàng loạt",
-        "Chuyển mọi repo được liệt kê sang trạng thái chỉ định và cập nhật cache. Không sửa tệp."
-      ],
-      "autotask_get": [
-        "Cấu hình tác vụ tự động",
-        "Công tắc và chu kỳ (phút) của tự động kiểm tra/đồng bộ, lọc nhóm, cấu hình thùng rác và các mốc chạy gần nhất."
-      ],
-      "autotask_update": [
-        "Cập nhật cấu hình tự động",
-        "Chu kỳ tính bằng phút (giá trị sai sẽ về 1440); groups phân tách bằng dấu phẩy, rỗng = tất cả; recycle_bin_days là thời hạn lưu giữ. Có hiệu lực trong 30 giây."
-      ],
-      "autotask_check_now": [
-        "Chạy kiểm tra tự động ngay",
-        "Bất đồng bộ bắt đầu một vòng kiểm tra và trả ok ngay. Khóa chống chồng lấp — vòng trước chưa xong sẽ bỏ qua. Theo dõi qua running/logs."
-      ],
-      "autotask_sync_now": [
-        "Chạy đồng bộ tự động ngay",
-        "Bất đồng bộ bắt đầu một vòng đồng bộ repo; chống chồng lấp như trên."
-      ],
-      "autotask_logs": [
-        "Log tác vụ tự động",
-        "Các lượt chạy gần đây: loại check/sync, trạng thái, tổng/thành công/thất bại, thời lượng và chi tiết. limit ≤200, mặc định 50."
-      ],
-      "autotask_running": [
-        "Tác vụ đang chạy",
-        "Trả về running và bản ghi log đang thực thi; UI hỏi mỗi 5 giây."
-      ],
-      "stats_overview": [
-        "Thống kê tổng quan",
-        "Số tài khoản theo trạng thái (loại trừ thùng rác), số repo/workflow/tác vụ và tác vụ đang bật. Không tham số."
-      ],
-      "apikeys_list": [
-        "Danh sách API key",
-        "Chỉ có tiền tố (14 ký tự) — không có khóa đầy đủ hay hash."
-      ],
-      "apikeys_create": [
-        "Tạo API key",
-        "Khóa đầy đủ chỉ trả về đúng một lần; máy chủ chỉ lưu hash SHA-256. expires_in_days 0/bỏ qua = vĩnh viễn."
-      ],
-      "apikeys_delete": [
-        "Xóa API key",
-        "Xóa vật lý; script đang dùng khóa đó sẽ nhận 401 ngay."
-      ],
-      "apikeys_toggle": [
-        "Bật/tắt API key",
-        "Tắt sẽ chặn xác thực ngay lập tức; có thể bật lại bất cứ lúc nào."
-      ],
-      "system_version": [
-        "Phiên bản hiện tại",
-        "current được tiêm lúc build qua -ldflags (chạy go run cục bộ là dev), kèm GOOS/GOARCH."
-      ],
-      "system_check_update": [
-        "Kiểm tra cập nhật",
-        "Tra release mới nhất trên GitHub và so sánh chuỗi phiên bản (không phải semver); trả has_update, URL release và notes. Lỗi mạng sẽ trả has_update:false kèm error."
-      ],
-      "system_update": [
-        "Tự cập nhật",
-        "Tải binary đúng nền tảng (≤200MB), xác minh SHA256SUMS.txt, thay thế nguyên tử (giữ .old) rồi thoát để systemd khởi động lại. Gián đoạn ngắn; không phù hợp cho Docker."
-      ]
+      "healthz": {
+        "summary": "Kiểm tra sức khỏe",
+        "detail": "Không cần xác thực. Trả về ok, tên dịch vụ và mốc thời gian của máy chủ. Dùng cho liveness probe, giám sát và health-check của systemd/Docker."
+      },
+      "health_alias": {
+        "summary": "Kiểm tra sức khỏe (bí danh)",
+        "detail": "Giống hệt /healthz."
+      },
+      "auth_status": {
+        "summary": "Trạng thái khởi tạo",
+        "detail": "Không cần xác thực. Trả về isInitialized: false nghĩa là chưa đặt master password (gọi setup trước); true thì dùng login."
+      },
+      "auth_setup": {
+        "summary": "Thiết lập master password lần đầu",
+        "detail": "Chỉ dùng được khi chưa khởi tạo (gọi lại sẽ 400). Mật khẩu ≥12 ký tự, lưu dưới dạng hash Argon2id; thành công sẽ trả về JWT và bạn đã đăng nhập. Giới hạn 10 lần/phút/IP."
+      },
+      "auth_login": {
+        "summary": "Đăng nhập lấy JWT",
+        "detail": "Xác minh master password, dẫn xuất khóa AES mở khóa các trường mã hóa và phát JWT (HS256) hiệu lực 7 ngày. Sai mật khẩu trả 401. Sau đó gửi Authorization: Bearer. Giới hạn như trên."
+      },
+      "auth_change_password": {
+        "summary": "Đổi master password",
+        "detail": "Xác minh mật khẩu cũ rồi đặt mật khẩu mới (≥12 ký tự); token/mật khẩu/email của mọi tài khoản được mã hóa lại bằng khóa mới — lỗi bất kỳ sẽ rollback toàn bộ. Cần xác thực."
+      },
+      "accounts_list": {
+        "summary": "Danh sách tài khoản",
+        "detail": "Trả về mọi tài khoản chưa xóa. Token/mật khẩu/email gốc không xuất hiện — chỉ có trường đã che. ?group= lọc theo nhóm; sắp xếp và ghim do phía client xử lý."
+      },
+      "accounts_get": {
+        "summary": "Chi tiết tài khoản",
+        "detail": "Một tài khoản (cùng trường với danh sách, bí mật đã che), gồm cả tài khoản trong thùng rác."
+      },
+      "accounts_secrets": {
+        "summary": "Giải mã xem bí mật",
+        "detail": "Giải mã và trả về token GitHub, mật khẩu, email khôi phục dạng gốc. Lỗi khi khóa chính chưa mở khóa (sau khi khởi động lại, trước khi đăng nhập). Đừng để script không tin cậy dùng API này."
+      },
+      "accounts_import": {
+        "summary": "Nhập tài khoản",
+        "detail": "Gửi PAT GitHub: backend xác minh qua /user (login, avatar, scope) rồi lưu đã mã hóa. Tài khoản trùng login trong thùng rác sẽ được phục hồi với token mới. password/recovery_email/note/group là tùy chọn."
+      },
+      "accounts_update": {
+        "summary": "Cập nhật tài khoản",
+        "detail": "note và group được xóa khi truyền chuỗi rỗng; password và recovery_email chỉ cập nhật khi khác rỗng (không hỗ trợ xóa trắng). Trường bỏ qua sẽ giữ nguyên."
+      },
+      "accounts_delete": {
+        "summary": "Xóa tài khoản (vào thùng rác)",
+        "detail": "Xóa mềm: vào thùng rác và vô hiệu hóa mọi tác vụ định kỳ của tài khoản. Có thể phục hồi trong thời hạn lưu giữ; hết hạn sẽ bị dọn vĩnh viễn."
+      },
+      "accounts_restore": {
+        "summary": "Phục hồi từ thùng rác",
+        "detail": "Xóa cờ đã xóa và bật lại mọi tác vụ định kỳ của tài khoản."
+      },
+      "accounts_check": {
+        "summary": "Kiểm tra trạng thái ban",
+        "detail": "Đồng thời gọi GitHub /user và trang cá nhân: bất kỳ tín hiệu bất thường nào → banned; 401 bad credentials → token_expired. Kết quả và lý do được lưu và trả về."
+      },
+      "accounts_batch_check": {
+        "summary": "Kiểm tra hàng loạt (theo ID)",
+        "detail": "Tuần tự kiểm tra ids (tối đa 100) và trả kết quả từng id. Lô lớn có thể mất vài phút."
+      },
+      "accounts_batch_check_group": {
+        "summary": "Kiểm tra hàng loạt (theo nhóm)",
+        "detail": "Kiểm tra mọi tài khoản trong nhóm; group rỗng = tất cả. Trả về results và total."
+      },
+      "accounts_groups": {
+        "summary": "Danh sách nhóm",
+        "detail": "Mọi tên nhóm đang dùng (đã khử trùng lặp, loại rỗng)."
+      },
+      "accounts_repos": {
+        "summary": "Danh sách repo (cache)",
+        "detail": "Cache cục bộ các repo của tài khoản — không gọi GitHub trực tiếp. Muốn dữ liệu mới hãy gọi refresh trước."
+      },
+      "accounts_repos_refresh": {
+        "summary": "Đồng bộ repo từ GitHub",
+        "detail": "Lấy mọi repo mà token nhìn thấy (cá nhân + tổ chức + cộng tác) có phân trang, cập nhật vào cache rồi tự động quét workflow. Trả về tổng số."
+      },
+      "accounts_scan_workflows": {
+        "summary": "Quét workflow",
+        "detail": "Duyệt tất cả repo (bỏ qua archived/disabled), lưu định nghĩa workflow và trạng thái chạy gần nhất."
+      },
+      "accounts_recycle_bin": {
+        "summary": "Thùng rác",
+        "detail": "Mọi tài khoản đã xóa mềm."
+      },
+      "accounts_recycle_bin_delete": {
+        "summary": "Xóa vĩnh viễn (thùng rác)",
+        "detail": "Xóa vật lý tài khoản cùng repo/workflow/tác vụ liên quan. Không thể phục hồi."
+      },
+      "accounts_recycle_bin_clean": {
+        "summary": "Dọn thùng rác hết hạn",
+        "detail": "Xóa vĩnh viễn các tài khoản đã xóa quá thời hạn lưu giữ (mặc định 30 ngày). Trả về ngày cắt off."
+      },
+      "repos_contents": {
+        "summary": "Duyệt thư mục",
+        "detail": "path tính_relative gốc repo (rỗng = gốc); ref mặc định là nhánh mặc định. :id là ID bản ghi repo cục bộ (từ accounts/:id/repos), không phải GitHub ID."
+      },
+      "repos_file_get": {
+        "summary": "Đọc tệp",
+        "detail": "Trả về path, sha, content (base64), encoding — nền tảng của trình soạn thảo tích hợp."
+      },
+      "repos_file_put": {
+        "summary": "Tạo/sửa tệp",
+        "detail": "content là base64; message là nội dung commit; tệp đã có sẽ tự cập nhật theo sha. Trả về commit sha."
+      },
+      "repos_workflows_list": {
+        "summary": "Danh sách workflow (cache)",
+        "detail": "Workflow trong cache cục bộ cùng trạng thái chạy gần nhất; dữ liệu đến từ refresh / scan-workflows."
+      },
+      "repos_workflows_create": {
+        "summary": "Tạo workflow",
+        "detail": "Tạo tệp trong .github/workflows/. filename chỉ được là tên tệp .yml/.yaml thuần (không chứa đường dẫn hay ..)."
+      },
+      "repos_dispatch": {
+        "summary": "Kích hoạt workflow",
+        "detail": "Kích hoạt workflow_dispatch. inputs phải khớp định nghĩa (hãy tra workflow-inputs trước); workflow phải khai báo trigger workflow_dispatch."
+      },
+      "repos_workflow_inputs": {
+        "summary": "Phân tích tham số workflow",
+        "detail": "Phân tích YAML và trả về định nghĩa workflow_dispatch.inputs (tên/mô tả/required/default/type/các lựa chọn). Trả mảng rỗng nếu lỗi."
+      },
+      "runs_list": {
+        "summary": "Các lượt chạy",
+        "detail": "Trả về total_count và các lượt chạy gần nhất. status: queued/in_progress/completed; conclusion: success/failure/cancelled/skipped."
+      },
+      "runs_jobs": {
+        "summary": "Job của một lượt chạy",
+        "detail": "Mọi job của lượt chạy, kèm trạng thái và kết luận của từng step."
+      },
+      "runs_logs_url": {
+        "summary": "URL tải log lượt chạy",
+        "detail": "Link trực tiếp zip log lấy từ redirect 302 của GitHub — link ký hiệu ngắn hạn, dùng ngay."
+      },
+      "runs_job_logs": {
+        "summary": "Log một job",
+        "detail": "Backend đi theo redirect và trả về log văn bản đầy đủ của job."
+      },
+      "runs_cancel": {
+        "summary": "Hủy lượt chạy",
+        "detail": "Chỉ hủy được queued/in_progress/waiting; lượt đã xong sẽ trả lỗi."
+      },
+      "tasks_list": {
+        "summary": "Danh sách tác vụ định kỳ",
+        "detail": "Mọi tác vụ: cron, next_run_at, kết quả gần nhất (success/failed/running) và lỗi."
+      },
+      "tasks_create": {
+        "summary": "Tạo tác vụ định kỳ",
+        "detail": "Đúng giờ sẽ kích hoạt workflow_dispatch của repo chỉ định. cron là biểu thức 5 trường (phút giờ ngày tháng thứ); bộ lập lịch quét mỗi 30 giây; next_run_at được tính ngay khi tạo."
+      },
+      "tasks_update": {
+        "summary": "Cập nhật tác vụ",
+        "detail": "Cập nhật một phần ref/cron_expr/inputs_json/enabled/workflow_filename; đổi cron hoặc enabled sẽ tính lại next_run_at."
+      },
+      "tasks_delete": {
+        "summary": "Xóa tác vụ",
+        "detail": "Xóa vật lý bản ghi tác vụ."
+      },
+      "tasks_toggle": {
+        "summary": "Bật/tắt tác vụ",
+        "detail": "Chuyển enabled; tắt sẽ xóa next_run_at, bật lại sẽ tính lại. Body: {\"enabled\": bool}."
+      },
+      "tasks_run": {
+        "summary": "Chạy ngay",
+        "detail": "Kích hoạt không đồng bộ một lượt — theo dõi last_run_result (running → success/failed). Cần keystore đã mở khóa."
+      },
+      "batch_create_workflows": {
+        "summary": "Tạo workflow hàng loạt",
+        "detail": "Commit cùng một tệp vào từng repo trong repo_ids (≤100), đồng bộ tuần tự; content là base64. Id thất bại có thể thử lại riêng."
+      },
+      "batch_dispatch": {
+        "summary": "Kích hoạt workflow hàng loạt",
+        "detail": "Kích hoạt workflow_dispatch cho từng repo. Tổng độ dài repo_ids ≤100 (số lần kích hoạt trong UI chỉ là lặp lại ids)."
+      },
+      "batch_create_repos": {
+        "summary": "Tạo repo hàng loạt",
+        "detail": "Mỗi tài khoản tạo count (1-50) repo (tên thêm hậu tố -1, -2…), có thể kèm tệp mẫu và secrets (mã hóa bằng repo public key). Chạy đồng bộ; lô lớn mất vài phút."
+      },
+      "batch_fetch_template": {
+        "summary": "Lấy tệp từ repo mẫu",
+        "detail": "Qua git tree đệ quy lấy mọi blob (tối đa 500 tệp, mỗi tệp ≤1MB) dạng base64, dùng cho create-repos."
+      },
+      "batch_update_repos": {
+        "summary": "Đồng bộ từ mẫu (xóa sạch & ghi đè)",
+        "detail": "Với từng repo: xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu. Hai request mỗi tệp — chậm với repo lớn. Nội dung gốc không thể phục hồi."
+      },
+      "batch_toggle_visibility": {
+        "summary": "Đổi chế độ hiển thị hàng loạt",
+        "detail": "Chuyển mọi repo được liệt kê sang trạng thái chỉ định và cập nhật cache. Không sửa tệp."
+      },
+      "autotask_get": {
+        "summary": "Cấu hình tác vụ tự động",
+        "detail": "Công tắc và chu kỳ (phút) của tự động kiểm tra/đồng bộ, lọc nhóm, cấu hình thùng rác và các mốc chạy gần nhất."
+      },
+      "autotask_update": {
+        "summary": "Cập nhật cấu hình tự động",
+        "detail": "Chu kỳ tính bằng phút (giá trị sai sẽ về 1440); groups phân tách bằng dấu phẩy, rỗng = tất cả; recycle_bin_days là thời hạn lưu giữ. Có hiệu lực trong 30 giây."
+      },
+      "autotask_check_now": {
+        "summary": "Chạy kiểm tra tự động ngay",
+        "detail": "Bất đồng bộ bắt đầu một vòng kiểm tra và trả ok ngay. Khóa chống chồng lấp — vòng trước chưa xong sẽ bỏ qua. Theo dõi qua running/logs."
+      },
+      "autotask_sync_now": {
+        "summary": "Chạy đồng bộ tự động ngay",
+        "detail": "Bất đồng bộ bắt đầu một vòng đồng bộ repo; chống chồng lấp như trên."
+      },
+      "autotask_logs": {
+        "summary": "Log tác vụ tự động",
+        "detail": "Các lượt chạy gần đây: loại check/sync, trạng thái, tổng/thành công/thất bại, thời lượng và chi tiết. limit ≤200, mặc định 50."
+      },
+      "autotask_running": {
+        "summary": "Tác vụ đang chạy",
+        "detail": "Trả về running và bản ghi log đang thực thi; UI hỏi mỗi 5 giây."
+      },
+      "stats_overview": {
+        "summary": "Thống kê tổng quan",
+        "detail": "Số tài khoản theo trạng thái (loại trừ thùng rác), số repo/workflow/tác vụ và tác vụ đang bật. Không tham số."
+      },
+      "apikeys_list": {
+        "summary": "Danh sách API key",
+        "detail": "Chỉ có tiền tố (14 ký tự) — không có khóa đầy đủ hay hash."
+      },
+      "apikeys_create": {
+        "summary": "Tạo API key",
+        "detail": "Khóa đầy đủ chỉ trả về đúng một lần; máy chủ chỉ lưu hash SHA-256. expires_in_days 0/bỏ qua = vĩnh viễn."
+      },
+      "apikeys_delete": {
+        "summary": "Xóa API key",
+        "detail": "Xóa vật lý; script đang dùng khóa đó sẽ nhận 401 ngay."
+      },
+      "apikeys_toggle": {
+        "summary": "Bật/tắt API key",
+        "detail": "Tắt sẽ chặn xác thực ngay lập tức; có thể bật lại bất cứ lúc nào."
+      },
+      "system_version": {
+        "summary": "Phiên bản hiện tại",
+        "detail": "current được tiêm lúc build qua -ldflags (chạy go run cục bộ là dev), kèm GOOS/GOARCH."
+      },
+      "system_check_update": {
+        "summary": "Kiểm tra cập nhật",
+        "detail": "Tra release mới nhất trên GitHub và so sánh chuỗi phiên bản (không phải semver); trả has_update, URL release và notes. Lỗi mạng sẽ trả has_update:false kèm error."
+      },
+      "system_update": {
+        "summary": "Tự cập nhật",
+        "detail": "Tải binary đúng nền tảng (≤200MB), xác minh SHA256SUMS.txt, thay thế nguyên tử (giữ .old) rồi thoát để systemd khởi động lại. Gián đoạn ngắn; không phù hợp cho Docker."
+      }
     },
     "danger": {
       "d_change_password": "Master password sẽ bị đổi ngay và mọi trường mã hóa được mã hóa lại",
@@ -499,7 +499,8 @@
     "sortCreated": "Theo tạo",
     "pin": "Ghim",
     "unpin": "Bỏ ghim",
-    "pinned": "Đã ghim"
+    "pinned": "Đã ghim",
+    "allGroups": "Tất cả"
   },
   "repos": {
     "title": "Kho lưu trữ",
@@ -805,7 +806,11 @@
     "contentLayout": "Chiều rộng nội dung",
     "layoutFull": "Toàn rộng",
     "layoutCentered": "Căn giữa",
-    "resetAll": "Đặt lại tất cả cài đặt"
+    "resetAll": "Đặt lại tất cả cài đặt",
+    "sidebarFloating": "Nổi",
+    "sidebarInset": "Âm",
+    "sidebarSidebar": "Thanh bên",
+    "subtitle": "Tùy chỉnh giao diện và bố cục theo ý bạn."
   },
   "landing": {
     "nav": {
@@ -939,6 +944,8 @@
     "pageError": "Lỗi trang",
     "unknownError": "Đã xảy ra lỗi không xác định",
     "admin": "Quản trị",
-    "private": "Riêng tư"
+    "private": "Riêng tư",
+    "confirmTitle": "Xác nhận thao tác",
+    "confirmDesc": "Thao tác này không thể hoàn tác. Tiếp tục?"
   }
 }

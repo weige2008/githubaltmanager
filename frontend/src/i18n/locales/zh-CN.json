@@ -499,7 +499,8 @@
     "sortCreated": "按创建时间",
     "pin": "置顶",
     "unpin": "取消置顶",
-    "pinned": "已置顶"
+    "pinned": "已置顶",
+    "allGroups": "全部"
   },
   "repos": {
     "title": "仓库浏览",
@@ -943,6 +944,8 @@
     "pageError": "页面出错了",
     "unknownError": "发生未知错误",
     "admin": "管理员",
-    "private": "私有"
+    "private": "私有",
+    "confirmTitle": "确认操作",
+    "confirmDesc": "此操作无法撤销，确定继续吗？"
   }
 }

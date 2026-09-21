@@ -22,8 +22,8 @@ const ConfirmDialog = ({
   open, onConfirm, onCancel, variant = 'destructive', children, ...rest
 }: ConfirmDialogProps) => {
   const { t } = useTranslation()
-  const title = rest.title ?? t('ui.confirm.title')
-  const description = rest.description ?? t('ui.confirm.desc')
+  const title = rest.title ?? t('ui.confirmTitle')
+  const description = rest.description ?? t('ui.confirmDesc')
   const confirmText = rest.confirmText ?? t('common.confirm')
   const cancelText = rest.cancelText ?? t('common.cancel')
 
