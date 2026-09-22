@@ -135,12 +135,22 @@ function BatchUpdateRepos() {
       {/* Left: account selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between text-base">
-            <span>选择账户</span>
-            <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
-              {allVisibleSelected ? '取消全选' : '全选'}
-            </Button>
-          </CardTitle>
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>选择账户</span>
+              <div className="flex items-center gap-1">
+                {selectedAccounts.length > 0 && (
+                  <>
+                    <span className="mr-1 text-xs text-muted-foreground">已选 {selectedAccounts.length}</span>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => { setSelectedAccounts([]); setSelectedRepoIds([]) }}>
+                      清空
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
+                  {allVisibleSelected ? '取消全选' : '全选'}
+                </Button>
+              </div>
+            </CardTitle>
           {(groups || []).filter(g => g).length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
               <button onClick={() => setGroupFilter('')} className={cn('rounded-md px-2 py-0.5 text-xs transition-colors', !groupFilter ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70')}>全部</button>

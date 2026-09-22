@@ -195,9 +195,19 @@ export default function BatchRepoPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base">
               <span>{t('batchRepo.selectAccount')}</span>
-              <Button variant="ghost" size="sm" onClick={toggleAll}>
-                {allVisibleSelected ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
-              </Button>
+              <div className="flex items-center gap-1">
+                {accountIds.length > 0 && (
+                  <>
+                    <span className="mr-1 text-xs text-muted-foreground">已选 {accountIds.length}</span>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => setAccountIds([])}>
+                      清空
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="sm" onClick={toggleAll}>
+                  {allVisibleSelected ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
+                </Button>
+              </div>
             </CardTitle>
             {(groups || []).filter(g => g).length > 0 && (
               <div className="flex flex-wrap gap-1 pt-1">
