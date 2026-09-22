@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "テンプレート同期（全消去・再書き込み）",
-        "detail": "repo_ids（≤100）の各リポジトリ：ファイルツリーを取得し、既存ファイルを全削除してからテンプレートの全ファイルをコピー（template_owner/template_repo 必須、secrets 同時設定可）。secrets_only:true なら同期をスキップし secrets のみ設定、ファイルは無変更。1 ファイル 2 リクエストで大容量は遅い。同期モードは復元不可。"
+        "detail": "repo_ids（≤100）の各リポジトリ：ファイルツリーを取得し、既存ファイルを全削除してからテンプレートの全ファイルをコピー。1 ファイル 2 リクエストで大容量は遅い。元の内容は復元不可。secrets は set-secrets / delete-secrets を使用。"
       },
       "batch_toggle_visibility": {
         "summary": "公開状態の一括切替",
@@ -352,6 +352,18 @@
       "system_update": {
         "summary": "セルフアップデート",
         "detail": "対応プラットフォームのバイナリ（≤200MB）をダウンロード → SHA256SUMS 検証 → 原子的置換（.old 保存）→ 終了後 systemd が再起動。数秒の中断。Docker 運用には不向き。"
+      },
+      "batch_set_secrets": {
+        "summary": "secrets の一括設定",
+        "detail": "repo_ids（≤100）の各リポジトリに Actions secrets を設定（同名は上書き）、ファイルは無変更。値は各リポジトリの public key で暗号化。名前は英数字とアンダースコアのみ、secrets は 1-100 個。リポジトリごとの結果を返す。"
+      },
+      "batch_delete_secrets": {
+        "summary": "secrets の一括削除",
+        "detail": "repo_ids（≤100）の Actions secrets を削除：all=true は現在全てを削除（一覧→個別削除）、names 指定では存在しない名前は削除済み扱い。復元不可。"
+      },
+      "repos_secrets_list": {
+        "summary": "リポジトリ secrets の一覧",
+        "detail": "リポジトリの Actions secrets の名前と作成/更新時刻を返す。GitHub では secret の値は読めず、上書きか削除のみ可能。1 ページ最大 100 件。"
       }
     },
     "danger": {
@@ -370,7 +382,9 @@
       "d_batch_update_repos": "対象リポジトリの全ファイルが削除されテンプレートで上書きされます（復元不可）",
       "d_batch_toggle_visibility": "リポジトリの公開/非公開を実際に変更します",
       "d_apikeys_delete": "キーは直ちに無効化され、使用中のスクリプトは 401 になります",
-      "d_system_update": "新しいバイナリをダウンロードして自動再起動します（一時停止あり）"
+      "d_system_update": "新しいバイナリをダウンロードして自動再起動します（一時停止あり）",
+      "d_batch_set_secrets": "選択したリポジトリの Actions secrets を実際に書き込みます（同名は上書き）",
+      "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可"
     },
     "p": {
       "p_id_account": "アカウント ID（accounts 一覧の id）",

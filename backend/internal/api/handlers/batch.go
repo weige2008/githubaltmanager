@@ -28,6 +28,8 @@ func RegisterBatchRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/create-repos", h.CreateRepos)
 		grp.POST("/fetch-template", h.FetchTemplate)
 		grp.POST("/update-repos", h.UpdateRepos)
+		grp.POST("/set-secrets", h.SetSecrets)
+		grp.POST("/delete-secrets", h.DeleteSecrets)
 		grp.POST("/toggle-visibility", h.ToggleVisibility)
 	}
 }
@@ -164,13 +166,11 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 }
 
 type BatchUpdateReposPayload struct {
-	RepoIDs       []uint                `json:"repo_ids" binding:"required"`
-	TemplateOwner string                `json:"template_owner"`
-	TemplateRepo  string                `json:"template_repo"`
-	TemplateRef   string                `json:"template_ref"`
-	Secrets       []service.SecretEntry `json:"secrets"`
-	// SecretsOnly 为 true 时跳过模板同步，仅为仓库批量设置 secrets（不动仓库文件）
-	SecretsOnly bool `json:"secrets_only"`
+	RepoIDs       []uint `json:"repo_ids" binding:"required"`
+	TemplateOwner string `json:"template_owner" binding:"required"`
+	TemplateRepo  string `json:"template_repo" binding:"required"`
+	TemplateRef   string `json:"template_ref"`
+	// Secrets / secrets_only 已迁移至 /api/batch/set-secrets 与 /api/batch/delete-secrets
 }
 
 func (h *BatchHandler) UpdateRepos(c *gin.Context) {
@@ -183,23 +183,113 @@ func (h *BatchHandler) UpdateRepos(c *gin.Context) {
 		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
 		return
 	}
-	if !p.SecretsOnly && (p.TemplateOwner == "" || p.TemplateRepo == "") {
-		resp.BadRequest(c, "template_owner/template_repo 不能为空（或改用 secrets_only 模式）", nil)
+	if p.TemplateOwner == "" || p.TemplateRepo == "" {
+		resp.BadRequest(c, "template_owner/template_repo 不能为空", nil)
 		return
 	}
 	success := []gin.H{}
 	failed := []gin.H{}
 	for _, rid := range p.RepoIDs {
-		var err error
-		if p.SecretsOnly {
-			err = h.s.SetRepoSecrets(h.c, rid, p.Secrets)
-		} else {
-			err = h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef, p.Secrets)
-		}
+		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef)
 		if err != nil {
 			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
 		} else {
 			success = append(success, gin.H{"repo_id": rid})
+		}
+	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+// validSecretName 校验 secret 名称（GitHub 规范：字母/数字/下划线，不进路径参数）
+func validSecretName(name string) bool {
+	if name == "" || len(name) > 100 {
+		return false
+	}
+	for _, r := range name {
+		if !(r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+type BatchSetSecretsPayload struct {
+	RepoIDs []uint                `json:"repo_ids" binding:"required"`
+	Secrets []service.SecretEntry `json:"secrets" binding:"required"`
+}
+
+// SetSecrets 批量为仓库设置 Actions secrets（不动仓库文件）
+func (h *BatchHandler) SetSecrets(c *gin.Context) {
+	var p BatchSetSecretsPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+		return
+	}
+	if len(p.Secrets) == 0 || len(p.Secrets) > 100 {
+		resp.BadRequest(c, "secrets 数量必须在 1-100 之间", nil)
+		return
+	}
+	for _, sec := range p.Secrets {
+		if !validSecretName(sec.Name) {
+			resp.BadRequest(c, "secret 名称只能包含字母、数字和下划线: "+sec.Name, nil)
+			return
+		}
+	}
+	success := []gin.H{}
+	failed := []gin.H{}
+	for _, rid := range p.RepoIDs {
+		if err := h.s.SetRepoSecrets(h.c, rid, p.Secrets); err != nil {
+			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+		} else {
+			success = append(success, gin.H{"repo_id": rid, "message": fmt.Sprintf("已设置 %d 个 secrets", len(p.Secrets))})
+		}
+	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+type BatchDeleteSecretsPayload struct {
+	RepoIDs []uint  `json:"repo_ids" binding:"required"`
+	All     bool    `json:"all"`
+	Names   []string `json:"names"`
+}
+
+// DeleteSecrets 批量删除仓库的 Actions secrets（all=true 删除全部，否则按 names）
+func (h *BatchHandler) DeleteSecrets(c *gin.Context) {
+	var p BatchDeleteSecretsPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+		return
+	}
+	if !p.All && len(p.Names) == 0 {
+		resp.BadRequest(c, "请提供 names 或 all=true", nil)
+		return
+	}
+	for _, n := range p.Names {
+		if !validSecretName(n) {
+			resp.BadRequest(c, "secret 名称只能包含字母、数字和下划线: "+n, nil)
+			return
+		}
+	}
+	success := []gin.H{}
+	failed := []gin.H{}
+	for _, rid := range p.RepoIDs {
+		deleted, err := h.s.DeleteRepoSecrets(h.c, rid, p.All, p.Names)
+		if err != nil {
+			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+		} else {
+			scope := "指定"
+			if p.All {
+				scope = "全部"
+			}
+			success = append(success, gin.H{"repo_id": rid, "deleted": deleted, "message": fmt.Sprintf("已删除 %s secrets %d 个", scope, deleted)})
 		}
 	}
 	resp.OK(c, gin.H{"success": success, "failed": failed})

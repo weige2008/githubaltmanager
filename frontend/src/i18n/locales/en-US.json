@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Batch sync from template (wipe & rewrite)",
-        "detail": "For each repo in repo_ids (≤100): fetches its file tree, deletes all existing files, then copies every file from the template (template_owner/template_repo required; optional secrets set at the same time). With secrets_only:true it skips the sync and only sets secrets — no file changes. Two upstream calls per file; slow for big repos. Sync mode is unrecoverable."
+        "detail": "For each repo in repo_ids (≤100): fetches its file tree, deletes all existing files, then copies every file from the template. Two upstream calls per file — slow for big repos. Original content cannot be recovered. For secrets use set-secrets / delete-secrets."
       },
       "batch_toggle_visibility": {
         "summary": "Batch toggle visibility",
@@ -352,6 +352,18 @@
       "system_update": {
         "summary": "Self-update",
         "detail": "Downloads the matching platform binary (≤200MB), verifies SHA256SUMS.txt, atomically replaces the binary (keeps .old) and exits for systemd to restart. Brief downtime; not suitable for Docker."
+      },
+      "batch_set_secrets": {
+        "summary": "Batch set secrets",
+        "detail": "Sets Actions secrets on each repo in repo_ids (≤100), upserting by name — no file changes. Values are encrypted per repo public key. Names allow letters/digits/underscore only; 1-100 secrets per call. Per-repo results returned."
+      },
+      "batch_delete_secrets": {
+        "summary": "Batch delete secrets",
+        "detail": "Deletes Actions secrets of each repo in repo_ids (≤100): all=true wipes every secret the repo currently has (listed then deleted one by one), or delete by names (missing names count as deleted). Irrecoverable."
+      },
+      "repos_secrets_list": {
+        "summary": "List repo secrets",
+        "detail": "Returns the Actions secrets of a repo with their created/updated timestamps. GitHub offers no way to read secret values — they can only be overwritten or deleted. Single page, max 100."
       }
     },
     "danger": {
@@ -370,7 +382,9 @@
       "d_batch_update_repos": "All existing files of the target repos will be deleted and overwritten by the template — unrecoverable",
       "d_batch_toggle_visibility": "The public/private state of the repos will really change",
       "d_apikeys_delete": "The key is invalidated immediately; scripts using it get 401",
-      "d_system_update": "The service downloads a new binary and restarts itself — brief downtime"
+      "d_system_update": "The service downloads a new binary and restarts itself — brief downtime",
+      "d_batch_set_secrets": "Actions secrets of the selected repos will really be written (upsert by name)",
+      "d_batch_delete_secrets": "Actions secrets of the selected repos will really be deleted — unrecoverable"
     },
     "p": {
       "p_id_account": "Account ID (the id from the accounts list)",

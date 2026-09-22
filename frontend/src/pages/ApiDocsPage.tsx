@@ -97,6 +97,7 @@ const GROUPS: EndpointGroup[] = [
       { key: 'repos_workflows_create', method: 'POST', path: '/api/repos/:id/workflows', pp: [REPO_ID], danger: 'd_workflow_create', body: { filename: 'keepalive.yml', content: 'bmFtZTogS2VlcCBBbGl2ZQo=', commit_message: 'ci: add keepalive' } },
       { key: 'repos_dispatch', method: 'POST', path: '/api/repos/:id/dispatch', pp: [REPO_ID], danger: 'd_dispatch', body: { filename: 'keepalive.yml', ref: 'main', inputs: {} } },
       { key: 'repos_workflow_inputs', method: 'GET', path: '/api/repos/:id/workflow-inputs', pp: [REPO_ID], q: [{ name: 'filename', key: 'p_filename', sample: 'keepalive.yml' }] },
+      { key: 'repos_secrets_list', method: 'GET', path: '/api/repos/:id/secrets', pp: [REPO_ID] },
     ],
   },
   {
@@ -127,7 +128,9 @@ const GROUPS: EndpointGroup[] = [
       { key: 'batch_dispatch', method: 'POST', path: '/api/batch/dispatch', danger: 'd_batch_dispatch', body: { repo_ids: [1, 2, 3], filename: 'keepalive.yml', ref: 'main', inputs: {} } },
       { key: 'batch_create_repos', method: 'POST', path: '/api/batch/create-repos', danger: 'd_batch_create_repos', body: { account_ids: [1, 2], repo_name: 'my-repo', description: '', private: true, count: 1, files: [{ path: 'README.md', content: 'aGVsbG8=' }], secrets: [] } },
       { key: 'batch_fetch_template', method: 'POST', path: '/api/batch/fetch-template', body: { account_id: 1, owner: 'some-user', repo: 'template-repo', ref: '' } },
-      { key: 'batch_update_repos', method: 'POST', path: '/api/batch/update-repos', danger: 'd_batch_update_repos', body: { repo_ids: [1, 2], template_owner: 'some-user', template_repo: 'template-repo', template_ref: '', secrets: [] } },
+      { key: 'batch_update_repos', method: 'POST', path: '/api/batch/update-repos', danger: 'd_batch_update_repos', body: { repo_ids: [1, 2], template_owner: 'some-user', template_repo: 'template-repo', template_ref: '' } },
+      { key: 'batch_set_secrets', method: 'POST', path: '/api/batch/set-secrets', danger: 'd_batch_set_secrets', body: { repo_ids: [1, 2], secrets: [{ name: 'TOKEN', value: 'xxx' }] } },
+      { key: 'batch_delete_secrets', method: 'POST', path: '/api/batch/delete-secrets', danger: 'd_batch_delete_secrets', body: { repo_ids: [1, 2], all: true } },
       { key: 'batch_toggle_visibility', method: 'POST', path: '/api/batch/toggle-visibility', danger: 'd_batch_toggle_visibility', body: { repo_ids: [1, 2], is_private: true } },
     ],
   },

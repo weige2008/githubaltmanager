@@ -604,8 +604,8 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 	return repo, nil
 }
 
-// UpdateRepoFromTemplate 清空目标仓库所有文件，然后从模板仓库拉取所有文件写入，可选批量设置 Actions secrets
-func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, templateOwner, templateRepo, templateRef string, secrets []SecretEntry) error {
+// UpdateRepoFromTemplate 清空目标仓库所有文件，然后从模板仓库拉取所有文件写入（secrets 操作请用 SetRepoSecrets/DeleteRepoSecrets）
+func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, templateOwner, templateRepo, templateRef string) error {
 	r, ghc, err := s.loadClient(c, repoID)
 	if err != nil {
 		return err
@@ -661,25 +661,8 @@ func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, template
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	failedSecrets := []string{}
-	for _, sec := range secrets {
-		if sec.Name == "" {
-			continue
-		}
-		if sc, sErr := ghc.CreateSecret(owner, repoName, sec.Name, sec.Value); sErr != nil {
-			failedSecrets = append(failedSecrets, fmt.Sprintf("%s (HTTP %d: %s)", sec.Name, sc, sErr.Error()))
-		}
-	}
-
-	var problems []string
 	if len(failedFiles) > 0 {
-		problems = append(problems, fmt.Sprintf("%d 个文件推送失败: %s", len(failedFiles), strings.Join(failedFiles, ", ")))
-	}
-	if len(failedSecrets) > 0 {
-		problems = append(problems, fmt.Sprintf("%d 个 secret 设置失败: %s", len(failedSecrets), strings.Join(failedSecrets, "; ")))
-	}
-	if len(problems) > 0 {
-		return fmt.Errorf("%s", strings.Join(problems, "；"))
+		return fmt.Errorf("更新完成但 %d 个文件失败: %s", len(failedFiles), strings.Join(failedFiles, ", "))
 	}
 	return nil
 }
@@ -703,6 +686,51 @@ func (s *RepoService) SetRepoSecrets(c *Container, repoID uint, secrets []Secret
 		return fmt.Errorf("%d 个 secret 设置失败: %s", len(failed), strings.Join(failed, "; "))
 	}
 	return nil
+}
+
+// ListRepoSecrets 列出仓库的 Actions secrets（仅名称与时间，值不可读）
+func (s *RepoService) ListRepoSecrets(c *Container, repoID uint) ([]github.RepoSecretItem, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return nil, err
+	}
+	items, code, err := ghc.ListSecrets(r.OwnerLogin, r.Name)
+	if err != nil {
+		return nil, fmt.Errorf("api %d: %w", code, err)
+	}
+	return items, nil
+}
+
+// DeleteRepoSecrets 删除仓库的 Actions secrets：all=true 删除全部，否则按 names 删除（404 视为已删）
+func (s *RepoService) DeleteRepoSecrets(c *Container, repoID uint, all bool, names []string) (int, error) {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return 0, err
+	}
+	targets := names
+	if all {
+		items, code, err := ghc.ListSecrets(r.OwnerLogin, r.Name)
+		if err != nil {
+			return 0, fmt.Errorf("获取 secret 列表失败: api %d: %w", code, err)
+		}
+		targets = make([]string, 0, len(items))
+		for _, it := range items {
+			targets = append(targets, it.Name)
+		}
+	}
+	deleted := 0
+	failed := []string{}
+	for _, n := range targets {
+		if _, dErr := ghc.DeleteSecret(r.OwnerLogin, r.Name, n); dErr != nil {
+			failed = append(failed, n)
+		} else {
+			deleted++
+		}
+	}
+	if len(failed) > 0 {
+		return deleted, fmt.Errorf("%d 个 secret 删除失败: %s", len(failed), strings.Join(failed, ", "))
+	}
+	return deleted, nil
 }
 
 // ToggleRepoVisibility 切换仓库公有/私有

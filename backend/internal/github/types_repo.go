@@ -487,3 +487,30 @@ func (c *Client) CreateSecret(owner, repo, name, value string) (int, error) {
 	}
 	return code, nil
 }
+
+// RepoSecretItem 仓库 Actions secret（GitHub 只暴露名称与时间，值不可读）
+type RepoSecretItem struct {
+	Name      string `json:"name"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+// ListSecrets 列出仓库 Actions secrets（单页最多 100 条）
+func (c *Client) ListSecrets(owner, repo string) ([]RepoSecretItem, int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/secrets?per_page=100", owner, repo)
+	var out struct {
+		TotalCount int              `json:"total_count"`
+		Secrets    []RepoSecretItem `json:"secrets"`
+	}
+	code, err := c.Get(p, &out)
+	if err != nil {
+		return nil, code, err
+	}
+	return out.Secrets, code, nil
+}
+
+// DeleteSecret 删除仓库 Actions secret（不存在时返回 404，与成功同样处理）
+func (c *Client) DeleteSecret(owner, repo, name string) (int, error) {
+	p := fmt.Sprintf("/repos/%s/%s/actions/secrets/%s", owner, repo, url.PathEscape(name))
+	return c.Delete(p)
+}

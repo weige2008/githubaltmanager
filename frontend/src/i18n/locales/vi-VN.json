@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Đồng bộ từ mẫu (xóa sạch & ghi đè)",
-        "detail": "Với từng repo trong repo_ids (≤100): lấy cây tệp, xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu (bắt buộc template_owner/template_repo; có thể đặt secrets cùng lúc). Khi secrets_only:true sẽ bỏ qua đồng bộ, chỉ đặt secrets — không đổi tệp nào. Hai request mỗi tệp; chậm với repo lớn. Chế độ đồng bộ không thể phục hồi."
+        "detail": "Với từng repo trong repo_ids (≤100): lấy cây tệp, xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu. Hai request mỗi tệp — chậm với repo lớn. Nội dung gốc không thể phục hồi. secrets hãy dùng set-secrets / delete-secrets."
       },
       "batch_toggle_visibility": {
         "summary": "Đổi chế độ hiển thị hàng loạt",
@@ -352,6 +352,18 @@
       "system_update": {
         "summary": "Tự cập nhật",
         "detail": "Tải binary đúng nền tảng (≤200MB), xác minh SHA256SUMS.txt, thay thế nguyên tử (giữ .old) rồi thoát để systemd khởi động lại. Gián đoạn ngắn; không phù hợp cho Docker."
+      },
+      "batch_set_secrets": {
+        "summary": "Đặt secrets hàng loạt",
+        "detail": "Đặt Actions secrets cho từng repo trong repo_ids (≤100), trùng tên sẽ ghi đè — không đổi tệp. Giá trị được mã hóa bằng repo public key. Tên chỉ gồm chữ/số/gạch dưới; 1-100 secrets mỗi lần gọi. Trả kết quả từng repo."
+      },
+      "batch_delete_secrets": {
+        "summary": "Xóa secrets hàng loạt",
+        "detail": "Xóa Actions secrets của các repo trong repo_ids (≤100): all=true xóa mọi secrets hiện có (lấy danh sách rồi xóa từng cái), hoặc theo names (tên không tồn tại tính là đã xóa). Không thể phục hồi."
+      },
+      "repos_secrets_list": {
+        "summary": "Liệt kê secrets của repo",
+        "detail": "Trả về Actions secrets của repo kèm thời gian tạo/cập nhật. GitHub không cho đọc giá trị secret — chỉ có thể ghi đè hoặc xóa. Một trang, tối đa 100."
       }
     },
     "danger": {
@@ -370,7 +382,9 @@
       "d_batch_update_repos": "Mọi tệp hiện có của repo đích sẽ bị xóa và ghi đè bằng mẫu — không thể phục hồi",
       "d_batch_toggle_visibility": "Trạng thái công khai/riêng tư của repo sẽ thực sự thay đổi",
       "d_apikeys_delete": "Khóa vô hiệu ngay lập tức; script đang dùng sẽ nhận 401",
-      "d_system_update": "Dịch vụ tải binary mới và tự khởi động lại — gián đoạn ngắn"
+      "d_system_update": "Dịch vụ tải binary mới và tự khởi động lại — gián đoạn ngắn",
+      "d_batch_set_secrets": "Actions secrets của các repo đã chọn sẽ được ghi thật (trùng tên sẽ ghi đè)",
+      "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi"
     },
     "p": {
       "p_id_account": "ID tài khoản (id từ danh sách accounts)",

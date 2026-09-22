@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Synchroniser depuis le gabarit (effacer et réécrire)",
-        "detail": "Pour chaque dépôt de repo_ids (≤100) : récupère l'arborescence, supprime tous les fichiers existants puis copie tous les fichiers du gabarit (template_owner/template_repo requis ; secrets optionnels en même temps). Avec secrets_only:true, la synchronisation est ignorée — seuls les secrets sont définis, aucun fichier modifié. Deux appels par fichier ; lent pour les gros dépôts. Le mode synchronisation est irrécupérable."
+        "detail": "Pour chaque dépôt de repo_ids (≤100) : récupère l'arborescence, supprime tous les fichiers existants puis copie tous les fichiers du gabarit. Deux appels par fichier — lent pour les gros dépôts. Contenu d'origine irrécupérable. Pour les secrets, utilisez set-secrets / delete-secrets."
       },
       "batch_toggle_visibility": {
         "summary": "Basculer la visibilité par lot",
@@ -352,6 +352,18 @@
       "system_update": {
         "summary": "Auto-mise à jour",
         "detail": "Télécharge le binaire de la plateforme (≤200 Mo), vérifie SHA256SUMS.txt, remplace atomiquement le binaire (garde .old) et quitte — systemd relance. Brève coupure ; inadapté à Docker."
+      },
+      "batch_set_secrets": {
+        "summary": "Définir des secrets par lot",
+        "detail": "Définit les secrets Actions de chaque dépôt de repo_ids (≤100), en écrasant par nom — aucun fichier modifié. Les valeurs sont chiffrées avec la clé publique de chaque dépôt. Noms : lettres/chiffres/underscore ; 1 à 100 secrets par appel. Résultats par dépôt."
+      },
+      "batch_delete_secrets": {
+        "summary": "Supprimer des secrets par lot",
+        "detail": "Supprime les secrets Actions des dépôts de repo_ids (≤100) : all=true efface tous les secrets actuels (listés puis supprimés un à un), ou par names (les noms absents comptent comme supprimés). Irrécupérable."
+      },
+      "repos_secrets_list": {
+        "summary": "Lister les secrets du dépôt",
+        "detail": "Renvoie les secrets Actions d'un dépôt avec leurs dates de création/mise à jour. GitHub ne permet pas de lire les valeurs — on peut seulement les écraser ou les supprimer. Une page, 100 max."
       }
     },
     "danger": {
@@ -370,7 +382,9 @@
       "d_batch_update_repos": "Tous les fichiers des dépôts cibles seront supprimés et écrasés par le gabarit — irrécupérable",
       "d_batch_toggle_visibility": "L'état public/privé des dépôts va réellement changer",
       "d_apikeys_delete": "La clé est invalidée immédiatement ; les scripts qui l’utilisent reçoivent 401",
-      "d_system_update": "Le service télécharge un nouveau binaire et redémarre — brève coupure"
+      "d_system_update": "Le service télécharge un nouveau binaire et redémarre — brève coupure",
+      "d_batch_set_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement écrits (écrasement par nom)",
+      "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable"
     },
     "p": {
       "p_id_account": "ID du compte (id de la liste accounts)",

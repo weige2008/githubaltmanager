@@ -225,8 +225,12 @@ export const batchApi = {
     http.post<unknown, { files: TemplateFile[]; count: number }>('/batch/fetch-template', data),
   createRepos: (data: { account_ids: number[]; repo_name: string; description?: string; private: boolean; files: TemplateFile[]; secrets?: SecretEntry[]; count?: number }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/create-repos', data),
-  updateRepos: (data: { repo_ids: number[]; template_owner?: string; template_repo?: string; template_ref?: string; secrets?: SecretEntry[]; secrets_only?: boolean }) =>
+  updateRepos: (data: { repo_ids: number[]; template_owner: string; template_repo: string; template_ref?: string; secrets?: SecretEntry[] }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/update-repos', data),
+  setSecrets: (data: { repo_ids: number[]; secrets: SecretEntry[] }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/set-secrets', data),
+  deleteSecrets: (data: { repo_ids: number[]; all?: boolean; names?: string[] }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/delete-secrets', data),
   toggleVisibility: (data: { repo_ids: number[]; is_private: boolean }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/toggle-visibility', data),
 }

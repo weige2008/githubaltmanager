@@ -23,15 +23,15 @@ function BatchUpdateRepos() {
   const [groupFilter, setGroupFilter] = useState('')
   const [repoName, setRepoName] = useState('')
   const [selectedRepoIds, setSelectedRepoIds] = useState<number[]>([])
-  const [subMode, setSubMode] = useState<'update' | 'visibility'>('update')
+  const [subMode, setSubMode] = useState<'update' | 'secrets' | 'visibility'>('update')
 
   // Update mode
   const [templateUrl, setTemplateUrl] = useState('')
-  const [updateMode, setUpdateMode] = useState<'sync' | 'secrets'>('sync')
+  // Secrets mode
+  const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
+  const [deleteAllSecrets, setDeleteAllSecrets] = useState(false)
   // Visibility mode
   const [targetPrivate, setTargetPrivate] = useState(true)
-  // Secrets (update mode)
-  const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
 
   const [executing, setExecuting] = useState(false)
   const [progress, setProgress] = useState<{ current: number; total: number; currentName: string } | null>(null)
@@ -82,19 +82,23 @@ function BatchUpdateRepos() {
       try {
         let data: { success: any[]; failed: any[] }
         if (subMode === 'update') {
+          const match = templateUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
+          if (!match) throw new Error('源仓库 URL 格式错误')
+          data = await batchApi.updateRepos({ repo_ids: [rid], template_owner: match[1], template_repo: match[2] })
+        } else if (subMode === 'secrets') {
           const secretsData = secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value }))
-          if (updateMode === 'sync') {
-            const match = templateUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
-            if (!match) throw new Error('源仓库 URL 格式错误')
-            data = await batchApi.updateRepos({
-              repo_ids: [rid],
-              template_owner: match[1],
-              template_repo: match[2],
-              secrets: secretsData,
-            })
-          } else {
-            data = await batchApi.updateRepos({ repo_ids: [rid], secrets_only: true, secrets: secretsData })
+          const msgs: string[] = []
+          if (secretsData.length > 0) {
+            const r1 = await batchApi.setSecrets({ repo_ids: [rid], secrets: secretsData })
+            if (r1.failed.length > 0) throw new Error(r1.failed[0].error)
+            if (r1.success[0]?.message) msgs.push(r1.success[0].message)
           }
+          if (deleteAllSecrets) {
+            const r2 = await batchApi.deleteSecrets({ repo_ids: [rid], all: true })
+            if (r2.failed.length > 0) throw new Error(r2.failed[0].error)
+            if (r2.success[0]?.message) msgs.push(r2.success[0].message)
+          }
+          data = { success: [{ repo_id: rid, message: msgs.filter(Boolean).join('；') }], failed: [] }
         } else {
           data = await batchApi.toggleVisibility({ repo_ids: [rid], is_private: targetPrivate })
         }
@@ -113,7 +117,12 @@ function BatchUpdateRepos() {
     else toast.warning(`完成：${allSuccess.length} 成功，${fCount} 失败`)
   }
 
-  const canExecute = selectedRepoIds.length > 0 && (subMode === 'visibility' || (updateMode === 'sync' ? templateUrl.trim() : secrets.some(s => s.name.trim())))
+  const hasSecretsToSet = secrets.some(s => s.name.trim())
+  const canExecute = selectedRepoIds.length > 0 && (
+    subMode === 'update' ? templateUrl.trim()
+      : subMode === 'secrets' ? (hasSecretsToSet || deleteAllSecrets)
+      : true
+  )
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -192,9 +201,10 @@ function BatchUpdateRepos() {
         {/* Mode tabs */}
         <Card>
           <CardHeader>
-            <Tabs value={subMode} onValueChange={(v) => { setSubMode(v as 'update' | 'visibility'); setResults(null) }}>
+            <Tabs value={subMode} onValueChange={(v) => { setSubMode(v as 'update' | 'secrets' | 'visibility'); setResults(null) }}>
               <TabsList>
                 <TabsTrigger value="update"><RefreshCw className="mr-2 h-3.5 w-3.5" />拉取更新</TabsTrigger>
+                <TabsTrigger value="secrets"><KeyRound className="mr-2 h-3.5 w-3.5" />批量 Secrets</TabsTrigger>
                 <TabsTrigger value="visibility"><Lock className="mr-2 h-3.5 w-3.5" />切换可见性</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -202,52 +212,36 @@ function BatchUpdateRepos() {
           <CardContent className="space-y-4">
             {subMode === 'update' ? (
               <>
-                {/* 模式切换 */}
-                <div className="flex gap-2">
-                  <button onClick={() => setUpdateMode('sync')} className={cn('flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors', updateMode === 'sync' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent')}>
-                    <RefreshCw className="h-4 w-4" /> 同步模板
-                  </button>
-                  <button onClick={() => setUpdateMode('secrets')} className={cn('flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors', updateMode === 'secrets' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent')}>
-                    <KeyRound className="h-4 w-4" /> 仅添加 Secrets
-                  </button>
+                <Alert>
+                  <AlertDescription>
+                    <p className="font-medium text-warning">⚠️ 此操作会清空目标仓库的所有文件，然后从源仓库复制全部文件。</p>
+                    <p className="mt-1 text-sm text-muted-foreground">操作不可撤销，请确认目标仓库选择正确。</p>
+                  </AlertDescription>
+                </Alert>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">源仓库 URL</label>
+                  <Input value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} placeholder="https://github.com/owner/repo" />
                 </div>
+              </>
+            ) : subMode === 'secrets' ? (
+              <>
+                <Alert>
+                  <AlertDescription>
+                    <p className="text-sm text-muted-foreground">为选中仓库批量设置 / 更新 Actions secrets，并可删除现有 secrets；仓库文件不受影响。secret 的值不可读取，同名设置会覆盖旧值。</p>
+                  </AlertDescription>
+                </Alert>
 
-                {updateMode === 'sync' ? (
-                  <Alert>
-                    <AlertDescription>
-                      <p className="font-medium text-warning">⚠️ 此操作会清空目标仓库的所有文件，然后从源仓库复制全部文件。</p>
-                      <p className="mt-1 text-sm text-muted-foreground">操作不可撤销，请确认目标仓库选择正确。</p>
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <Alert>
-                    <AlertDescription>
-                      <p className="font-medium text-success">✓ 只为选中仓库批量设置 Actions secrets，不修改仓库的任何文件。</p>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {updateMode === 'sync' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">源仓库 URL</label>
-                    <Input value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} placeholder="https://github.com/owner/repo" />
-                  </div>
-                )}
-
-                {/* Repository Secrets */}
                 <div className="space-y-3 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm font-medium">
-                      <KeyRound className="h-4 w-4" /> Repository Secrets
+                      <KeyRound className="h-4 w-4" /> 添加 / 更新 Secrets
                       {secrets.length > 0 && <Badge variant="secondary">{secrets.length}</Badge>}
                     </div>
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSecrets(prev => [...prev, { name: '', value: '', show: false }])}>
                       <Plus className="h-3.5 w-3.5" /> 添加 Secret
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {updateMode === 'sync' ? '文件同步完成后自动设置 Actions secrets，值会被加密传输。' : '将为选中仓库设置以下 Actions secrets，值会被加密传输，仓库文件不受影响。'}
-                  </p>
+                  <p className="text-xs text-muted-foreground">值会被加密传输；名称只能包含字母、数字和下划线。</p>
                   {secrets.map((secret, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <Input
@@ -277,6 +271,14 @@ function BatchUpdateRepos() {
                       </Button>
                     </div>
                   ))}
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-destructive/30 p-4">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-destructive">
+                    <Checkbox checked={deleteAllSecrets} onCheckedChange={(v) => setDeleteAllSecrets(!!v)} />
+                    同时删除选中仓库的全部现有 secrets
+                  </label>
+                  <p className="text-xs text-muted-foreground">按各仓库当前 secrets 逐个删除，不可恢复；仓库没有 secrets 时自动跳过。</p>
                 </div>
               </>
             ) : (
@@ -324,6 +326,7 @@ function BatchUpdateRepos() {
                           <CircleCheck className="h-4 w-4 shrink-0 text-success" />
                           <span>{repo ? `${accMap.get(repo.account_id) || '?'}/${repo.name}` : `repo ${s.repo_id}`}</span>
                           {s.visibility && <Badge variant="secondary" className="text-xs">{s.visibility}</Badge>}
+                          {s.message && <span className="ml-auto text-xs text-muted-foreground">{s.message}</span>}
                         </div>
                       )
                     })}
@@ -345,9 +348,11 @@ function BatchUpdateRepos() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setResults(null); setSelectedRepoIds([]) }}>重置</Button>
               <Button size="lg" disabled={!canExecute || executing} onClick={executeBatch} className="gap-2">
-                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : subMode === 'update' ? (updateMode === 'sync' ? <RefreshCw className="h-4 w-4" /> : <KeyRound className="h-4 w-4" />) : <Lock className="h-4 w-4" />}
+                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : subMode === 'update' ? <RefreshCw className="h-4 w-4" /> : subMode === 'secrets' ? <KeyRound className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 {executing ? '执行中...' : subMode === 'update'
-                  ? (updateMode === 'sync' ? `更新 ${selectedRepoIds.length} 个仓库` : `为 ${selectedRepoIds.length} 个仓库设置 Secrets`)
+                  ? `更新 ${selectedRepoIds.length} 个仓库`
+                  : subMode === 'secrets'
+                  ? `执行 ${selectedRepoIds.length} 个仓库的 Secrets 操作`
                   : `切换 ${selectedRepoIds.length} 个仓库为${targetPrivate ? '私有' : '公有'}`}
               </Button>
             </div>

@@ -28,6 +28,7 @@ func RegisterRepoRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/:id/workflows", h.CreateWorkflow)
 		grp.POST("/:id/dispatch", h.Dispatch)
 		grp.GET("/:id/workflow-inputs", h.GetWorkflowInputs)
+		grp.GET("/:id/secrets", h.ListRepoSecrets)
 	}
 }
 
@@ -174,6 +175,17 @@ func (h *RepoHandler) Dispatch(c *gin.Context) {
 		return
 	}
 	resp.OK(c, gin.H{"ok": true})
+}
+
+// ListRepoSecrets 列出仓库的 Actions secrets（仅名称与时间，值不可读）
+func (h *RepoHandler) ListRepoSecrets(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	items, err := h.s.ListRepoSecrets(h.c, uint(id))
+	if err != nil {
+		resp.Internal(c, "获取 secrets 失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, items)
 }
 
 // GetWorkflowInputs 读取 workflow yml 文件，解析 workflow_dispatch.inputs 定义

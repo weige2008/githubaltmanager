@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "批量同步模板（清空重写）",
-        "detail": "对 repo_ids（≤100）逐个执行：拉取目标仓库文件树 → 删除全部现有文件 → 从模板复制全部文件（此时 template_owner/template_repo 必填，可带 secrets 一并设置）。传 secrets_only:true 则跳过模板同步，仅为每个仓库设置 secrets，不改任何文件。每个文件 2 次上游请求，仓库大时很慢；同步模式下原内容不可恢复。"
+        "detail": "对 repo_ids（≤100）逐个执行：拉取目标仓库文件树 → 删除全部现有文件 → 从模板复制全部文件。每个文件 2 次上游请求，仓库大时很慢；原内容不可恢复。secrets 操作请改用 set-secrets / delete-secrets。"
       },
       "batch_toggle_visibility": {
         "summary": "批量切换可见性",
@@ -352,6 +352,18 @@
       "system_update": {
         "summary": "自更新",
         "detail": "下载匹配平台二进制（≤200MB）→ SHA256SUMS 校验 → 原子替换（保留 .old）→ 退出由 systemd 拉起。服务中断数秒；Docker 部署不适用。"
+      },
+      "batch_set_secrets": {
+        "summary": "批量设置 secrets",
+        "detail": "为 repo_ids（≤100）逐个设置 Actions secrets（同名覆盖），不动仓库文件；值由后端用各仓库 public key 加密。名称仅允许字母/数字/下划线，secrets 数量 1-100。逐仓库返回结果。"
+      },
+      "batch_delete_secrets": {
+        "summary": "批量删除 secrets",
+        "detail": "删除 repo_ids（≤100）仓库的 Actions secrets：all=true 删除各仓库当前全部 secrets（逐个先查询再删除），或按 names 指定名称（不存在视为已删除）。不可恢复。"
+      },
+      "repos_secrets_list": {
+        "summary": "列出仓库 secrets",
+        "detail": "返回仓库的 Actions secrets 名称与创建/更新时间。GitHub 不提供读取 secret 值的接口，值仅能覆盖或删除。单页最多 100 条。"
       }
     },
     "danger": {
@@ -370,7 +382,9 @@
       "d_batch_update_repos": "目标仓库全部现有文件将被删除并用模板覆盖，不可恢复",
       "d_batch_toggle_visibility": "将真实修改仓库的公有/私有状态",
       "d_apikeys_delete": "密钥立即失效，使用它的脚本将 401",
-      "d_system_update": "服务将下载新二进制并自动重启，期间短暂中断"
+      "d_system_update": "服务将下载新二进制并自动重启，期间短暂中断",
+      "d_batch_set_secrets": "将真实写入选中仓库的 Actions secrets（同名覆盖）",
+      "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复"
     },
     "p": {
       "p_id_account": "账户 ID（accounts 列表返回的 id）",
