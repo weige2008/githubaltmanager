@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "Lister les secrets du dépôt",
         "detail": "Renvoie les secrets Actions d'un dépôt avec leurs dates de création/mise à jour. GitHub ne permet pas de lire les valeurs — on peut seulement les écraser ou les supprimer. Une page, 100 max."
+      },
+      "accounts_profile_get": {
+        "summary": "Récupérer le profil public GitHub",
+        "detail": "Appelle GET /user avec le token du compte et renvoie le profil public actuel (nom/email/site/entreprise/emplacement/bio/X) pour préremplir le formulaire."
+      },
+      "accounts_profile_update": {
+        "summary": "Mettre à jour le profil public GitHub",
+        "detail": "Appelle PATCH /user avec le token du compte pour modifier le profil public sur GitHub : name/email/blog/company/location/bio/twitter_username ; une chaîne vide efface le champ. L'e-mail public doit être vérifié. Le cache display_name local est synchronisé."
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "La clé est invalidée immédiatement ; les scripts qui l’utilisent reçoivent 401",
       "d_system_update": "Le service télécharge un nouveau binaire et redémarre — brève coupure",
       "d_batch_set_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement écrits (écrasement par nom)",
-      "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable"
+      "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable",
+      "d_accounts_profile_update": "Le profil public de ce compte GitHub sera réellement modifié (réversible en rappelant)"
     },
     "p": {
       "p_id_account": "ID du compte (id de la liste accounts)",
@@ -519,7 +528,20 @@
     "statusRestricted": "Restreint",
     "recheckHint": "Son statut sera revérifié automatiquement dans 3 minutes (les infos d'un nouveau compte peuvent se propager avec du retard côté GitHub)",
     "importedAt": "Importé le",
-    "registeredAt": "Inscrit le"
+    "registeredAt": "Inscrit le",
+    "tabSettings": "Paramètres du compte",
+    "profileTitle": "Profil public",
+    "profileHint": "Les modifications sont synchronisées avec GitHub via le token du compte (équivalent de Paramètres → Profil public). Page officielle : ",
+    "profileName": "Nom",
+    "profileEmail": "E-mail public",
+    "profileEmailHint": "Doit être un e-mail vérifié du compte, sinon GitHub refusera",
+    "profileBlog": "Site web",
+    "profileTwitter": "Nom X (Twitter)",
+    "profileCompany": "Entreprise",
+    "profileLocation": "Emplacement",
+    "profileBio": "Bio",
+    "profileSave": "Enregistrer sur GitHub",
+    "profileSaveSuccess": "Synchronisé avec GitHub"
   },
   "repos": {
     "title": "Dépôts",

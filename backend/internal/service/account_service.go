@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -267,6 +268,40 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 		return nil, err
 	}
 	return acc, nil
+}
+
+// GetGitHubProfile 拉取账户当前 GitHub 公开资料
+func (s *AccountService) GetGitHubProfile(c *Container, id uint) (*github.User, error) {
+	token, _, err := s.GetDecryptedToken(id)
+	if err != nil {
+		return nil, err
+	}
+	ghc := github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout)
+	u, code, err := ghc.GetUserProfile()
+	if err != nil {
+		return nil, fmt.Errorf("api %d: %w", code, err)
+	}
+	return u, nil
+}
+
+// UpdateGitHubProfile 通过账户 token 更新 GitHub 公开资料，并同步本地 display_name 缓存
+func (s *AccountService) UpdateGitHubProfile(c *Container, id uint, p github.UpdateUserProfilePayload) (*github.User, error) {
+	token, acc, err := s.GetDecryptedToken(id)
+	if err != nil {
+		return nil, err
+	}
+	ghc := github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout)
+	u, code, err := ghc.UpdateUserProfile(p)
+	if err != nil {
+		return nil, fmt.Errorf("api %d: %w", code, err)
+	}
+	displayName := u.Name
+	if displayName == "" {
+		displayName = u.Login
+	}
+	s.DB.Model(&model.Account{}).Where("id = ?", id).Update("display_name", displayName)
+	_ = acc
+	return u, nil
 }
 
 // ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。

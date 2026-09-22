@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "Список secrets репозитория",
         "detail": "Возвращает Actions secrets репозитория с временем создания/обновления. GitHub не позволяет читать значения — их можно только перезаписать или удалить. Одна страница, максимум 100."
+      },
+      "accounts_profile_get": {
+        "summary": "Публичный профиль GitHub",
+        "detail": "Через token аккаунта вызывает GET /user и возвращает текущий публичный профиль (имя/email/сайт/компания/расположение/о себе/X) для предзаполнения формы."
+      },
+      "accounts_profile_update": {
+        "summary": "Обновление публичного профиля GitHub",
+        "detail": "Через token аккаунта вызывает PATCH /user и меняет публичный профиль на GitHub: name/email/blog/company/location/bio/twitter_username; пустая строка очищает поле. Публичный email должен быть подтверждён. Локальный кэш display_name синхронизируется."
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "Ключ мгновенно недействителен; скрипты получат 401",
       "d_system_update": "Сервис скачает новый бинарник и перезапустится — кратковременный простой",
       "d_batch_set_secrets": "В выбранные репозитории будут реально записаны Actions secrets (обновление по имени)",
-      "d_batch_delete_secrets": "Actions secrets выбранных репозиториев будут реально удалены — невосстановимо"
+      "d_batch_delete_secrets": "Actions secrets выбранных репозиториев будут реально удалены — невосстановимо",
+      "d_accounts_profile_update": "Публичный профиль этого GitHub-аккаунта будет реально изменён (можно вернуть повторным вызовом)"
     },
     "p": {
       "p_id_account": "ID аккаунта (id из списка accounts)",
@@ -519,7 +528,20 @@
     "statusRestricted": "Ограничен",
     "recheckHint": "Статус будет автоматически перепроверен через 3 минуты (данные нового аккаунта могут обновляться в GitHub с задержкой)",
     "importedAt": "Дата импорта",
-    "registeredAt": "Дата регистрации"
+    "registeredAt": "Дата регистрации",
+    "tabSettings": "Настройки аккаунта",
+    "profileTitle": "Публичный профиль",
+    "profileHint": "Изменения напрямую синхронизируются с GitHub через token аккаунта (аналог официальных Настройки → Публичный профиль). Официальная страница: ",
+    "profileName": "Имя",
+    "profileEmail": "Публичный email",
+    "profileEmailHint": "Email должен быть подтверждён для аккаунта, иначе GitHub отклонит",
+    "profileBlog": "Сайт",
+    "profileTwitter": "X (Twitter) имя",
+    "profileCompany": "Компания",
+    "profileLocation": "Расположение",
+    "profileBio": "О себе",
+    "profileSave": "Сохранить в GitHub",
+    "profileSaveSuccess": "Синхронизировано с GitHub"
   },
   "repos": {
     "title": "Репозитории",

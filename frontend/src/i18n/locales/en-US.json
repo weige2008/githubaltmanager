@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "List repo secrets",
         "detail": "Returns the Actions secrets of a repo with their created/updated timestamps. GitHub offers no way to read secret values — they can only be overwritten or deleted. Single page, max 100."
+      },
+      "accounts_profile_get": {
+        "summary": "Fetch GitHub public profile",
+        "detail": "Calls GET /user with the account token and returns the current public profile (name/email/blog/company/location/bio/X username) to prefill the edit form."
+      },
+      "accounts_profile_update": {
+        "summary": "Update GitHub public profile",
+        "detail": "Calls PATCH /user with the account token to change the public profile on GitHub: name/email/blog/company/location/bio/twitter_username; empty strings clear fields. The public email must be verified for the account. The local display_name cache is synced."
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "The key is invalidated immediately; scripts using it get 401",
       "d_system_update": "The service downloads a new binary and restarts itself — brief downtime",
       "d_batch_set_secrets": "Actions secrets of the selected repos will really be written (upsert by name)",
-      "d_batch_delete_secrets": "Actions secrets of the selected repos will really be deleted — unrecoverable"
+      "d_batch_delete_secrets": "Actions secrets of the selected repos will really be deleted — unrecoverable",
+      "d_accounts_profile_update": "The public profile of this GitHub account will really be changed (revert by calling again)"
     },
     "p": {
       "p_id_account": "Account ID (the id from the accounts list)",
@@ -519,7 +528,20 @@
     "statusRestricted": "Restricted",
     "recheckHint": "Its status will be re-checked automatically in 3 minutes (new account info may propagate slowly on GitHub)",
     "importedAt": "Imported at",
-    "registeredAt": "Registered at"
+    "registeredAt": "Registered at",
+    "tabSettings": "Account Settings",
+    "profileTitle": "Public profile",
+    "profileHint": "Changes are synced to GitHub directly via the account token (mirrors official Settings → Public profile). Official settings page: ",
+    "profileName": "Name",
+    "profileEmail": "Public email",
+    "profileEmailHint": "Must be a verified email of the account or GitHub will reject it",
+    "profileBlog": "Website",
+    "profileTwitter": "X (Twitter) username",
+    "profileCompany": "Company",
+    "profileLocation": "Location",
+    "profileBio": "Bio",
+    "profileSave": "Save to GitHub",
+    "profileSaveSuccess": "Synced to GitHub"
   },
   "repos": {
     "title": "Repositories",

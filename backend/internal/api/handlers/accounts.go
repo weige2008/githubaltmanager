@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/crypto"
+	"githubaltmanager/internal/github"
 	"githubaltmanager/internal/model"
 	"githubaltmanager/internal/service"
 
@@ -31,6 +32,8 @@ func RegisterAccountRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/import", h.Import)
 		grp.GET("/:id", h.Get)
 		grp.GET("/:id/secrets", h.GetSecrets)
+		grp.GET("/:id/profile", h.GetGitHubProfile)
+		grp.PATCH("/:id/profile", h.UpdateGitHubProfile)
 		grp.PUT("/:id", h.Update)
 		grp.DELETE("/:id", h.Delete)
 		grp.POST("/:id/restore", h.Restore)
@@ -215,6 +218,61 @@ func (h *AccountHandler) Update(c *gin.Context) {
 		return
 	}
 	resp.OK(c, h.s.ToOut(acc))
+}
+
+// GetGitHubProfile 拉取账户当前 GitHub 公开资料（GET /api/accounts/:id/profile）
+func (h *AccountHandler) GetGitHubProfile(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if _, err := h.s.GetActive(uint(id)); err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
+	u, err := h.s.GetGitHubProfile(h.c, uint(id))
+	if err != nil {
+		resp.Internal(c, "获取资料失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, u)
+}
+
+// UpdateGitHubProfilePayload 更新 GitHub 公开资料请求体（指针为 nil 表示不修改该字段）
+type UpdateGitHubProfilePayload struct {
+	Name            *string `json:"name"`
+	Email           *string `json:"email"`
+	Blog            *string `json:"blog"`
+	Company         *string `json:"company"`
+	Location        *string `json:"location"`
+	Bio             *string `json:"bio"`
+	TwitterUsername *string `json:"twitter_username"`
+}
+
+// UpdateGitHubProfile 通过账户 token 更新 GitHub 公开资料（PATCH /api/accounts/:id/profile）
+func (h *AccountHandler) UpdateGitHubProfile(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var p UpdateGitHubProfilePayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if _, err := h.s.GetActive(uint(id)); err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
+	payload := github.UpdateUserProfilePayload{
+		Name:            p.Name,
+		Email:           p.Email,
+		Blog:            p.Blog,
+		Company:         p.Company,
+		Location:        p.Location,
+		Bio:             p.Bio,
+		TwitterUsername: p.TwitterUsername,
+	}
+	u, err := h.s.UpdateGitHubProfile(h.c, uint(id), payload)
+	if err != nil {
+		resp.Internal(c, "更新资料失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, u)
 }
 
 func (h *AccountHandler) Delete(c *gin.Context) {

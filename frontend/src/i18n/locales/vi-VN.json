@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "Liệt kê secrets của repo",
         "detail": "Trả về Actions secrets của repo kèm thời gian tạo/cập nhật. GitHub không cho đọc giá trị secret — chỉ có thể ghi đè hoặc xóa. Một trang, tối đa 100."
+      },
+      "accounts_profile_get": {
+        "summary": "Lấy hồ sơ công khai GitHub",
+        "detail": "Dùng token của tài khoản gọi GET /user, trả về hồ sơ công khai hiện tại (tên/email/trang web/công ty/vị trí/giới thiệu/X) để điền sẵn form."
+      },
+      "accounts_profile_update": {
+        "summary": "Cập nhật hồ sơ công khai GitHub",
+        "detail": "Dùng token của tài khoản gọi PATCH /user để trực tiếp sửa hồ sơ công khai trên GitHub: name/email/blog/company/location/bio/twitter_username; chuỗi rỗng nghĩa là xóa trắng. Email công khai phải đã được xác minh. Cache display_name cục bộ cũng được đồng bộ."
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "Khóa vô hiệu ngay lập tức; script đang dùng sẽ nhận 401",
       "d_system_update": "Dịch vụ tải binary mới và tự khởi động lại — gián đoạn ngắn",
       "d_batch_set_secrets": "Actions secrets của các repo đã chọn sẽ được ghi thật (trùng tên sẽ ghi đè)",
-      "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi"
+      "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi",
+      "d_accounts_profile_update": "Hồ sơ công khai của tài khoản GitHub này sẽ thực sự bị thay đổi (có thể gọi lại để hoàn tác)"
     },
     "p": {
       "p_id_account": "ID tài khoản (id từ danh sách accounts)",
@@ -519,7 +528,20 @@
     "statusRestricted": "Bị hạn chế",
     "recheckHint": "Sẽ tự động kiểm tra lại trạng thái sau 3 phút (thông tin tài khoản mới có thể chưa cập nhật kịp trên GitHub)",
     "importedAt": "Thời gian nhập",
-    "registeredAt": "Ngày đăng ký"
+    "registeredAt": "Ngày đăng ký",
+    "tabSettings": "Cài đặt tài khoản",
+    "profileTitle": "Hồ sơ công khai",
+    "profileHint": "Thay đổi sẽ được đồng bộ trực tiếp lên GitHub qua token của tài khoản (tương đương Cài đặt → Hồ sơ công khai). Trang cài đặt chính thức: ",
+    "profileName": "Họ tên",
+    "profileEmail": "Email công khai",
+    "profileEmailHint": "Phải là email đã xác minh của tài khoản, nếu không GitHub sẽ từ chối",
+    "profileBlog": "Trang web",
+    "profileTwitter": "Tên X (Twitter)",
+    "profileCompany": "Công ty",
+    "profileLocation": "Vị trí",
+    "profileBio": "Giới thiệu",
+    "profileSave": "Lưu lên GitHub",
+    "profileSaveSuccess": "Đã đồng bộ lên GitHub"
   },
   "repos": {
     "title": "Kho lưu trữ",

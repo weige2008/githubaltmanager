@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { KeyRound, FileText, List, Terminal, ChevronDown, ChevronRight, Play, Loader2, AlertTriangle, Search, ArrowUp } from 'lucide-react'
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 interface ParamRef {
   name: string // URL 占位符名
@@ -37,6 +37,7 @@ const methodStyle: Record<Method, string> = {
   GET: 'bg-success/10 text-success',
   POST: 'bg-primary/10 text-primary',
   PUT: 'bg-warning/10 text-warning',
+  PATCH: 'bg-info/10 text-info',
   DELETE: 'bg-destructive/10 text-destructive',
 }
 
@@ -73,6 +74,8 @@ const GROUPS: EndpointGroup[] = [
       { key: 'accounts_secrets', method: 'GET', path: '/api/accounts/:id/secrets', pp: [ACC_ID] },
       { key: 'accounts_import', method: 'POST', path: '/api/accounts/import', body: { token: 'ghp_xxxxxxxxxxxxxxxxxxxx', password: '', recovery_email: '', note: '', group: '' } },
       { key: 'accounts_update', method: 'PUT', path: '/api/accounts/:id', pp: [ACC_ID], body: { note: '', group: '' } },
+      { key: 'accounts_profile_get', method: 'GET', path: '/api/accounts/:id/profile', pp: [ACC_ID] },
+      { key: 'accounts_profile_update', method: 'PATCH', path: '/api/accounts/:id/profile', pp: [ACC_ID], danger: 'd_accounts_profile_update', body: { name: '', bio: '' } },
       { key: 'accounts_delete', method: 'DELETE', path: '/api/accounts/:id', pp: [ACC_ID], danger: 'd_account_delete' },
       { key: 'accounts_restore', method: 'POST', path: '/api/accounts/:id/restore', pp: [ACC_ID] },
       { key: 'accounts_check', method: 'POST', path: '/api/accounts/:id/check', pp: [ACC_ID] },

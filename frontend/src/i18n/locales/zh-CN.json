@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "列出仓库 secrets",
         "detail": "返回仓库的 Actions secrets 名称与创建/更新时间。GitHub 不提供读取 secret 值的接口，值仅能覆盖或删除。单页最多 100 条。"
+      },
+      "accounts_profile_get": {
+        "summary": "读取 GitHub 公开资料",
+        "detail": "用该账户的 token 调 GET /user，返回当前公开资料（姓名/邮箱/网站/公司/位置/简介/X 用户名），供编辑表单预填。"
+      },
+      "accounts_profile_update": {
+        "summary": "更新 GitHub 公开资料",
+        "detail": "用该账户的 token 调 PATCH /user，直接修改 GitHub 上的公开资料：name/email/blog/company/location/bio/twitter_username，字段为空字符串表示清空。公开邮箱必须是账户已验证的邮箱。同时同步本地 display_name 缓存。"
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "密钥立即失效，使用它的脚本将 401",
       "d_system_update": "服务将下载新二进制并自动重启，期间短暂中断",
       "d_batch_set_secrets": "将真实写入选中仓库的 Actions secrets（同名覆盖）",
-      "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复"
+      "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复",
+      "d_accounts_profile_update": "将真实修改该 GitHub 账户的公开资料（可通过再次调用改回）"
     },
     "p": {
       "p_id_account": "账户 ID（accounts 列表返回的 id）",
@@ -519,7 +528,20 @@
     "statusRestricted": "受限",
     "recheckHint": "3 分钟后将自动复检其状态（新账户信息在 GitHub 侧可能延迟生效）",
     "importedAt": "导入时间",
-    "registeredAt": "注册时间"
+    "registeredAt": "注册时间",
+    "tabSettings": "账户设置",
+    "profileTitle": "公开资料",
+    "profileHint": "修改会通过该账户的 token 直接同步到 GitHub（对标官方 设置 → 公开资料）。官方设置页：",
+    "profileName": "姓名",
+    "profileEmail": "公开邮箱",
+    "profileEmailHint": "必须是该账户已验证的邮箱，否则 GitHub 会拒绝",
+    "profileBlog": "网站",
+    "profileTwitter": "X (Twitter) 用户名",
+    "profileCompany": "公司",
+    "profileLocation": "位置",
+    "profileBio": "个人简介",
+    "profileSave": "保存到 GitHub",
+    "profileSaveSuccess": "已同步到 GitHub"
   },
   "repos": {
     "title": "仓库浏览",

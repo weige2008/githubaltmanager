@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { accountApi, repoApi, type Repo } from '@/api'
 import { displayName } from '@/lib/account'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github } from 'lucide-react'
+import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/ui/error-state'
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/ui/copy-button'
 import { BreadcrumbNav } from '@/components/breadcrumb-nav'
+import { Input, Textarea } from '@/components/ui/input'
 import { useTranslation } from 'react-i18next'
 
 export default function AccountDetailPage() {
@@ -85,6 +86,7 @@ export default function AccountDetailPage() {
         <TabsList>
           <TabsTrigger value="info">{t('accounts.tabInfo')}</TabsTrigger>
           <TabsTrigger value="repos">{t('accounts.tabRepos')} ({repos?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="settings"><Settings className="mr-1.5 h-3.5 w-3.5" />{t('accounts.tabSettings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -161,7 +163,103 @@ export default function AccountDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="settings">
+          <ProfileSettings accId={accId} login={acc.github_login} />
+        </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+function ProfileSettings({ accId, login }: { accId: number; login: string }) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [form, setForm] = useState({ name: '', email: '', blog: '', company: '', location: '', bio: '', twitter_username: '' })
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['gh-profile', accId],
+    queryFn: () => accountApi.getProfile(accId),
+  })
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        name: profile.name || '',
+        email: profile.email || '',
+        blog: profile.blog || '',
+        company: profile.company || '',
+        location: profile.location || '',
+        bio: profile.bio || '',
+        twitter_username: profile.twitter_username || '',
+      })
+    }
+  }, [profile])
+
+  const saveMut = useMutation({
+    mutationFn: () => accountApi.updateProfile(accId, form),
+    onSuccess: () => {
+      toast.success(t('accounts.profileSaveSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['account', accId] })
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    },
+    onError: (e: any) => toast.error(e?.message || t('common.operationFailed')),
+  })
+
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base"><Settings className="h-4 w-4" /> {t('accounts.profileTitle')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">
+          {t('accounts.profileHint')} <a href={`https://github.com/settings/profile`} target="_blank" rel="noreferrer" className="text-primary hover:underline">github.com/settings/profile ↗</a>
+        </p>
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileName')}</label>
+                <Input value={form.name} onChange={set('name')} placeholder="bytedancer" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileEmail')}</label>
+                <Input value={form.email} onChange={set('email')} placeholder="public@example.com" />
+                <p className="text-xs text-muted-foreground">{t('accounts.profileEmailHint')}</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileBlog')}</label>
+                <Input value={form.blog} onChange={set('blog')} placeholder="https://example.com" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileTwitter')}</label>
+                <Input value={form.twitter_username} onChange={set('twitter_username')} placeholder="twitter_username" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileCompany')}</label>
+                <Input value={form.company} onChange={set('company')} placeholder="@github" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{t('accounts.profileLocation')}</label>
+                <Input value={form.location} onChange={set('location')} placeholder="Hangzhou, China" />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">{t('accounts.profileBio')}</label>
+                <Textarea rows={3} value={form.bio} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm(prev => ({ ...prev, bio: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              {saveMut.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>{t('accounts.profileSave')}</Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }

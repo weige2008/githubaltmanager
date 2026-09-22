@@ -28,9 +28,32 @@ export interface AccountSecrets {
   email: string
 }
 
+export interface GitHubProfile {
+  login: string
+  name: string | null
+  email: string | null
+  blog: string | null
+  company: string | null
+  location: string | null
+  bio: string | null
+  twitter_username: string | null
+}
+
+export interface GitHubProfileUpdate {
+  name?: string
+  email?: string
+  blog?: string
+  company?: string
+  location?: string
+  bio?: string
+  twitter_username?: string
+}
+
 export const accountApi = {
   list: (group?: string) => http.get<unknown, Account[]>('/accounts', { params: group ? { group } : {} }),
   get: (id: number) => http.get<unknown, Account>(`/accounts/${id}`),
+  getProfile: (id: number) => http.get<unknown, GitHubProfile>(`/accounts/${id}/profile`),
+  updateProfile: (id: number, data: GitHubProfileUpdate) => http.patch<unknown, GitHubProfile>(`/accounts/${id}/profile`, data),
   import: (data: { token: string; password?: string; recovery_email?: string; note?: string; group?: string }) =>
     http.post<unknown, Account>('/accounts/import', data),
   update: (id: number, data: Partial<{ password?: string; recovery_email?: string; note?: string; group?: string }>) =>

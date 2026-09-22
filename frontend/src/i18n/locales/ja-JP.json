@@ -364,6 +364,14 @@
       "repos_secrets_list": {
         "summary": "リポジトリ secrets の一覧",
         "detail": "リポジトリの Actions secrets の名前と作成/更新時刻を返す。GitHub では secret の値は読めず、上書きか削除のみ可能。1 ページ最大 100 件。"
+      },
+      "accounts_profile_get": {
+        "summary": "GitHub 公開プロフィールの取得",
+        "detail": "アカウント token で GET /user を呼び、現在の公開プロフィール（名前/メール/サイト/会社/場所/自己紹介/X ユーザー名）を返します。編集フォームの初期値に使用。"
+      },
+      "accounts_profile_update": {
+        "summary": "GitHub 公開プロフィールの更新",
+        "detail": "アカウント token で PATCH /user を呼び、GitHub 上の公開プロフィールを直接変更します。空文字はフィールドのクリアを意味します。公開メールは確認済みである必要があります。ローカルの display_name キャッシュも同期します。"
       }
     },
     "danger": {
@@ -384,7 +392,8 @@
       "d_apikeys_delete": "キーは直ちに無効化され、使用中のスクリプトは 401 になります",
       "d_system_update": "新しいバイナリをダウンロードして自動再起動します（一時停止あり）",
       "d_batch_set_secrets": "選択したリポジトリの Actions secrets を実際に書き込みます（同名は上書き）",
-      "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可"
+      "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可",
+      "d_accounts_profile_update": "この GitHub アカウントの公開プロフィールを実際に変更します（再呼び出しで元に戻せます）"
     },
     "p": {
       "p_id_account": "アカウント ID（accounts 一覧の id）",
@@ -519,7 +528,20 @@
     "statusRestricted": "制限中",
     "recheckHint": "3 分後にステータスを自動再チェックします（新アカウントの情報は GitHub 側で反映が遅れる場合があります）",
     "importedAt": "インポート日時",
-    "registeredAt": "登録日時"
+    "registeredAt": "登録日時",
+    "tabSettings": "アカウント設定",
+    "profileTitle": "公開プロフィール",
+    "profileHint": "変更はアカウントの token 経由で GitHub に直接同期されます（公式の 設定 → 公開プロフィール と同等）。公式設定ページ：",
+    "profileName": "名前",
+    "profileEmail": "公開メール",
+    "profileEmailHint": "アカウントで確認済みのメールアドレスである必要があります",
+    "profileBlog": "ウェブサイト",
+    "profileTwitter": "X (Twitter) ユーザー名",
+    "profileCompany": "会社",
+    "profileLocation": "場所",
+    "profileBio": "自己紹介",
+    "profileSave": "GitHub に保存",
+    "profileSaveSuccess": "GitHub に同期しました"
   },
   "repos": {
     "title": "リポジトリ",
