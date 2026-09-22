@@ -517,7 +517,9 @@
     "allGroups": "全部",
     "workflows": "工作流",
     "statusRestricted": "受限",
-    "recheckHint": "3 分钟后将自动复检其状态（新账户信息在 GitHub 侧可能延迟生效）"
+    "recheckHint": "3 分钟后将自动复检其状态（新账户信息在 GitHub 侧可能延迟生效）",
+    "importedAt": "导入时间",
+    "registeredAt": "注册时间"
   },
   "repos": {
     "title": "仓库浏览",
@@ -551,7 +553,8 @@
     "browse": "浏览",
     "permission": "权限",
     "private": "私有",
-    "emptyOrSync": "没有仓库数据，请点击同步"
+    "emptyOrSync": "没有仓库数据，请点击同步",
+    "openOnGithub": "在 GitHub 打开"
   },
   "tasks": {
     "title": "定时任务",

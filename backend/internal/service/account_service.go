@@ -98,6 +98,7 @@ func (s *AccountService) ImportByToken(c *Container, token, password, recoveryEm
 	}
 
 	scopes := github.ParseScopes(header)
+	ghcCreated := github.ParseGitHubTime(u.CreatedAt)
 
 	tokenEnc, err := crypto.EncryptField(token)
 	if err != nil {
@@ -136,6 +137,9 @@ func (s *AccountService) ImportByToken(c *Container, token, password, recoveryEm
 			"status_reason": "token 导入时验证通过",
 			"token_scopes":  strings.Join(scopes, ","),
 		}
+		if ghcCreated != nil {
+			updates["github_created_at"] = *ghcCreated
+		}
 		if pwEnc != "" {
 			updates["password_enc"] = pwEnc
 		}
@@ -155,17 +159,18 @@ func (s *AccountService) ImportByToken(c *Container, token, password, recoveryEm
 	}
 
 	acc := model.Account{
-		GithubID:      u.ID,
-		GithubLogin:   u.Login,
-		DisplayName:   displayName,
-		AvatarURL:     u.AvatarURL,
-		TokenEnc:      tokenEnc,
-		PasswordEnc:   pwEnc,
-		RecoveryEmail: emailEnc,
-		Status:        "active",
-		StatusReason:  "token 导入时验证通过",
-		TokenScopes:   strings.Join(scopes, ","),
-		Note:          note,
+		GithubID:        u.ID,
+		GithubLogin:     u.Login,
+		DisplayName:     displayName,
+		AvatarURL:       u.AvatarURL,
+		TokenEnc:        tokenEnc,
+		PasswordEnc:     pwEnc,
+		RecoveryEmail:   emailEnc,
+		Status:          "active",
+		StatusReason:    "token 导入时验证通过",
+		TokenScopes:     strings.Join(scopes, ","),
+		GithubCreatedAt: ghcCreated,
+		Note:            note,
 	}
 	if err := s.DB.Create(&acc).Error; err != nil {
 		return nil, err
@@ -249,11 +254,16 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 	acc.Status = result.Status
 	acc.StatusReason = result.Reason
 	acc.LastCheckedAt = &now
-	if err := s.DB.Model(&model.Account{}).Where("id = ?", id).Updates(map[string]any{
+	updates := map[string]any{
 		"status":          result.Status,
 		"status_reason":   result.Reason,
 		"last_checked_at": now,
-	}).Error; err != nil {
+	}
+	if result.GithubCreatedAt != nil {
+		updates["github_created_at"] = *result.GithubCreatedAt
+		acc.GithubCreatedAt = result.GithubCreatedAt
+	}
+	if err := s.DB.Model(&model.Account{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
 	return acc, nil

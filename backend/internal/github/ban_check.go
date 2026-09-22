@@ -15,6 +15,7 @@ type AccountStatus struct {
 	Reason      string // 详细原因
 	Methods     []string // 命中的检测方法
 	WebNotFound bool // 仅网页探测：主页 404
+	GithubCreatedAt *time.Time // API 探测返回的 GitHub 账号注册时间
 }
 
 // CheckBanStatus 多方案并发检测账户是否被封禁
@@ -141,6 +142,7 @@ func checkViaAPI(c *Client, login string) AccountStatus {
 	if err != nil {
 		return AccountStatus{Status: "error", Reason: "api error: " + err.Error()}
 	}
+	githubCreated := ParseGitHubTime(u.CreatedAt)
 
 	// 401/403 → token 失效或账户问题
 	body := ""
@@ -181,13 +183,13 @@ func checkViaAPI(c *Client, login string) AccountStatus {
 			return AccountStatus{Status: "banned", Reason: "账户 suspended/flagged 标记为 true"}
 		}
 		if u.Login != "" {
-			return AccountStatus{Status: "active", Reason: "API /user 正常返回，login=" + u.Login}
+			return AccountStatus{Status: "active", Reason: "API /user 正常返回，login=" + u.Login, GithubCreatedAt: githubCreated}
 		}
 	}
 	if login == "" && u != nil && u.Login != "" {
 		login = u.Login
 	}
-	return AccountStatus{Status: "active", Reason: "API /user 正常"}
+	return AccountStatus{Status: "active", Reason: "API /user 正常", GithubCreatedAt: githubCreated}
 }
 
 // checkViaWebProfile 抓取 github.com/<login> 主页判断

@@ -517,7 +517,9 @@
     "allGroups": "All",
     "workflows": "Workflows",
     "statusRestricted": "Restricted",
-    "recheckHint": "Its status will be re-checked automatically in 3 minutes (new account info may propagate slowly on GitHub)"
+    "recheckHint": "Its status will be re-checked automatically in 3 minutes (new account info may propagate slowly on GitHub)",
+    "importedAt": "Imported at",
+    "registeredAt": "Registered at"
   },
   "repos": {
     "title": "Repositories",
@@ -551,7 +553,8 @@
     "browse": "Browse",
     "permission": "Permission",
     "private": "Private",
-    "emptyOrSync": "No repository data. Please sync."
+    "emptyOrSync": "No repository data. Please sync.",
+    "openOnGithub": "Open on GitHub"
   },
   "tasks": {
     "title": "Scheduled Tasks",

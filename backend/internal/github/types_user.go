@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // User GitHub /user 返回
@@ -16,7 +17,19 @@ type User struct {
 	Suspended bool   `json:"suspended"`
 	Flagged   bool   `json:"flagged"`
 	Type      string `json:"type"`
+	CreatedAt string `json:"created_at"` // GitHub 账号注册时间 RFC3339
 	Message   string `json:"message"`
+}
+
+// ParseGitHubTime 解析 GitHub RFC3339 时间（失败返回 nil）
+func ParseGitHubTime(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return &t
+	}
+	return nil
 }
 
 // GetAuthenticatedUserWithHeader 返回 user + 完整 header（含 X-OAuth-Scopes）

@@ -58,6 +58,7 @@ type Account struct {
 	Status        string `gorm:"column:status;size:32;not null;default:'unknown';index" json:"status"` // active / banned / unknown / error
 	StatusReason  string `gorm:"column:status_reason;type:text" json:"status_reason"`
 	TokenScopes   string `gorm:"column:token_scopes;type:text" json:"token_scopes"`
+	GithubCreatedAt *time.Time `gorm:"column:github_created_at" json:"github_created_at"` // GitHub 账号注册时间（来自 /user.created_at）
 	LastCheckedAt *time.Time `gorm:"column:last_checked_at" json:"last_checked_at"`
 	Note          string `gorm:"column:note;type:text" json:"note"`
 	Group         string `gorm:"column:account_group;size:100;index" json:"group"` // 分组名

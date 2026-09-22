@@ -517,7 +517,9 @@
     "allGroups": "すべて",
     "workflows": "ワークフロー",
     "statusRestricted": "制限中",
-    "recheckHint": "3 分後にステータスを自動再チェックします（新アカウントの情報は GitHub 側で反映が遅れる場合があります）"
+    "recheckHint": "3 分後にステータスを自動再チェックします（新アカウントの情報は GitHub 側で反映が遅れる場合があります）",
+    "importedAt": "インポート日時",
+    "registeredAt": "登録日時"
   },
   "repos": {
     "title": "リポジトリ",
@@ -551,7 +553,8 @@
     "browse": "閲覧",
     "permission": "権限",
     "private": "プライベート",
-    "emptyOrSync": "リポジトリデータがありません。同期してください。"
+    "emptyOrSync": "リポジトリデータがありません。同期してください。",
+    "openOnGithub": "GitHub で開く"
   },
   "tasks": {
     "title": "スケジュールタスク",

@@ -517,7 +517,9 @@
     "allGroups": "Tất cả",
     "workflows": "Workflow",
     "statusRestricted": "Bị hạn chế",
-    "recheckHint": "Sẽ tự động kiểm tra lại trạng thái sau 3 phút (thông tin tài khoản mới có thể chưa cập nhật kịp trên GitHub)"
+    "recheckHint": "Sẽ tự động kiểm tra lại trạng thái sau 3 phút (thông tin tài khoản mới có thể chưa cập nhật kịp trên GitHub)",
+    "importedAt": "Thời gian nhập",
+    "registeredAt": "Ngày đăng ký"
   },
   "repos": {
     "title": "Kho lưu trữ",
@@ -551,7 +553,8 @@
     "browse": "Duyệt",
     "permission": "Quyền",
     "private": "Riêng tư",
-    "emptyOrSync": "Không có dữ liệu kho. Vui lòng đồng bộ."
+    "emptyOrSync": "Không có dữ liệu kho. Vui lòng đồng bộ.",
+    "openOnGithub": "Mở trên GitHub"
   },
   "tasks": {
     "title": "Tác vụ định kỳ",

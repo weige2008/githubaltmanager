@@ -10,6 +10,7 @@ export interface Account {
   status: string
   status_reason: string
   token_scopes: string
+  github_created_at: string | null
   last_checked_at: string | null
   note: string
   group: string

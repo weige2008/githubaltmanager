@@ -517,7 +517,9 @@
     "allGroups": "Tous",
     "workflows": "Workflows",
     "statusRestricted": "Restreint",
-    "recheckHint": "Son statut sera revérifié automatiquement dans 3 minutes (les infos d'un nouveau compte peuvent se propager avec du retard côté GitHub)"
+    "recheckHint": "Son statut sera revérifié automatiquement dans 3 minutes (les infos d'un nouveau compte peuvent se propager avec du retard côté GitHub)",
+    "importedAt": "Importé le",
+    "registeredAt": "Inscrit le"
   },
   "repos": {
     "title": "Dépôts",
@@ -551,7 +553,8 @@
     "browse": "Parcourir",
     "permission": "Permission",
     "private": "Privé",
-    "emptyOrSync": "Aucune donnée de dépôt. Veuillez synchroniser."
+    "emptyOrSync": "Aucune donnée de dépôt. Veuillez synchroniser.",
+    "openOnGithub": "Ouvrir sur GitHub"
   },
   "tasks": {
     "title": "Tâches planifiées",

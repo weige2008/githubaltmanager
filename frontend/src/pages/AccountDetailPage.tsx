@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, Eye, EyeOff, Copy, Lock } from 'lucide-react'
+import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/ui/error-state'
@@ -58,7 +58,14 @@ export default function AccountDetailPage() {
       <PageHeader
         title={accountName}
         description={acc.display_name}
-        actions={<Button variant="outline" onClick={() => navigate('/accounts')}>{t('common.back')}</Button>}
+        actions={
+          <div className="flex gap-2">
+            <a href={`https://github.com/${acc.github_login}`} target="_blank" rel="noreferrer">
+              <Button variant="outline" className="gap-2"><Github className="h-4 w-4" />GitHub 主页</Button>
+            </a>
+            <Button variant="outline" onClick={() => navigate('/accounts')}>{t('common.back')}</Button>
+          </div>
+        }
       />
 
       <div className="flex items-center gap-4">
@@ -108,6 +115,8 @@ export default function AccountDetailPage() {
                   <span className="font-medium">{secretsVisible && secrets ? secrets.email || t('accounts.emptyValue') : '••••'}</span>
                 </div>
                 <div><span className="text-muted-foreground">{t('accounts.lastChecked')}</span><br />{acc.last_checked_at ? new Date(acc.last_checked_at).toLocaleString() : '—'}</div>
+                <div><span className="text-muted-foreground">{t('accounts.importedAt')}</span><br />{acc.created_at ? new Date(acc.created_at).toLocaleString() : '—'}</div>
+                <div><span className="text-muted-foreground">{t('accounts.registeredAt')}</span><br />{acc.github_created_at ? new Date(acc.github_created_at).toLocaleDateString() : '—'}</div>
                 <div><span className="text-muted-foreground">{t('accounts.notes')}</span><br />{acc.note || '—'}</div>
                 <div><span className="text-muted-foreground">{t('accounts.group', { defaultValue: '分组' })}</span><br />{acc.group || '—'}</div>
                 <div className="col-span-2 lg:col-span-3"><span className="text-muted-foreground">{t('accounts.statusReason')}</span><br />{acc.status_reason || '—'}</div>
@@ -138,7 +147,12 @@ export default function AccountDetailPage() {
                           </div>
                         </TD>
                         <TD className="text-sm">{r.permission}</TD>
-                        <TD className="text-right"><Button variant="ghost" size="sm" onClick={() => navigate(`/repos?rid=${r.id}`)}>{t('repos.browse')}</Button></TD>
+                        <TD className="text-right"><div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/repos?rid=${r.id}`)}>{t('repos.browse')}</Button>
+                          <a href={r.html_url} target="_blank" rel="noreferrer" title={t('repos.openOnGithub')}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                          </a>
+                        </div></TD>
                       </TR>
                     ))}
                   </TBody>
