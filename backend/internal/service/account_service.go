@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -256,6 +257,22 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 		return nil, err
 	}
 	return acc, nil
+}
+
+// ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。
+// 用于导入后的二次复检：新账户信息在 GitHub 侧可能延迟生效，导致导入瞬间的首检偏差。
+// 定时器驻留在内存中（进程重启丢失，由周期性自动检测兜底）；账户已进入回收站则跳过。
+func (s *AccountService) ScheduleRecheck(c *Container, id uint, delay time.Duration) {
+	time.AfterFunc(delay, func() {
+		if _, err := s.GetActive(id); err != nil {
+			return // 已删除/不存在，跳过
+		}
+		if acc, err := s.CheckStatus(c, id); err != nil {
+			log.Printf("[import] 复检账户 %d 失败: %v", id, err)
+		} else {
+			log.Printf("[import] 复检账户 %s(id=%d): %s", acc.GithubLogin, id, acc.Status)
+		}
+	})
 }
 
 // List 列出全部活跃账户（排除回收站）

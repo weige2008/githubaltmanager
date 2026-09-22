@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "Importer un compte",
-        "detail": "Soumet un PAT GitHub : le backend le valide via /user (login, avatar, scopes) puis le stocke chiffré, et lance immédiatement une détection complète (API + web) — le statut renvoyé est le réel (active/restricted/banned/token_expired), pas un active figé. Un compte du même login dans la corbeille est restauré avec le token mis à jour. password/recovery_email/note/group optionnels."
+        "detail": "Soumet un PAT GitHub : le backend le valide via /user (login, avatar, scopes) puis le stocke chiffré, lance immédiatement une détection complète (API + web) et re-vérifie automatiquement après 3 minutes (par prudence face à la propagation retardée des infos d'un nouveau compte côté GitHub). Le statut renvoyé/mis à jour est le réel (active/restricted/banned/token_expired). Un compte du même login dans la corbeille est restauré avec le token mis à jour. password/recovery_email/note/group optionnels."
       },
       "accounts_update": {
         "summary": "Mettre à jour un compte",
@@ -516,7 +516,8 @@
     "pinned": "Épinglé",
     "allGroups": "Tous",
     "workflows": "Workflows",
-    "statusRestricted": "Restreint"
+    "statusRestricted": "Restreint",
+    "recheckHint": "Son statut sera revérifié automatiquement dans 3 minutes (les infos d'un nouveau compte peuvent se propager avec du retard côté GitHub)"
   },
   "repos": {
     "title": "Dépôts",

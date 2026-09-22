@@ -76,6 +76,8 @@ func (h *AccountHandler) Import(c *gin.Context) {
 	if checked, err := h.s.CheckStatus(h.c, acc.ID); err == nil {
 		acc = checked
 	}
+	// 3 分钟后自动复检一次：新账户信息在 GitHub 侧可能延迟生效，首检存在偏差
+	h.s.ScheduleRecheck(h.c, acc.ID, 3*time.Minute)
 	resp.Created(c, h.s.ToOut(acc))
 }
 

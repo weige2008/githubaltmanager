@@ -185,6 +185,7 @@ export default function AccountsPage() {
     try {
       const acc = await accountApi.import(importData)
       toast.success(t('accounts.importSuccess', { name: acc.github_login }))
+      toast.info(t('accounts.recheckHint'))
       setDialogOpen(false)
       setImportData({ token: '', password: '', recovery_email: '', note: '', group: '' })
       queryClient.invalidateQueries({ queryKey: ['accounts'] })

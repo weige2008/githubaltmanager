@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "アカウントのインポート",
-        "detail": "GitHub token を送信すると、まず /user で検証しユーザー名/アバター/scope を取得してから暗号化保存。保存後ただちに完全な BAN 検知（API + Web）を実行し、実際のステータス（active/restricted/banned/token_expired）を返します（固定の active ではありません）。同じログ名のアカウントがゴミ箱にあれば復元し token を更新。password・recovery_email・note・group は任意。"
+        "detail": "GitHub token を送信すると、まず /user で検証しユーザー名/アバター/scope を取得してから暗号化保存。保存後ただちに完全な BAN 検知（API + Web）を実行し、3 分後に自動で再チェックします（新アカウント情報の GitHub 側での遅延反映に対応）。実際のステータス（active/restricted/banned/token_expired）を返却・更新します。同じログ名のアカウントがゴミ箱にあれば復元し token を更新。password・recovery_email・note・group は任意。"
       },
       "accounts_update": {
         "summary": "アカウント情報の更新",
@@ -516,7 +516,8 @@
     "pinned": "固定済み",
     "allGroups": "すべて",
     "workflows": "ワークフロー",
-    "statusRestricted": "制限中"
+    "statusRestricted": "制限中",
+    "recheckHint": "3 分後にステータスを自動再チェックします（新アカウントの情報は GitHub 側で反映が遅れる場合があります）"
   },
   "repos": {
     "title": "リポジトリ",
