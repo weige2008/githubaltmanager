@@ -106,17 +106,19 @@ export default function AccountsPage() {
   const togglePin = (id: number) => setPinnedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id])
 
+  const [statusFilter, setStatusFilter] = useState('')
   const sortedAccounts = useMemo(() => {
     if (!accounts) return []
     let list = sortAccounts(accounts)
     if (activeGroup === '__ungrouped__') list = list.filter(a => !a.group)
     else if (activeGroup) list = list.filter(a => (a.group || '') === activeGroup)
+    if (statusFilter) list = list.filter(a => a.status === statusFilter)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter(a => a.github_login.toLowerCase().includes(q) || (a.note || '').toLowerCase().includes(q) || (a.display_name || '').toLowerCase().includes(q))
     }
     return list
-  }, [accounts, searchQuery, activeGroup])
+  }, [accounts, searchQuery, activeGroup, statusFilter])
 
   const groupedAccounts = useMemo(() => {
     if (!sortedAccounts.length) return []
@@ -128,7 +130,7 @@ export default function AccountsPage() {
   // 分页（仅扁平视图；数据仍全量拉取与筛选排序，只渲染当前页，账户量大时避免 DOM 过载）
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-  useEffect(() => { setPage(1) }, [searchQuery, activeGroup, sortMode])
+  useEffect(() => { setPage(1) }, [searchQuery, activeGroup, sortMode, statusFilter])
   const totalPages = Math.max(1, Math.ceil(sortedAccounts.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageAccounts = useMemo(
@@ -407,6 +409,18 @@ export default function AccountsPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative"><Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t('common.search')} className="h-9 w-40 pl-8 text-sm" /></div>
+          <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
+            <SelectTrigger className="h-9 w-[124px] gap-2 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="active">只显示正常</SelectItem>
+              <SelectItem value="restricted">受限</SelectItem>
+              <SelectItem value="banned">封禁</SelectItem>
+              <SelectItem value="token_expired">Token过期</SelectItem>
+              <SelectItem value="error">错误</SelectItem>
+              <SelectItem value="unknown">未知</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
             <SelectTrigger className="h-9 w-[140px] gap-2 text-sm"><ArrowUpDown className="h-3.5 w-3.5" /><SelectValue /></SelectTrigger>
             <SelectContent>
