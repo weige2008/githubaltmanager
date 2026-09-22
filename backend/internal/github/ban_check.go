@@ -19,10 +19,10 @@ type AccountStatus struct {
 
 // CheckBanStatus 多方案并发检测账户是否被封禁
 // 方案1: API /user 错误码 + 响应体关键字（suspended/flagged/invalid token）
-// 方案2(可选 webCheck): 抓取 github.com/<user> 主页，404 判异常
-//   （大规模账户时建议关闭：无认证网页请求都出自服务器同一 IP，易被 GitHub 网页侧限流）
+// 方案2: 抓取 github.com/<user> 主页，404 判异常（始终执行，与 API 探测互为印证，
+//       缺少任一路将无法识别受限等状态；注意无认证网页请求出自服务器 IP，大量账户时留意频率）
 // 方案3: token 验证失败信号
-func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int, webCheck bool) AccountStatus {
+func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStatus {
 	client := New(apiBaseURL, token, timeoutSec)
 	type probe struct {
 		src string
@@ -36,9 +36,9 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int, webCheck bo
 		results <- probe{src: "api", st: s}
 	}()
 
-	// 方案2：网页主页（可选，封禁可能 404）
+	// 方案2：网页主页
 	wantCount := 1
-	if webCheck && login != "" {
+	if login != "" {
 		wantCount = 2
 		go func() {
 			results <- probe{src: "web", st: checkViaWebProfile(login, timeoutSec)}

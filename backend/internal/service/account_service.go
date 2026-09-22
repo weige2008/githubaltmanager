@@ -243,7 +243,7 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 	if err != nil {
 		return nil, err
 	}
-	result := github.CheckBanStatus(token, c.CFG.GitHub.APIBaseURL, acc.GithubLogin, c.CFG.GitHub.RequestTimeout, c.CFG.GitHub.BanCheckWeb)
+	result := github.CheckBanStatus(token, c.CFG.GitHub.APIBaseURL, acc.GithubLogin, c.CFG.GitHub.RequestTimeout)
 	now := time.Now()
 	acc.Status = result.Status
 	acc.StatusReason = result.Reason

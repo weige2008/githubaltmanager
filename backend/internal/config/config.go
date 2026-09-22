@@ -44,8 +44,6 @@ type GitHubConfig struct {
 	RequestTimeout int
 	// MaxConcurrent 并发调用 GitHub API 的最大 goroutine 数
 	MaxConcurrent int
-	// BanCheckWeb 封禁检测是否抓取 github.com/<user> 主页（大规模时建议关闭，避免服务器 IP 被GitHub 网页侧限流）
-	BanCheckWeb bool
 }
 
 type SchedulerConfig struct {
@@ -91,7 +89,6 @@ func Load() (*Config, error) {
 			APIBaseURL:     envStr("GAM_GH_API", "https://api.github.com"),
 			RequestTimeout: envInt("GAM_GH_TIMEOUT", 20),
 			MaxConcurrent:  envInt("GAM_GH_CONCURRENCY", 8),
-			BanCheckWeb:    envBool("GAM_BAN_CHECK_WEB", true),
 		},
 		Scheduler: SchedulerConfig{
 			Timezone:             envStr("GAM_TZ", "Asia/Shanghai"),
@@ -148,15 +145,6 @@ func envInt(key string, def int) int {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			return n
-		}
-	}
-	return def
-}
-
-func envBool(key string, def bool) bool {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
-		if b, err := strconv.ParseBool(v); err == nil {
-			return b
 		}
 	}
 	return def

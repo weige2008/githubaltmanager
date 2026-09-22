@@ -391,6 +391,7 @@ export default function AccountsPage() {
           </Button>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
           <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('banned')}>全选封禁</Button>
+          <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('restricted')}>全选受限</Button>
           <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('active')}>全选正常</Button>
           <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('token_expired')}>全选Token过期</Button>
         </div>
@@ -574,29 +575,90 @@ export default function AccountsPage() {
 function RecycleBinDialog({ open, onClose, onPermDelete }: { open: boolean; onClose: () => void; onPermDelete: (acc: Account) => void }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [batchPermCount, setBatchPermCount] = useState<number | null>(null)
   const { data: deleted, isLoading } = useQuery({ queryKey: ['accounts', 'recycle-bin'], queryFn: () => accountApi.listRecycleBin(), enabled: open })
-  const restoreMutation = useMutation({ mutationFn: (id: number) => accountApi.restore(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); queryClient.invalidateQueries({ queryKey: ['accounts', 'recycle-bin'] }); toast.success('已恢复') } })
-  const cleanMutation = useMutation({ mutationFn: () => accountApi.cleanRecycleBin(), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts', 'recycle-bin'] }); toast.success('已清理过期账户') } })
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    queryClient.invalidateQueries({ queryKey: ['accounts', 'recycle-bin'] })
+    queryClient.invalidateQueries({ queryKey: ['stats'] })
+  }
+  const restoreMutation = useMutation({ mutationFn: (id: number) => accountApi.restore(id), onSuccess: () => { invalidate(); toast.success('已恢复') } })
+  const cleanMutation = useMutation({ mutationFn: () => accountApi.cleanRecycleBin(), onSuccess: () => { invalidate(); toast.success('已清理过期账户') } })
+
+  useEffect(() => { if (!open) setSelectedIds([]) }, [open])
+  useEffect(() => { if (deleted) setSelectedIds(prev => prev.filter(id => deleted.some(a => a.id === id))) }, [deleted])
+
+  const toggleOne = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  const allChecked = !!deleted?.length && deleted.every(a => selectedIds.includes(a.id))
+  const someChecked = !!deleted?.length && deleted.some(a => selectedIds.includes(a.id))
+  const toggleAll = (v: boolean) => setSelectedIds(v ? (deleted || []).map(a => a.id) : [])
+
+  const handleBatchRestore = async () => {
+    if (!selectedIds.length) return
+    setBulkBusy(true)
+    let ok = 0
+    for (const id of selectedIds) { try { await accountApi.restore(id); ok++ } catch {} }
+    setBulkBusy(false)
+    setSelectedIds([])
+    invalidate()
+    toast.success(`已恢复 ${ok} 个账户`)
+  }
+  const handleBatchPermDelete = async () => {
+    if (!selectedIds.length) return
+    setBulkBusy(true)
+    let ok = 0
+    for (const id of selectedIds) { try { await accountApi.permanentDelete(id); ok++ } catch {} }
+    setBulkBusy(false)
+    setBatchPermCount(null)
+    setSelectedIds([])
+    invalidate()
+    toast.success(`已永久删除 ${ok} 个账户`)
+  }
 
   return (
-    <Dialog open={open} onClose={onClose} className="max-w-2xl">
-      <DialogTitle>回收站</DialogTitle>
+    <Dialog open={open} onClose={onClose} className="max-w-4xl">
+      <DialogTitle>回收站{deleted?.length ? `（${deleted.length}）` : ''}</DialogTitle>
       {isLoading ? <LoadingState /> : deleted && deleted.length > 0 ? (
-        <Table><THead><TR><TH>{t('accounts.accountColumn')}</TH><TH>删除时间</TH><TH className="text-right">{t('common.actions')}</TH></TR></THead>
-          <TBody>{deleted.map((acc) => (
-            <TR key={acc.id}>
-              <TD><div className="flex items-center gap-2"><Avatar className="h-7 w-7"><AvatarImage src={acc.avatar_url} alt={acc.github_login} /><AvatarFallback>{acc.github_login[0]?.toUpperCase()}</AvatarFallback></Avatar><span className="font-medium">{getDisplayName(acc)}</span></div></TD>
-              <TD className="text-sm text-muted-foreground">{acc.deleted_at ? new Date(acc.deleted_at).toLocaleString() : '—'}</TD>
-              <TD><div className="flex justify-end gap-1">
-                <Button variant="ghost" size="sm" className="gap-1" onClick={() => restoreMutation.mutate(acc.id)} disabled={restoreMutation.isPending}><RotateCcw className="h-3.5 w-3.5" />恢复</Button>
-                <Button variant="ghost" size="sm" className="gap-1 text-destructive" onClick={() => onPermDelete(acc)}><Trash className="h-3.5 w-3.5" />永久删除</Button>
-              </div></TD>
-            </TR>))}</TBody></Table>
+        <>
+          {selectedIds.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border bg-primary/5 px-4 py-2.5 text-sm">
+              <span className="font-bold">已选 {selectedIds.length} 项</span>
+              <Button size="sm" variant="outline" className="gap-1" disabled={bulkBusy} onClick={handleBatchRestore}>
+                <RotateCcw className="h-3.5 w-3.5" />批量恢复
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive" disabled={bulkBusy} onClick={() => setBatchPermCount(selectedIds.length)}>
+                <Trash className="h-3.5 w-3.5" />批量永久删除
+              </Button>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
+            </div>
+          )}
+          <div className="max-h-[55vh] overflow-y-auto rounded-md border">
+            <Table>
+              <THead><TR>
+                <TH className="w-8"><Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(v) => toggleAll(v === true)} /></TH>
+                <TH>{t('accounts.accountColumn')}</TH><TH>删除时间</TH><TH className="text-right">{t('common.actions')}</TH>
+              </TR></THead>
+              <TBody>{deleted.map((acc) => (
+                <TR key={acc.id} className={cn(selectedIds.includes(acc.id) && 'bg-primary/5')}>
+                  <TD><Checkbox checked={selectedIds.includes(acc.id)} onCheckedChange={() => toggleOne(acc.id)} /></TD>
+                  <TD><div className="flex items-center gap-2"><Avatar className="h-7 w-7"><AvatarImage src={acc.avatar_url} alt={acc.github_login} /><AvatarFallback>{acc.github_login[0]?.toUpperCase()}</AvatarFallback></Avatar><span className="font-medium">{getDisplayName(acc)}</span></div></TD>
+                  <TD className="text-sm text-muted-foreground">{acc.deleted_at ? new Date(acc.deleted_at).toLocaleString() : '—'}</TD>
+                  <TD><div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="sm" className="gap-1" onClick={() => restoreMutation.mutate(acc.id)} disabled={restoreMutation.isPending}><RotateCcw className="h-3.5 w-3.5" />恢复</Button>
+                    <Button variant="ghost" size="sm" className="gap-1 text-destructive" onClick={() => onPermDelete(acc)}><Trash className="h-3.5 w-3.5" />永久删除</Button>
+                  </div></TD>
+                </TR>))}</TBody></Table>
+          </div>
+        </>
       ) : <EmptyState title="回收站为空" />}
       <DialogFooter>
         <Button variant="outline" className="mr-auto text-destructive" disabled={!deleted?.length || cleanMutation.isPending} onClick={() => cleanMutation.mutate()}>清理过期账户</Button>
         <Button variant="outline" onClick={onClose}>关闭</Button>
       </DialogFooter>
+      <ConfirmDialog open={batchPermCount !== null} title={`批量永久删除 ${batchPermCount ?? 0} 个账户？`} description="将连同其仓库/workflow/定时任务记录一起物理删除，不可恢复" onConfirm={handleBatchPermDelete} onCancel={() => setBatchPermCount(null)} />
     </Dialog>
   )
 }

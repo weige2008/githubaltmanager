@@ -71,7 +71,6 @@ func ensureDefaults() {
 			"GAM_TZ":                 "Asia/Shanghai",
 			"GAM_AUTOCHECK_CONCURRENCY": "10",
 			"GAM_AUTOSYNC_CONCURRENCY":  "4",
-			"GAM_BAN_CHECK_WEB":         "true",
 		}
 
 	for key, val := range defaults {
@@ -103,7 +102,7 @@ func saveDotEnv() {
 		"GAM_JWT_SECRET", "GAM_MASTER_SALT",
 		"GAM_GH_API", "GAM_GH_TIMEOUT", "GAM_GH_CONCURRENCY",
 		"GAM_TZ", "GAM_MASTER_PASSWORD",
-		"GAM_AUTOCHECK_CONCURRENCY", "GAM_AUTOSYNC_CONCURRENCY", "GAM_BAN_CHECK_WEB",
+		"GAM_AUTOCHECK_CONCURRENCY", "GAM_AUTOSYNC_CONCURRENCY",
 	}
 	f, err := os.OpenFile(".env", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
