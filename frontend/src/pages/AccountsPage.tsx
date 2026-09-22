@@ -208,8 +208,10 @@ export default function AccountsPage() {
     return map[status] || map.unknown
   }
 
-  const allChecked = sortedAccounts.length > 0 && selectedIds.length === sortedAccounts.length
-  const someChecked = selectedIds.length > 0 && selectedIds.length < sortedAccounts.length
+  const allChecked = sortedAccounts.length > 0 && sortedAccounts.every(a => selectedIds.includes(a.id))
+  const someChecked = sortedAccounts.some(a => selectedIds.includes(a.id)) && !allChecked
+  const toggleSelectVisible = (v: boolean) => setSelectedIds(prev => v ? [...new Set([...prev, ...sortedAccounts.map(a => a.id)])] : prev.filter(id => !sortedAccounts.some(a => a.id === id)))
+  const quickSelectByStatus = (status: string) => setSelectedIds(prev => [...new Set([...prev, ...sortedAccounts.filter(a => a.status === status).map(a => a.id)])])
 
   const handleBatchAssign = (groupName: string) => {
     if (selectedIds.length === 0) return
@@ -376,9 +378,9 @@ export default function AccountsPage() {
             批量删除 ({selectedIds.length})
           </Button>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'banned').map(a => a.id))}>全选封禁</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'active').map(a => a.id))}>全选正常</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(sortedAccounts.filter(a => a.status === 'token_expired').map(a => a.id))}>全选Token过期</Button>
+          <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('banned')}>全选封禁</Button>
+          <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('active')}>全选正常</Button>
+          <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('token_expired')}>全选Token过期</Button>
         </div>
       )}
 
@@ -407,7 +409,7 @@ export default function AccountsPage() {
           viewMode === 'flat' ? (
             <Table>
               <THead><TR>
-                <TH className="w-8"><Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(v) => setSelectedIds(v ? sortedAccounts.map(a => a.id) : [])} /></TH>
+                <TH className="w-8"><Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(v) => toggleSelectVisible(v === true)} /></TH>
                 <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.repos')}</TH><TH>{t('accounts.workflows')}</TH><TH>{t('nav.tasks')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
               </TR></THead>
               <TBody>{sortedAccounts.map(renderAccountRow)}</TBody>

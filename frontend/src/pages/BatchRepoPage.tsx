@@ -148,9 +148,16 @@ export default function BatchRepoPage() {
     setAccountIds(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id])
   }
 
+  const visibleAccounts = useMemo(() => accounts ? sortAccounts(accounts).filter(a => {
+    if (!groupFilter) return true
+    if (groupFilter === '__ungrouped__') return !a.group
+    return (a.group || '') === groupFilter
+  }) : [], [accounts, groupFilter])
+  const allVisibleSelected = visibleAccounts.length > 0 && visibleAccounts.every(a => accountIds.includes(a.id))
+
   const toggleAll = () => {
-    const list = accounts ? sortAccounts(accounts).filter(a => !groupFilter || groupFilter === '__ungrouped__' ? (groupFilter === '__ungrouped__' ? !a.group : true) : (a.group || '') === groupFilter) : []
-    setAccountIds(prev => prev.length === list.length ? [] : list.map(a => a.id))
+    const ids = visibleAccounts.map(a => a.id)
+    setAccountIds(prev => allVisibleSelected ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
   }
 
   const addManualFile = () => setManualFiles(prev => [...prev, { path: '', content: '' }])
@@ -189,7 +196,7 @@ export default function BatchRepoPage() {
             <CardTitle className="flex items-center justify-between text-base">
               <span>{t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAll}>
-                {t('batchRepo.selectAll')}
+                {allVisibleSelected ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
             {(groups || []).filter(g => g).length > 0 && (
@@ -203,11 +210,7 @@ export default function BatchRepoPage() {
             )}
           </CardHeader>
           <CardContent className="max-h-[500px] space-y-1 overflow-y-auto">
-            {(accounts ? sortAccounts(accounts).filter(a => {
-              if (!groupFilter) return true
-              if (groupFilter === '__ungrouped__') return !a.group
-              return (a.group || '') === groupFilter
-            }) : []).map(acc => (
+            {visibleAccounts.map(acc => (
               <label key={acc.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-accent">
                 <Checkbox checked={accountIds.includes(acc.id)} onCheckedChange={() => toggleAccount(acc.id)} />
                 <span className="text-sm font-medium">{displayName(acc)}</span>

@@ -63,8 +63,14 @@ function BatchUpdateRepos() {
   ;(accounts || []).forEach(a => accMap.set(a.id, displayName(a)))
 
   const sortedAccounts = accounts ? sortAccounts(accounts).filter(a => !groupFilter || groupFilter === '__ungrouped__' ? (groupFilter === '__ungrouped__' ? !a.group : true) : (a.group || '') === groupFilter) : []
+  const visibleAccountIds = sortedAccounts.map(a => a.id)
+  const allVisibleSelected = visibleAccountIds.length > 0 && visibleAccountIds.every(id => selectedAccounts.includes(id))
 
   const toggleAccount = (id: number) => { setSelectedAccounts(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]); setSelectedRepoIds([]) }
+  const toggleAllAccounts = () => {
+    setSelectedAccounts(prev => allVisibleSelected ? prev.filter(id => !visibleAccountIds.includes(id)) : [...new Set([...prev, ...visibleAccountIds])])
+    setSelectedRepoIds([])
+  }
   const toggleRepo = (id: number) => setSelectedRepoIds(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])
 
   const executeBatch = async () => {
@@ -131,8 +137,8 @@ function BatchUpdateRepos() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
             <span>选择账户</span>
-            <Button variant="ghost" size="sm" onClick={() => { setSelectedAccounts(prev => prev.length === sortedAccounts.length ? [] : sortedAccounts.map(a => a.id)); setSelectedRepoIds([]) }}>
-              {selectedAccounts.length === sortedAccounts.length && sortedAccounts.length > 0 ? '取消' : '全选'}
+            <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
+              {allVisibleSelected ? '取消全选' : '全选'}
             </Button>
           </CardTitle>
           {(groups || []).filter(g => g).length > 0 && (

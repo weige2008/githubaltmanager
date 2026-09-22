@@ -88,6 +88,8 @@ export default function BatchPage() {
     else if (groupFilter) list = list.filter(a => (a.group || '') === groupFilter)
     return list
   }, [accounts, groupFilter])
+  const visibleAccountIds = useMemo(() => sortedAccountsList.map(a => a.id), [sortedAccountsList])
+  const allVisibleSelected = visibleAccountIds.length > 0 && visibleAccountIds.every(id => selectedAccounts.includes(id))
   const accMap = useMemo(() => {
     const m = new Map<number, Account>()
     accounts?.forEach((a) => m.set(a.id, a))
@@ -122,7 +124,7 @@ export default function BatchPage() {
   }
 
   const toggleAllAccounts = () => {
-    setSelectedAccounts((prev) => prev.length === sortedAccountsList.length ? [] : sortedAccountsList.map((a) => a.id))
+    setSelectedAccounts((prev) => allVisibleSelected ? prev.filter(id => !visibleAccountIds.includes(id)) : [...new Set([...prev, ...visibleAccountIds])])
     setSelectedRepoIds([])
   }
 
@@ -300,7 +302,7 @@ export default function BatchPage() {
             <CardTitle className="flex items-center justify-between text-base">
               <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {t('batchRepo.selectAccount')}</span>
               <Button variant="ghost" size="sm" onClick={toggleAllAccounts}>
-                {selectedAccounts.length === sortedAccountsList.length && sortedAccountsList.length > 0 ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
+                {allVisibleSelected ? t('batchRepo.deselectAll') : t('batchRepo.selectAll')}
               </Button>
             </CardTitle>
             {(groups || []).filter(g => g).length > 0 && (
