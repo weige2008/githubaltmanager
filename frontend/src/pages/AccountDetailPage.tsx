@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2 } from 'lucide-react'
+import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/ui/error-state'
@@ -62,8 +62,11 @@ export default function AccountDetailPage() {
         description={acc.display_name}
         actions={
           <div className="flex gap-2">
-            <a href={`https://github.com/${acc.github_login}`} target="_blank" rel="noreferrer">
+            <a href={`https://github.com/${acc.github_login}`} target="_blank" rel="noreferrer" title={`github.com/${acc.github_login}`}>
               <Button variant="outline" className="gap-2"><Github className="h-4 w-4" />GitHub 主页</Button>
+            </a>
+            <a href={`https://api.github.com/users/${acc.github_login}`} target="_blank" rel="noreferrer" title={`api.github.com/users/${acc.github_login}（公开 JSON 数据）`}>
+              <Button variant="outline" className="gap-2"><Braces className="h-4 w-4" />API</Button>
             </a>
             <Button variant="outline" onClick={() => navigate('/accounts')}>{t('common.back')}</Button>
           </div>
