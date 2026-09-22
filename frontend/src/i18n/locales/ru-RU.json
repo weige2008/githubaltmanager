@@ -559,7 +559,8 @@
     "emailVisibility": "Видимость email",
     "emailVisOn": "Публичный",
     "emailVisOff": "Приватный",
-    "emailVisNoScope": "У токена нет права user:email — видимость email нельзя прочитать или изменить (переимпортируйте с token, содержащим user:email)."
+    "emailVisNoScope": "У токена нет права user:email — видимость email нельзя прочитать или изменить (переимпортируйте с token, содержащим user:email).",
+    "statusTokenExpired": "Token истёк"
   },
   "repos": {
     "title": "Репозитории",
@@ -1007,5 +1008,30 @@
     "private": "Приватный",
     "confirmTitle": "Подтвердите действие",
     "confirmDesc": "Это действие нельзя отменить. Продолжить?"
+  },
+  "export": {
+    "title": "Экспорт данных аккаунтов",
+    "count": "Аккаунтов: {{count}}",
+    "account": "Аккаунт",
+    "login": "Логин",
+    "githubId": "GitHub ID",
+    "displayName": "Отображаемое имя",
+    "status": "Статус",
+    "statusReason": "Причина статуса",
+    "group": "Группа",
+    "note": "Заметка",
+    "token": "Token",
+    "password": "Пароль",
+    "recoveryEmail": "Email восстановления",
+    "scopes": "Token Scopes",
+    "registeredAt": "Дата регистрации",
+    "importedAt": "Дата импорта",
+    "lastCheckedAt": "Последняя проверка",
+    "profile": "Профиль",
+    "copied": "{{count}} аккаунтов скопировано в буфер обмена",
+    "downloaded": "Данные {{count}} аккаунтов скачаны",
+    "warning": " (содержит открытые token — храните осторожно)",
+    "clipboardUnavailable": "Буфер обмена недоступен",
+    "failed": "Ошибка экспорта"
   }
 }

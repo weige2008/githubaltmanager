@@ -559,7 +559,8 @@
     "emailVisibility": "Hiển thị email",
     "emailVisOn": "Công khai",
     "emailVisOff": "Riêng tư",
-    "emailVisNoScope": "Token thiếu quyền user:email — không thể đọc/sửa hiển thị email (nhập lại bằng token có user:email)."
+    "emailVisNoScope": "Token thiếu quyền user:email — không thể đọc/sửa hiển thị email (nhập lại bằng token có user:email).",
+    "statusTokenExpired": "Token hết hạn"
   },
   "repos": {
     "title": "Kho lưu trữ",
@@ -1007,5 +1008,30 @@
     "private": "Riêng tư",
     "confirmTitle": "Xác nhận thao tác",
     "confirmDesc": "Thao tác này không thể hoàn tác. Tiếp tục?"
+  },
+  "export": {
+    "title": "Xuất dữ liệu tài khoản",
+    "count": "{{count}} tài khoản",
+    "account": "Tài khoản",
+    "login": "Tên đăng nhập",
+    "githubId": "GitHub ID",
+    "displayName": "Tên hiển thị",
+    "status": "Trạng thái",
+    "statusReason": "Lý do trạng thái",
+    "group": "Nhóm",
+    "note": "Ghi chú",
+    "token": "Token",
+    "password": "Mật khẩu",
+    "recoveryEmail": "Email khôi phục",
+    "scopes": "Token Scopes",
+    "registeredAt": "Ngày đăng ký",
+    "importedAt": "Thời gian nhập",
+    "lastCheckedAt": "Kiểm tra cuối",
+    "profile": "Trang cá nhân",
+    "copied": "Đã sao chép dữ liệu {{count}} tài khoản vào clipboard",
+    "downloaded": "Đã tải dữ liệu {{count}} tài khoản",
+    "warning": " (chứa token dạng rõ — hãy bảo quản cẩn thận)",
+    "clipboardUnavailable": "Không thể dùng clipboard",
+    "failed": "Xuất thất bại"
   }
 }

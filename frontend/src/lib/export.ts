@@ -18,35 +18,50 @@ export interface ExportedAccount {
   html_url: string
 }
 
+type T = (key: string, opts?: Record<string, unknown>) => string
+
 const fmtTime = (s: string | null) => (s ? new Date(s).toLocaleString() : '—')
 
-export function formatAccountText(a: ExportedAccount): string {
+function localizedStatus(a: ExportedAccount, t: T): string {
+  const map: Record<string, string> = {
+    active: t('accounts.statusActive'),
+    banned: t('accounts.statusBanned'),
+    restricted: t('accounts.statusRestricted'),
+    token_expired: t('accounts.statusTokenExpired'),
+    error: t('accounts.statusError'),
+    unknown: t('accounts.statusUnknown'),
+  }
+  return map[a.status] || a.status
+}
+
+export function formatAccountText(a: ExportedAccount, t: T): string {
+  const N = '—'
   return [
     '──────────────────────────────',
-    `账户 #${a.id} · ${a.login}`,
+    `${t('export.account')} #${a.id} · ${a.login}`,
     '──────────────────────────────',
-    `登录名:        ${a.login}`,
-    `GitHub ID:     ${a.github_id}`,
-    `显示名:        ${a.display_name || '—'}`,
-    `状态:          ${a.status}`,
-    `状态原因:      ${a.status_reason || '—'}`,
-    `分组:          ${a.group || '—'}`,
-    `备注:          ${a.note || '—'}`,
-    `Token:         ${a.token || '—'}`,
-    `密码:          ${a.password || '—'}`,
-    `恢复邮箱:      ${a.recovery_email || '—'}`,
-    `Token Scopes:  ${a.token_scopes || '—'}`,
-    `注册时间:      ${fmtTime(a.github_created_at)}`,
-    `导入时间:      ${fmtTime(a.created_at)}`,
-    `最后检测:      ${fmtTime(a.last_checked_at)}`,
-    `主页:          ${a.html_url}`,
+    `${t('export.login')}: ${a.login}`,
+    `${t('export.githubId')}: ${a.github_id}`,
+    `${t('export.displayName')}: ${a.display_name || N}`,
+    `${t('export.status')}: ${localizedStatus(a, t)}`,
+    `${t('export.statusReason')}: ${a.status_reason || N}`,
+    `${t('export.group')}: ${a.group || N}`,
+    `${t('export.note')}: ${a.note || N}`,
+    `${t('export.token')}: ${a.token || N}`,
+    `${t('export.password')}: ${a.password || N}`,
+    `${t('export.recoveryEmail')}: ${a.recovery_email || N}`,
+    `${t('export.scopes')}: ${a.token_scopes || N}`,
+    `${t('export.registeredAt')}: ${fmtTime(a.github_created_at)}`,
+    `${t('export.importedAt')}: ${fmtTime(a.created_at)}`,
+    `${t('export.lastCheckedAt')}: ${fmtTime(a.last_checked_at)}`,
+    `${t('export.profile')}: ${a.html_url}`,
     '',
   ].join('\n')
 }
 
-export function formatAccountsText(items: ExportedAccount[]): string {
-  const header = `GitHub Alt Manager 账户导出 · ${items.length} 个账户 · ${new Date().toLocaleString()}\n\n`
-  return header + items.map(formatAccountText).join('\n')
+export function formatAccountsText(items: ExportedAccount[], t: T): string {
+  const header = `GitHub Alt Manager · ${t('export.title')} · ${t('export.count', { count: items.length })} · ${new Date().toLocaleString()}\n\n`
+  return header + items.map(a => formatAccountText(a, t)).join('\n')
 }
 
 export function downloadText(filename: string, content: string) {

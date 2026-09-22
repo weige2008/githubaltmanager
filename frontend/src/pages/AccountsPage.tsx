@@ -269,19 +269,19 @@ export default function AccountsPage() {
     setExporting(true)
     try {
       const data = await accountApi.export(selectedIds)
-      const text = formatAccountsText(data.items)
+      const text = formatAccountsText(data.items, t)
       const name = `gam-accounts-${selectedIds.length}-${new Date().toISOString().slice(0, 10)}.txt`
-      const warning = '（含明文 token，请妥善保管）'
+      const warning = t('export.warning')
       if (mode === 'clipboard') {
         const ok = await copyToClipboard(text)
-        if (!ok) { toast.error('剪贴板不可用'); return }
-        toast.success(`已复制 ${data.count} 个账户数据到剪贴板${warning}`)
+        if (!ok) { toast.error(t('export.clipboardUnavailable')); return }
+        toast.success(t('export.copied', { count: data.count }) + ' ' + warning)
       } else {
         downloadText(name, text)
-        toast.success(`已下载 ${data.count} 个账户数据${warning}`)
+        toast.success(t('export.downloaded', { count: data.count }) + ' ' + warning)
       }
     } catch (e: any) {
-      toast.error(e?.message || '导出失败')
+      toast.error(e?.message || t('export.failed'))
     } finally {
       setExporting(false)
     }

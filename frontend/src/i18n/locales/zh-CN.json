@@ -559,7 +559,8 @@
     "emailVisibility": "邮箱公开可见性",
     "emailVisOn": "公开",
     "emailVisOff": "私密",
-    "emailVisNoScope": "当前 token 缺少 user:email 权限，无法读取/修改邮箱可见性（重新导入时使用包含 user:email 权限的 token 即可）。"
+    "emailVisNoScope": "当前 token 缺少 user:email 权限，无法读取/修改邮箱可见性（重新导入时使用包含 user:email 权限的 token 即可）。",
+    "statusTokenExpired": "Token过期"
   },
   "repos": {
     "title": "仓库浏览",
@@ -1007,5 +1008,30 @@
     "private": "私有",
     "confirmTitle": "确认操作",
     "confirmDesc": "此操作无法撤销，确定继续吗？"
+  },
+  "export": {
+    "title": "账户数据导出",
+    "count": "{{count}} 个账户",
+    "account": "账户",
+    "login": "登录名",
+    "githubId": "GitHub ID",
+    "displayName": "显示名",
+    "status": "状态",
+    "statusReason": "状态原因",
+    "group": "分组",
+    "note": "备注",
+    "token": "Token",
+    "password": "密码",
+    "recoveryEmail": "恢复邮箱",
+    "scopes": "Token Scopes",
+    "registeredAt": "注册时间",
+    "importedAt": "导入时间",
+    "lastCheckedAt": "最后检测",
+    "profile": "主页",
+    "copied": "已复制 {{count}} 个账户数据到剪贴板",
+    "downloaded": "已下载 {{count}} 个账户数据",
+    "warning": "（含明文 token，请妥善保管）",
+    "clipboardUnavailable": "剪贴板不可用",
+    "failed": "导出失败"
   }
 }

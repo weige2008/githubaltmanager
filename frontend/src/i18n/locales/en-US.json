@@ -559,7 +559,8 @@
     "emailVisibility": "Email visibility",
     "emailVisOn": "Public",
     "emailVisOff": "Private",
-    "emailVisNoScope": "The token lacks the user:email scope — email visibility cannot be read or changed (re-import with a token that includes user:email)."
+    "emailVisNoScope": "The token lacks the user:email scope — email visibility cannot be read or changed (re-import with a token that includes user:email).",
+    "statusTokenExpired": "Token expired"
   },
   "repos": {
     "title": "Repositories",
@@ -1007,5 +1008,30 @@
     "private": "Private",
     "confirmTitle": "Confirm action",
     "confirmDesc": "This action cannot be undone. Are you sure?"
+  },
+  "export": {
+    "title": "Account data export",
+    "count": "{{count}} accounts",
+    "account": "Account",
+    "login": "Login",
+    "githubId": "GitHub ID",
+    "displayName": "Display name",
+    "status": "Status",
+    "statusReason": "Status reason",
+    "group": "Group",
+    "note": "Note",
+    "token": "Token",
+    "password": "Password",
+    "recoveryEmail": "Recovery email",
+    "scopes": "Token Scopes",
+    "registeredAt": "Registered at",
+    "importedAt": "Imported at",
+    "lastCheckedAt": "Last checked",
+    "profile": "Profile",
+    "copied": "Copied {{count}} accounts to the clipboard",
+    "downloaded": "Downloaded data for {{count}} accounts",
+    "warning": " (contains plaintext tokens — keep them safe)",
+    "clipboardUnavailable": "Clipboard unavailable",
+    "failed": "Export failed"
   }
 }

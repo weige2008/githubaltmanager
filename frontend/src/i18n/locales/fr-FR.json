@@ -559,7 +559,8 @@
     "emailVisibility": "Visibilité de l'e-mail",
     "emailVisOn": "Public",
     "emailVisOff": "Privé",
-    "emailVisNoScope": "Le token n'a pas le scope user:email — la visibilité de l'e-mail ne peut être ni lue ni modifiée (réimportez avec un token incluant user:email)."
+    "emailVisNoScope": "Le token n'a pas le scope user:email — la visibilité de l'e-mail ne peut être ni lue ni modifiée (réimportez avec un token incluant user:email).",
+    "statusTokenExpired": "Token expiré"
   },
   "repos": {
     "title": "Dépôts",
@@ -1007,5 +1008,30 @@
     "private": "Privé",
     "confirmTitle": "Confirmer l'action",
     "confirmDesc": "Cette action est irréversible. Continuer ?"
+  },
+  "export": {
+    "title": "Export des données de comptes",
+    "count": "{{count}} comptes",
+    "account": "Compte",
+    "login": "Identifiant",
+    "githubId": "GitHub ID",
+    "displayName": "Nom affiché",
+    "status": "Statut",
+    "statusReason": "Raison du statut",
+    "group": "Groupe",
+    "note": "Note",
+    "token": "Token",
+    "password": "Mot de passe",
+    "recoveryEmail": "E-mail de récupération",
+    "scopes": "Token Scopes",
+    "registeredAt": "Inscrit le",
+    "importedAt": "Importé le",
+    "lastCheckedAt": "Dernière vérification",
+    "profile": "Profil",
+    "copied": "{{count}} comptes copiés dans le presse-papiers",
+    "downloaded": "Données de {{count}} comptes téléchargées",
+    "warning": " (contient des tokens en clair — à conserver précieusement)",
+    "clipboardUnavailable": "Presse-papiers indisponible",
+    "failed": "Échec de l'export"
   }
 }
