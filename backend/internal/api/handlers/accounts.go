@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -260,26 +261,41 @@ type BatchCheckPayload struct {
 	IDs []uint `json:"ids" binding:"required"`
 }
 
+// runCheckPool 账户级有界并发执行封禁检测（并发数 GAM_AUTOCHECK_CONCURRENCY，默认 10），结果保持请求顺序
+func (h *AccountHandler) runCheckPool(ids []uint) []gin.H {
+	workers := h.c.CFG.Scheduler.AutoCheckConcurrency
+	if workers < 1 {
+		workers = 1
+	}
+	results := make([]gin.H, len(ids))
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	for i, id := range ids {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int, id uint) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			acc, err := h.s.CheckStatus(h.c, id)
+			if err != nil {
+				results[i] = gin.H{"id": id, "ok": false, "error": err.Error()}
+			} else {
+				results[i] = gin.H{"id": id, "ok": true, "status": acc.Status, "reason": acc.StatusReason}
+			}
+		}(i, id)
+	}
+	wg.Wait()
+	return results
+}
+
 func (h *AccountHandler) BatchCheckStatus(c *gin.Context) {
 	var p BatchCheckPayload
 	if err := c.ShouldBindJSON(&p); err != nil || len(p.IDs) == 0 {
 		resp.BadRequest(c, "请提供 ids", err)
 		return
 	}
-	if len(p.IDs) > 100 {
-		resp.BadRequest(c, "最多 100 个账户", nil)
-		return
-	}
-	results := make([]gin.H, 0, len(p.IDs))
-	for _, id := range p.IDs {
-		acc, err := h.s.CheckStatus(h.c, id)
-		if err != nil {
-			results = append(results, gin.H{"id": id, "ok": false, "error": err.Error()})
-		} else {
-			results = append(results, gin.H{"id": id, "ok": true, "status": acc.Status, "reason": acc.StatusReason})
-		}
-	}
-	resp.OK(c, gin.H{"results": results})
+	// 有界并发执行；不再限制 100 个（数量越多耗时越长，前端 300 秒超时后后端仍会跑完）
+	resp.OK(c, gin.H{"results": h.runCheckPool(p.IDs)})
 }
 
 type BatchCheckGroupPayload struct {
@@ -295,16 +311,12 @@ func (h *AccountHandler) BatchCheckByGroup(c *gin.Context) {
 	}
 	var accs []model.Account
 	query.Find(&accs)
-	results := make([]gin.H, 0, len(accs))
-	for _, acc := range accs {
-		result, err := h.s.CheckStatus(h.c, acc.ID)
-		if err != nil {
-			results = append(results, gin.H{"id": acc.ID, "ok": false, "error": err.Error()})
-		} else {
-			results = append(results, gin.H{"id": acc.ID, "ok": true, "status": result.Status, "reason": result.StatusReason})
-		}
+	ids := make([]uint, len(accs))
+	for i, a := range accs {
+		ids[i] = a.ID
 	}
-	resp.OK(c, gin.H{"results": results, "total": len(accs)})
+	// 有界并发执行（与 batch-check 相同的池）
+	resp.OK(c, gin.H{"results": h.runCheckPool(ids), "total": len(accs)})
 }
 
 func (h *AccountHandler) ListGroups(c *gin.Context) {

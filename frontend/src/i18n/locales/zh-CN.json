@@ -167,7 +167,7 @@
       },
       "accounts_batch_check": {
         "summary": "批量检测（按 ID）",
-        "detail": "对 ids（≤100）逐个同步检测并返回逐条结果。量大时整个请求可能耗时数分钟。"
+        "detail": "对 ids 以有界并发池执行封禁检测（并发数 GAM_AUTOCHECK_CONCURRENCY，默认 10），不限制数量，返回逐条结果并保持请求顺序。账户越多耗时越长（前端 300 秒超时后后端仍会跑完）。"
       },
       "accounts_batch_check_group": {
         "summary": "批量检测（按分组）",

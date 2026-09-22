@@ -167,7 +167,7 @@
       },
       "accounts_batch_check": {
         "summary": "Vérification par lots (par IDs)",
-        "detail": "Vérifie séquentiellement ids (max 100) et renvoie le résultat par id. Les gros volumes peuvent prendre des minutes."
+        "detail": "Exécute la détection pour ids avec un pool de workers borné (GAM_AUTOCHECK_CONCURRENCY, 10 par défaut), sans limite de nombre ; résultats dans l'ordre de la requête. Les gros lots prennent plus de temps (timeout frontend 300 s, le backend continue)."
       },
       "accounts_batch_check_group": {
         "summary": "Vérification par lots (par groupe)",

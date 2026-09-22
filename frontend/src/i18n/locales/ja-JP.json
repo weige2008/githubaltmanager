@@ -167,7 +167,7 @@
       },
       "accounts_batch_check": {
         "summary": "一括チェック（ID 指定）",
-        "detail": "ids（最大 100）を順次チェックし個別結果を返す。件数が多いと数分かかる場合あり。"
+        "detail": "ids を有界ワーカープール（GAM_AUTOCHECK_CONCURRENCY、既定 10）で並列検知し、件数制限なし、リクエスト順に結果を返します。件数が多いほど時間がかかります（フロントは 300 秒でタイムアウト、バックエンドは継続）。"
       },
       "accounts_batch_check_group": {
         "summary": "一括チェック（グループ指定）",

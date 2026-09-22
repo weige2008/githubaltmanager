@@ -167,7 +167,7 @@
       },
       "accounts_batch_check": {
         "summary": "Kiểm tra hàng loạt (theo ID)",
-        "detail": "Tuần tự kiểm tra ids (tối đa 100) và trả kết quả từng id. Lô lớn có thể mất vài phút."
+        "detail": "Chạy kiểm tra cho ids bằng pool worker có giới hạn (GAM_AUTOCHECK_CONCURRENCY, mặc định 10), không giới hạn số lượng, trả kết quả theo thứ tự yêu cầu. Lô càng lớn càng lâu (frontend hết hạn sau 300 giây, backend vẫn chạy tiếp)."
       },
       "accounts_batch_check_group": {
         "summary": "Kiểm tra hàng loạt (theo nhóm)",

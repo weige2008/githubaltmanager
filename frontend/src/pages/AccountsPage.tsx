@@ -139,7 +139,7 @@ export default function AccountsPage() {
   const batchCheckMutation = useMutation({
     mutationFn: (ids: number[]) => accountApi.batchCheck(ids),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); toast.success(t('accounts.checkComplete')) },
-    onError: () => toast.error(t('accounts.checkFailed')),
+    onError: (e: any) => toast.error(e?.message || t('accounts.checkFailed')),
   })
 
   const batchAssignMutation = useMutation({
@@ -174,7 +174,7 @@ export default function AccountsPage() {
   const checkMutation = useMutation({
     mutationFn: (id: number) => accountApi.checkStatus(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['accounts'] }); toast.success(t('accounts.checkComplete')) },
-    onError: () => toast.error(t('accounts.checkFailed')),
+    onError: (e: any) => toast.error(e?.message || t('accounts.checkFailed')),
   })
 
   const handleImport = async () => {

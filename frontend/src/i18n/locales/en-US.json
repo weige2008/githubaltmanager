@@ -167,7 +167,7 @@
       },
       "accounts_batch_check": {
         "summary": "Batch check (by IDs)",
-        "detail": "Runs detection for ids (max 100) sequentially and returns per-id results. Large batches can take minutes."
+        "detail": "Runs ban detection for ids with a bounded worker pool (GAM_AUTOCHECK_CONCURRENCY, default 10), no count limit, returning per-id results in request order. Larger batches take proportionally longer (the frontend times out at 300s while the backend keeps running)."
       },
       "accounts_batch_check_group": {
         "summary": "Batch check (by group)",
