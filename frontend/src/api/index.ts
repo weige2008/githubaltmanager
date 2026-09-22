@@ -56,6 +56,7 @@ export const accountApi = {
   updateProfile: (id: number, data: GitHubProfileUpdate) => http.patch<unknown, GitHubProfile>(`/accounts/${id}/profile`, data),
   getEmailVisibility: (id: number) => http.get<unknown, { email: string; visibility: string }>(`/accounts/${id}/email-visibility`),
   setEmailVisibility: (id: number, visibility: 'public' | 'private') => http.patch<unknown, { ok: boolean; visibility: string }>(`/accounts/${id}/email-visibility`, { visibility }),
+  export: (ids: number[]) => http.post<unknown, { items: import('@/lib/export').ExportedAccount[]; count: number }>('/accounts/export', { ids }),
   import: (data: { token: string; password?: string; recovery_email?: string; note?: string; group?: string }) =>
     http.post<unknown, Account>('/accounts/import', data),
   update: (id: number, data: Partial<{ password?: string; recovery_email?: string; note?: string; group?: string }>) =>

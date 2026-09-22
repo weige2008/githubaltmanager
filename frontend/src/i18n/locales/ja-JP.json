@@ -380,6 +380,10 @@
       "accounts_email_visibility_set": {
         "summary": "主メールの公開設定を変更",
         "detail": "PATCH /user/email/visibility に {\"visibility\":\"public\"|\"private\"} を送り、主メールが公開プロフィールで見えるかを変更します。user:email 権限が必要。"
+      },
+      "accounts_export": {
+        "summary": "アカウントデータの全量エクスポート",
+        "detail": "指定 ids の全フィールドをエクスポートします（**復号済みの token・パスワード・復旧メールを含む平文**）。存在しない/削除済みはスキップ。items と count を返す。エクスポート内容の管理に注意。"
       }
     },
     "danger": {
@@ -402,7 +406,8 @@
       "d_batch_set_secrets": "選択したリポジトリの Actions secrets を実際に書き込みます（同名は上書き）",
       "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可",
       "d_accounts_profile_update": "この GitHub アカウントの公開プロフィールを実際に変更します（再呼び出しで元に戻せます）",
-      "d_accounts_email_visibility": "この GitHub アカウントの主メールの公開設定を実際に変更します"
+      "d_accounts_email_visibility": "この GitHub アカウントの主メールの公開設定を実際に変更します",
+      "d_accounts_export": "エクスポートには平文の token・パスワード・復旧メールが含まれます。管理に注意してください"
     },
     "p": {
       "p_id_account": "アカウント ID（accounts 一覧の id）",

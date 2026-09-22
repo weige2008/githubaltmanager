@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces } from 'lucide-react'
+import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces, ClipboardCopy, Download } from 'lucide-react'
+import { formatAccountsText, downloadText } from '@/lib/export'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/ui/error-state'
@@ -41,6 +42,28 @@ export default function AccountDetailPage() {
     navigator.clipboard.writeText(text).then(() => toast.success(label)).catch(() => toast.error(t('accounts.copyFailed')))
   }
 
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async (mode: 'clipboard' | 'txt') => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const data = await accountApi.export([accId])
+      const text = formatAccountsText(data.items)
+      const warning = '（含明文 token，请妥善保管）'
+      if (mode === 'clipboard') {
+        await navigator.clipboard.writeText(text)
+        toast.success(`已复制账户数据到剪贴板${warning}`)
+      } else {
+        downloadText(`gam-account-${accId}.txt`, text)
+        toast.success(`已下载账户数据${warning}`)
+      }
+    } catch (e: any) {
+      toast.error(e?.message || '导出失败')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const syncRepos = async () => {
     toast.loading(t('repos.syncing'), { id: 'sync' })
     try { const r = await repoApi.refreshRepos(accId); toast.success(t('accounts.syncedCount', { count: r.total }), { id: 'sync' }) }
@@ -68,6 +91,12 @@ export default function AccountDetailPage() {
             <a href={`https://api.github.com/users/${acc.github_login}`} target="_blank" rel="noreferrer" title={`api.github.com/users/${acc.github_login}（公开 JSON 数据）`}>
               <Button variant="outline" className="gap-2"><Braces className="h-4 w-4" />API</Button>
             </a>
+            <Button variant="outline" size="icon" disabled={exporting} onClick={() => handleExport('clipboard')} title="导出全部数据（含明文 token）并复制到剪贴板">
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCopy className="h-4 w-4" />}
+            </Button>
+            <Button variant="outline" size="icon" disabled={exporting} onClick={() => handleExport('txt')} title="导出全部数据（含明文 token）并下载 TXT 文件">
+              <Download className="h-4 w-4" />
+            </Button>
             <Button variant="outline" onClick={() => navigate('/accounts')}>{t('common.back')}</Button>
           </div>
         }

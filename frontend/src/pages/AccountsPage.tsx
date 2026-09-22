@@ -12,7 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock, ChevronLeft, ChevronRight, ClipboardCopy, Download } from 'lucide-react'
+import { formatAccountsText, downloadText } from '@/lib/export'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -261,6 +262,29 @@ export default function AccountsPage() {
     batchDeleteMut.mutate(batchDeleteTarget)
   }
 
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async (mode: 'clipboard' | 'txt') => {
+    if (!selectedIds.length || exporting) return
+    setExporting(true)
+    try {
+      const data = await accountApi.export(selectedIds)
+      const text = formatAccountsText(data.items)
+      const name = `gam-accounts-${selectedIds.length}-${new Date().toISOString().slice(0, 10)}.txt`
+      const warning = '（含明文 token，请妥善保管）'
+      if (mode === 'clipboard') {
+        await navigator.clipboard.writeText(text)
+        toast.success(`已复制 ${data.count} 个账户数据到剪贴板${warning}`)
+      } else {
+        downloadText(name, text)
+        toast.success(`已下载 ${data.count} 个账户数据${warning}`)
+      }
+    } catch (e: any) {
+      toast.error(e?.message || '导出失败')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const renderAccountRow = (acc: Account) => {
     const sb = statusBadge(acc.status)
     const isPinned = pinnedIds.includes(acc.id)
@@ -391,6 +415,14 @@ export default function AccountsPage() {
           <Button variant="outline" size="sm" className="h-8 gap-1 text-destructive hover:text-destructive" disabled={batchDeleteMut.isPending} onClick={handleBatchDelete}>
             {batchDeleteMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
             批量删除 ({selectedIds.length})
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1" disabled={exporting} onClick={() => handleExport('clipboard')} title="导出选中账户的全部数据（含明文 token）并复制到剪贴板">
+            {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ClipboardCopy className="h-3 w-3" />}
+            复制导出
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1" disabled={exporting} onClick={() => handleExport('txt')} title="导出选中账户的全部数据（含明文 token）并下载 TXT 文件">
+            <Download className="h-3 w-3" />
+            下载 TXT
           </Button>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelectedIds([])}>取消选择</Button>
           <Button variant="ghost" size="sm" onClick={() => quickSelectByStatus('banned')}>全选封禁</Button>

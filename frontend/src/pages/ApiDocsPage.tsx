@@ -82,6 +82,7 @@ const GROUPS: EndpointGroup[] = [
       { key: 'accounts_restore', method: 'POST', path: '/api/accounts/:id/restore', pp: [ACC_ID] },
       { key: 'accounts_check', method: 'POST', path: '/api/accounts/:id/check', pp: [ACC_ID] },
       { key: 'accounts_batch_check', method: 'POST', path: '/api/accounts/batch-check', body: { ids: [1, 2, 3] } },
+      { key: 'accounts_export', method: 'POST', path: '/api/accounts/export', danger: 'd_accounts_export', body: { ids: [1, 2] } },
       { key: 'accounts_batch_check_group', method: 'POST', path: '/api/accounts/batch-check-group', body: { group: '' } },
       { key: 'accounts_groups', method: 'GET', path: '/api/accounts/groups' },
       { key: 'accounts_repos', method: 'GET', path: '/api/accounts/:id/repos', pp: [ACC_ID] },

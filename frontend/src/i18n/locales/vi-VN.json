@@ -380,6 +380,10 @@
       "accounts_email_visibility_set": {
         "summary": "Đổi hiển thị email chính",
         "detail": "Gọi PATCH /user/email/visibility với {\"visibility\":\"public\"|\"private\"} — đổi việc email chính có hiển thị trong hồ sơ công khai hay không. Cần quyền user:email."
+      },
+      "accounts_export": {
+        "summary": "Xuất toàn bộ dữ liệu tài khoản",
+        "detail": "Xuất mọi trường của các tài khoản theo ids, **bao gồm token, mật khẩu, email khôi phục đã giải mã** (dạng rõ). Bỏ qua tài khoản không tồn tại/đã xóa. Trả về items và count. Hãy bảo quản nội dung xuất cẩn thận."
       }
     },
     "danger": {
@@ -402,7 +406,8 @@
       "d_batch_set_secrets": "Actions secrets của các repo đã chọn sẽ được ghi thật (trùng tên sẽ ghi đè)",
       "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi",
       "d_accounts_profile_update": "Hồ sơ công khai của tài khoản GitHub này sẽ thực sự bị thay đổi (có thể gọi lại để hoàn tác)",
-      "d_accounts_email_visibility": "Chế độ hiển thị email chính của tài khoản GitHub này sẽ thực sự bị thay đổi"
+      "d_accounts_email_visibility": "Chế độ hiển thị email chính của tài khoản GitHub này sẽ thực sự bị thay đổi",
+      "d_accounts_export": "Nội dung xuất có token, mật khẩu, email khôi phục dạng rõ — hãy bảo quản cẩn thận"
     },
     "p": {
       "p_id_account": "ID tài khoản (id từ danh sách accounts)",

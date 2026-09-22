@@ -43,6 +43,7 @@ func RegisterAccountRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/:id/check", h.CheckStatus)
 		grp.POST("/batch-check", h.BatchCheckStatus)
 		grp.POST("/batch-check-group", h.BatchCheckByGroup)
+		grp.POST("/export", h.Export)
 		grp.GET("/groups", h.ListGroups)
 		grp.GET("/recycle-bin", h.ListRecycleBin)
 		grp.DELETE("/recycle-bin/:id", h.PermanentDelete)
@@ -221,6 +222,38 @@ func (h *AccountHandler) Update(c *gin.Context) {
 		return
 	}
 	resp.OK(c, h.s.ToOut(acc))
+}
+
+// Export 全量导出账户数据（含解密后的 token/密码/恢复邮箱），POST /api/accounts/export
+func (h *AccountHandler) Export(c *gin.Context) {
+	var p BatchCheckPayload
+	if err := c.ShouldBindJSON(&p); err != nil || len(p.IDs) == 0 {
+		resp.BadRequest(c, "请提供 ids", err)
+		return
+	}
+	items := make([]gin.H, 0, len(p.IDs))
+	for _, id := range p.IDs {
+		acc, err := h.s.GetActive(uint(id))
+		if err != nil {
+			continue // 不存在或已删除，跳过
+		}
+		token, tokErr := crypto.DecryptField(acc.TokenEnc)
+		password, _ := crypto.DecryptField(acc.PasswordEnc)
+		email, _ := crypto.DecryptField(acc.RecoveryEmail)
+		items = append(items, gin.H{
+			"id": acc.ID, "github_id": acc.GithubID,
+			"login": acc.GithubLogin, "display_name": acc.DisplayName,
+			"status": acc.Status, "status_reason": acc.StatusReason,
+			"group": acc.Group, "note": acc.Note,
+			"token": func() string { if tokErr != nil { return "" }; return token }(),
+			"password": password, "recovery_email": email,
+			"token_scopes": acc.TokenScopes,
+			"github_created_at": acc.GithubCreatedAt, "last_checked_at": acc.LastCheckedAt,
+			"created_at": acc.CreatedAt, "updated_at": acc.UpdatedAt,
+			"html_url": "https://github.com/" + acc.GithubLogin,
+		})
+	}
+	resp.OK(c, gin.H{"items": items, "count": len(items)})
 }
 
 // GetGitHubProfile 拉取账户当前 GitHub 公开资料（GET /api/accounts/:id/profile）

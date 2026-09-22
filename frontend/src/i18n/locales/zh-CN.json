@@ -380,6 +380,10 @@
       "accounts_email_visibility_set": {
         "summary": "设置主邮箱公开可见性",
         "detail": "调 PATCH /user/email/visibility，body 为 {\"visibility\":\"public\"|\"private\"}，实时修改主邮箱在公开资料中是否可见。需要 token 含 user:email 权限。"
+      },
+      "accounts_export": {
+        "summary": "全量导出账户数据",
+        "detail": "按 ids 导出账户的全部数据，**含解密后的 token、密码、恢复邮箱**（明文）。跳过不存在或已删除的账户。返回 items 数组与 count。请妥善保管导出内容。"
       }
     },
     "danger": {
@@ -402,7 +406,8 @@
       "d_batch_set_secrets": "将真实写入选中仓库的 Actions secrets（同名覆盖）",
       "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复",
       "d_accounts_profile_update": "将真实修改该 GitHub 账户的公开资料（可通过再次调用改回）",
-      "d_accounts_email_visibility": "将真实修改该 GitHub 账户的主邮箱公开可见性"
+      "d_accounts_email_visibility": "将真实修改该 GitHub 账户的主邮箱公开可见性",
+      "d_accounts_export": "导出内容包含明文 token / 密码 / 恢复邮箱，请妥善保管"
     },
     "p": {
       "p_id_account": "账户 ID（accounts 列表返回的 id）",

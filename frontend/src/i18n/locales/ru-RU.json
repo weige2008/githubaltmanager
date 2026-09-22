@@ -380,6 +380,10 @@
       "accounts_email_visibility_set": {
         "summary": "Изменить видимость основного email",
         "detail": "Вызывает PATCH /user/email/visibility с {\"visibility\":\"public\"|\"private\"} — меняет, виден ли основной email в публичном профиле. Требуется scope user:email."
+      },
+      "accounts_export": {
+        "summary": "Полный экспорт данных аккаунтов",
+        "detail": "Экспортирует все поля указанных аккаунтов, **включая расшифрованные token, пароль и email восстановления** (открытым текстом). Несуществующие/удалённые пропускаются. Возвращает items и count. Берегите экспортированные данные."
       }
     },
     "danger": {
@@ -402,7 +406,8 @@
       "d_batch_set_secrets": "В выбранные репозитории будут реально записаны Actions secrets (обновление по имени)",
       "d_batch_delete_secrets": "Actions secrets выбранных репозиториев будут реально удалены — невосстановимо",
       "d_accounts_profile_update": "Публичный профиль этого GitHub-аккаунта будет реально изменён (можно вернуть повторным вызовом)",
-      "d_accounts_email_visibility": "Видимость основного email этого GitHub-аккаунта будет реально изменена"
+      "d_accounts_email_visibility": "Видимость основного email этого GitHub-аккаунта будет реально изменена",
+      "d_accounts_export": "Экспорт содержит открытые token, пароль и email восстановления — храните осторожно"
     },
     "p": {
       "p_id_account": "ID аккаунта (id из списка accounts)",

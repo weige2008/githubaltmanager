@@ -380,6 +380,10 @@
       "accounts_email_visibility_set": {
         "summary": "Définir la visibilité de l'e-mail principal",
         "detail": "Appelle PATCH /user/email/visibility avec {\"visibility\":\"public\"|\"private\"} — change si l'e-mail principal est visible dans le profil public. Requiert le scope user:email."
+      },
+      "accounts_export": {
+        "summary": "Export complet des données de comptes",
+        "detail": "Exporte tous les champs des comptes indiqués, **y compris token, mot de passe et e-mail de récupération déchiffrés** (en clair). Les comptes absents/supprimés sont ignorés. Renvoie items et count. Protégez soigneusement le contenu exporté."
       }
     },
     "danger": {
@@ -402,7 +406,8 @@
       "d_batch_set_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement écrits (écrasement par nom)",
       "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable",
       "d_accounts_profile_update": "Le profil public de ce compte GitHub sera réellement modifié (réversible en rappelant)",
-      "d_accounts_email_visibility": "La visibilité de l'e-mail principal de ce compte GitHub sera réellement modifiée"
+      "d_accounts_email_visibility": "La visibilité de l'e-mail principal de ce compte GitHub sera réellement modifiée",
+      "d_accounts_export": "L'export contient token, mot de passe et e-mail de récupération en clair — protégez-le"
     },
     "p": {
       "p_id_account": "ID du compte (id de la liste accounts)",
