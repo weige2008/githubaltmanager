@@ -305,6 +305,9 @@ export default function BatchPage() {
                 {selectedAccounts.length > 0 && (
                   <>
                     <span className="mr-1 text-xs text-muted-foreground">已选 {selectedAccounts.length}</span>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { const bad = new Set((accounts || []).filter(a => a.status === 'banned' || a.status === 'restricted').map(a => a.id)); setSelectedAccounts(prev => prev.filter(id => !bad.has(id))); setSelectedRepoIds([]) }}>
+                      去除受限/封禁
+                    </Button>
                     <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => { setSelectedAccounts([]); setSelectedRepoIds([]) }}>
                       清空
                     </Button>

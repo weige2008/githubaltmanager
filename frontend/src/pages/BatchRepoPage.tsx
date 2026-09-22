@@ -199,6 +199,9 @@ export default function BatchRepoPage() {
                 {accountIds.length > 0 && (
                   <>
                     <span className="mr-1 text-xs text-muted-foreground">已选 {accountIds.length}</span>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { const bad = new Set((accounts || []).filter(a => a.status === 'banned' || a.status === 'restricted').map(a => a.id)); setAccountIds(prev => prev.filter(id => !bad.has(id))) }}>
+                      去除受限/封禁
+                    </Button>
                     <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={() => setAccountIds([])}>
                       清空
                     </Button>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { Users, CheckCircle, FolderGit2, Zap, ArrowRight, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } } }
 
@@ -20,6 +22,10 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { data: stats, isLoading, isError, refetch } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
+  // 主页账户卡片：只显示正常账户（偏好持久化在 localStorage）
+  const [activeOnly, setActiveOnly] = useState(() => localStorage.getItem('gam-dash-active-only') === 'true')
+  useEffect(() => { localStorage.setItem('gam-dash-active-only', String(activeOnly)) }, [activeOnly])
+  const displayAccounts = sortAccounts(activeOnly ? (accounts || []).filter(a => a.status === 'active') : (accounts || [])).slice(0, 9)
 
   if (isLoading) return <LoadingState />
   if (isError) return <ErrorState retry={refetch} />
@@ -134,11 +140,18 @@ export default function DashboardPage() {
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>
           <Card><CardHeader><CardTitle className="flex items-center justify-between text-base">
             <span>{t('nav.accounts')}</span>
-            <a href="/accounts" className="text-xs text-muted-foreground hover:text-primary transition-colors">全部 {accounts.length} 个 →</a>
+            <div className="flex items-center gap-3">
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+                <Checkbox checked={activeOnly} onCheckedChange={(v) => setActiveOnly(v === true)} />
+                只显示正常
+              </label>
+              <a href="/accounts" className="text-xs text-muted-foreground hover:text-primary transition-colors">全部 {accounts.length} 个 →</a>
+            </div>
           </CardTitle></CardHeader>
             <CardContent>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {sortAccounts(accounts).slice(0, 9).map((acc) => {
+              {displayAccounts.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {displayAccounts.map((acc) => {
                   const statusMap: Record<string, { color: string; label: string }> = {
                     active: { color: 'text-green-500', label: '正常' },
                     banned: { color: 'text-red-500', label: '封禁' },
@@ -156,6 +169,9 @@ export default function DashboardPage() {
                   )
                 })}
               </div>
+            ) : (
+              <div className="py-6 text-center text-sm text-muted-foreground">没有正常状态的账户</div>
+            )}
             </CardContent>
           </Card>
         </motion.div>
