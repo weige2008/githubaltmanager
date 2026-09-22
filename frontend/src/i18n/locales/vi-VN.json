@@ -372,6 +372,14 @@
       "accounts_profile_update": {
         "summary": "Cập nhật hồ sơ công khai GitHub",
         "detail": "Dùng token của tài khoản gọi PATCH /user để trực tiếp sửa hồ sơ công khai trên GitHub: name/email/blog/company/location/bio/twitter_username; chuỗi rỗng nghĩa là xóa trắng. Email công khai phải đã được xác minh. Cache display_name cục bộ cũng được đồng bộ."
+      },
+      "accounts_email_visibility_get": {
+        "summary": "Xem hiển thị email chính",
+        "detail": "Dùng token của tài khoản gọi GET /user/emails, trả về email chính và chế độ hiển thị (public/private). Cần quyền user:email."
+      },
+      "accounts_email_visibility_set": {
+        "summary": "Đổi hiển thị email chính",
+        "detail": "Gọi PATCH /user/email/visibility với {\"visibility\":\"public\"|\"private\"} — đổi việc email chính có hiển thị trong hồ sơ công khai hay không. Cần quyền user:email."
       }
     },
     "danger": {
@@ -393,7 +401,8 @@
       "d_system_update": "Dịch vụ tải binary mới và tự khởi động lại — gián đoạn ngắn",
       "d_batch_set_secrets": "Actions secrets của các repo đã chọn sẽ được ghi thật (trùng tên sẽ ghi đè)",
       "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi",
-      "d_accounts_profile_update": "Hồ sơ công khai của tài khoản GitHub này sẽ thực sự bị thay đổi (có thể gọi lại để hoàn tác)"
+      "d_accounts_profile_update": "Hồ sơ công khai của tài khoản GitHub này sẽ thực sự bị thay đổi (có thể gọi lại để hoàn tác)",
+      "d_accounts_email_visibility": "Chế độ hiển thị email chính của tài khoản GitHub này sẽ thực sự bị thay đổi"
     },
     "p": {
       "p_id_account": "ID tài khoản (id từ danh sách accounts)",
@@ -541,7 +550,11 @@
     "profileLocation": "Vị trí",
     "profileBio": "Giới thiệu",
     "profileSave": "Lưu lên GitHub",
-    "profileSaveSuccess": "Đã đồng bộ lên GitHub"
+    "profileSaveSuccess": "Đã đồng bộ lên GitHub",
+    "emailVisibility": "Hiển thị email",
+    "emailVisOn": "Công khai",
+    "emailVisOff": "Riêng tư",
+    "emailVisNoScope": "Token thiếu quyền user:email — không thể đọc/sửa hiển thị email (nhập lại bằng token có user:email)."
   },
   "repos": {
     "title": "Kho lưu trữ",

@@ -372,6 +372,14 @@
       "accounts_profile_update": {
         "summary": "GitHub 公開プロフィールの更新",
         "detail": "アカウント token で PATCH /user を呼び、GitHub 上の公開プロフィールを直接変更します。空文字はフィールドのクリアを意味します。公開メールは確認済みである必要があります。ローカルの display_name キャッシュも同期します。"
+      },
+      "accounts_email_visibility_get": {
+        "summary": "主メールの公開設定を取得",
+        "detail": "アカウント token で GET /user/emails を呼び、主メールとその公開設定（public/private）を返します。user:email 権限が必要。"
+      },
+      "accounts_email_visibility_set": {
+        "summary": "主メールの公開設定を変更",
+        "detail": "PATCH /user/email/visibility に {\"visibility\":\"public\"|\"private\"} を送り、主メールが公開プロフィールで見えるかを変更します。user:email 権限が必要。"
       }
     },
     "danger": {
@@ -393,7 +401,8 @@
       "d_system_update": "新しいバイナリをダウンロードして自動再起動します（一時停止あり）",
       "d_batch_set_secrets": "選択したリポジトリの Actions secrets を実際に書き込みます（同名は上書き）",
       "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可",
-      "d_accounts_profile_update": "この GitHub アカウントの公開プロフィールを実際に変更します（再呼び出しで元に戻せます）"
+      "d_accounts_profile_update": "この GitHub アカウントの公開プロフィールを実際に変更します（再呼び出しで元に戻せます）",
+      "d_accounts_email_visibility": "この GitHub アカウントの主メールの公開設定を実際に変更します"
     },
     "p": {
       "p_id_account": "アカウント ID（accounts 一覧の id）",
@@ -541,7 +550,11 @@
     "profileLocation": "場所",
     "profileBio": "自己紹介",
     "profileSave": "GitHub に保存",
-    "profileSaveSuccess": "GitHub に同期しました"
+    "profileSaveSuccess": "GitHub に同期しました",
+    "emailVisibility": "メールアドレスの公開設定",
+    "emailVisOn": "公開",
+    "emailVisOff": "非公開",
+    "emailVisNoScope": "この token には user:email 権限がなく、公開設定を読み取り/変更できません（user:email 付きの token で再インポートしてください）。"
   },
   "repos": {
     "title": "リポジトリ",

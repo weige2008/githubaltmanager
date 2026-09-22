@@ -304,6 +304,39 @@ func (s *AccountService) UpdateGitHubProfile(c *Container, id uint, p github.Upd
 	return u, nil
 }
 
+// GetEmailVisibility 返回账户主邮箱及其公开可见性（public / private）
+func (s *AccountService) GetEmailVisibility(c *Container, id uint) (string, string, error) {
+	token, _, err := s.GetDecryptedToken(id)
+	if err != nil {
+		return "", "", err
+	}
+	ghc := github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout)
+	emails, code, err := ghc.ListEmails()
+	if err != nil {
+		return "", "", fmt.Errorf("api %d: %w", code, err)
+	}
+	for _, e := range emails {
+		if e.Primary {
+			return e.Email, e.Visibility, nil
+		}
+	}
+	return "", "", errors.New("未找到主邮箱")
+}
+
+// SetEmailVisibility 设置账户主邮箱公开可见性（public / private）
+func (s *AccountService) SetEmailVisibility(c *Container, id uint, visibility string) error {
+	token, _, err := s.GetDecryptedToken(id)
+	if err != nil {
+		return err
+	}
+	ghc := github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout)
+	_, code, err := ghc.SetEmailVisibility(visibility)
+	if err != nil {
+		return fmt.Errorf("api %d: %w", code, err)
+	}
+	return nil
+}
+
 // ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。
 // 用于导入后的二次复检：新账户信息在 GitHub 侧可能延迟生效，导致导入瞬间的首检偏差。
 // 定时器驻留在内存中（进程重启丢失，由周期性自动检测兜底）；账户已进入回收站则跳过。

@@ -35,6 +35,8 @@ func RegisterAccountRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.GET("/:id/secrets", h.GetSecrets)
 		grp.GET("/:id/profile", h.GetGitHubProfile)
 		grp.PATCH("/:id/profile", h.UpdateGitHubProfile)
+		grp.GET("/:id/email-visibility", h.GetEmailVisibility)
+		grp.PATCH("/:id/email-visibility", h.SetEmailVisibility)
 		grp.PUT("/:id", h.Update)
 		grp.DELETE("/:id", h.Delete)
 		grp.POST("/:id/restore", h.Restore)
@@ -280,6 +282,50 @@ func (h *AccountHandler) UpdateGitHubProfile(c *gin.Context) {
 		return
 	}
 	resp.OK(c, u)
+}
+
+// GetEmailVisibility 返回账户主邮箱及其公开可见性（GET /api/accounts/:id/email-visibility）
+func (h *AccountHandler) GetEmailVisibility(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if _, err := h.s.GetActive(uint(id)); err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
+	email, visibility, err := h.s.GetEmailVisibility(h.c, uint(id))
+	if err != nil {
+		resp.Internal(c, "获取邮箱可见性失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, gin.H{"email": email, "visibility": visibility})
+}
+
+// SetEmailVisibilityPayload 设置主邮箱公开可见性请求体
+type SetEmailVisibilityPayload struct {
+	Visibility string `json:"visibility" binding:"required,oneof=public private"`
+}
+
+// SetEmailVisibility 设置账户主邮箱公开可见性（PATCH /api/accounts/:id/email-visibility）
+func (h *AccountHandler) SetEmailVisibility(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var p SetEmailVisibilityPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "visibility 必须为 public 或 private", err)
+		return
+	}
+	if _, err := h.s.GetActive(uint(id)); err != nil {
+		resp.NotFound(c, "账户不存在")
+		return
+	}
+	if err := h.s.SetEmailVisibility(h.c, uint(id), p.Visibility); err != nil {
+		var apiErr *github.APIError
+		if errors.As(err, &apiErr) {
+			resp.Fail(c, apiErr.Status, "github_error", apiErr.Error())
+			return
+		}
+		resp.Internal(c, "设置失败: "+err.Error(), err)
+		return
+	}
+	resp.OK(c, gin.H{"ok": true, "visibility": p.Visibility})
 }
 
 func (h *AccountHandler) Delete(c *gin.Context) {

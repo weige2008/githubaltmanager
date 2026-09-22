@@ -372,6 +372,14 @@
       "accounts_profile_update": {
         "summary": "Mettre à jour le profil public GitHub",
         "detail": "Appelle PATCH /user avec le token du compte pour modifier le profil public sur GitHub : name/email/blog/company/location/bio/twitter_username ; une chaîne vide efface le champ. L'e-mail public doit être vérifié. Le cache display_name local est synchronisé."
+      },
+      "accounts_email_visibility_get": {
+        "summary": "Visibilité de l'e-mail principal",
+        "detail": "Appelle GET /user/emails avec le token du compte et renvoie l'e-mail principal et sa visibilité (public/privé). Requiert le scope user:email."
+      },
+      "accounts_email_visibility_set": {
+        "summary": "Définir la visibilité de l'e-mail principal",
+        "detail": "Appelle PATCH /user/email/visibility avec {\"visibility\":\"public\"|\"private\"} — change si l'e-mail principal est visible dans le profil public. Requiert le scope user:email."
       }
     },
     "danger": {
@@ -393,7 +401,8 @@
       "d_system_update": "Le service télécharge un nouveau binaire et redémarre — brève coupure",
       "d_batch_set_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement écrits (écrasement par nom)",
       "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable",
-      "d_accounts_profile_update": "Le profil public de ce compte GitHub sera réellement modifié (réversible en rappelant)"
+      "d_accounts_profile_update": "Le profil public de ce compte GitHub sera réellement modifié (réversible en rappelant)",
+      "d_accounts_email_visibility": "La visibilité de l'e-mail principal de ce compte GitHub sera réellement modifiée"
     },
     "p": {
       "p_id_account": "ID du compte (id de la liste accounts)",
@@ -541,7 +550,11 @@
     "profileLocation": "Emplacement",
     "profileBio": "Bio",
     "profileSave": "Enregistrer sur GitHub",
-    "profileSaveSuccess": "Synchronisé avec GitHub"
+    "profileSaveSuccess": "Synchronisé avec GitHub",
+    "emailVisibility": "Visibilité de l'e-mail",
+    "emailVisOn": "Public",
+    "emailVisOff": "Privé",
+    "emailVisNoScope": "Le token n'a pas le scope user:email — la visibilité de l'e-mail ne peut être ni lue ni modifiée (réimportez avec un token incluant user:email)."
   },
   "repos": {
     "title": "Dépôts",

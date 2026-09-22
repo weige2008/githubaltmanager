@@ -76,6 +76,8 @@ const GROUPS: EndpointGroup[] = [
       { key: 'accounts_update', method: 'PUT', path: '/api/accounts/:id', pp: [ACC_ID], body: { note: '', group: '' } },
       { key: 'accounts_profile_get', method: 'GET', path: '/api/accounts/:id/profile', pp: [ACC_ID] },
       { key: 'accounts_profile_update', method: 'PATCH', path: '/api/accounts/:id/profile', pp: [ACC_ID], danger: 'd_accounts_profile_update', body: { name: '', bio: '' } },
+      { key: 'accounts_email_visibility_get', method: 'GET', path: '/api/accounts/:id/email-visibility', pp: [ACC_ID] },
+      { key: 'accounts_email_visibility_set', method: 'PATCH', path: '/api/accounts/:id/email-visibility', pp: [ACC_ID], danger: 'd_accounts_email_visibility', body: { visibility: 'private' } },
       { key: 'accounts_delete', method: 'DELETE', path: '/api/accounts/:id', pp: [ACC_ID], danger: 'd_account_delete' },
       { key: 'accounts_restore', method: 'POST', path: '/api/accounts/:id/restore', pp: [ACC_ID] },
       { key: 'accounts_check', method: 'POST', path: '/api/accounts/:id/check', pp: [ACC_ID] },

@@ -372,6 +372,14 @@
       "accounts_profile_update": {
         "summary": "更新 GitHub 公开资料",
         "detail": "用该账户的 token 调 PATCH /user，直接修改 GitHub 上的公开资料：name/email/blog/company/location/bio/twitter_username，字段为空字符串表示清空。公开邮箱必须是账户已验证的邮箱。同时同步本地 display_name 缓存。"
+      },
+      "accounts_email_visibility_get": {
+        "summary": "读取主邮箱可见性",
+        "detail": "用该账户的 token 调 GET /user/emails，返回主邮箱地址及其可见性（public/private）。需要 token 含 user:email 权限。"
+      },
+      "accounts_email_visibility_set": {
+        "summary": "设置主邮箱公开可见性",
+        "detail": "调 PATCH /user/email/visibility，body 为 {\"visibility\":\"public\"|\"private\"}，实时修改主邮箱在公开资料中是否可见。需要 token 含 user:email 权限。"
       }
     },
     "danger": {
@@ -393,7 +401,8 @@
       "d_system_update": "服务将下载新二进制并自动重启，期间短暂中断",
       "d_batch_set_secrets": "将真实写入选中仓库的 Actions secrets（同名覆盖）",
       "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复",
-      "d_accounts_profile_update": "将真实修改该 GitHub 账户的公开资料（可通过再次调用改回）"
+      "d_accounts_profile_update": "将真实修改该 GitHub 账户的公开资料（可通过再次调用改回）",
+      "d_accounts_email_visibility": "将真实修改该 GitHub 账户的主邮箱公开可见性"
     },
     "p": {
       "p_id_account": "账户 ID（accounts 列表返回的 id）",
@@ -541,7 +550,11 @@
     "profileLocation": "位置",
     "profileBio": "个人简介",
     "profileSave": "保存到 GitHub",
-    "profileSaveSuccess": "已同步到 GitHub"
+    "profileSaveSuccess": "已同步到 GitHub",
+    "emailVisibility": "邮箱公开可见性",
+    "emailVisOn": "公开",
+    "emailVisOff": "私密",
+    "emailVisNoScope": "当前 token 缺少 user:email 权限，无法读取/修改邮箱可见性（重新导入时使用包含 user:email 权限的 token 即可）。"
   },
   "repos": {
     "title": "仓库浏览",

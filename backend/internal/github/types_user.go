@@ -58,6 +58,34 @@ func (c *Client) UpdateUserProfile(payload UpdateUserProfilePayload) (*User, int
 	return &u, code, nil
 }
 
+// EmailEntry GET /user/emails 条目
+type EmailEntry struct {
+	Email      string `json:"email"`
+	Primary    bool   `json:"primary"`
+	Verified   bool   `json:"verified"`
+	Visibility string `json:"visibility"` // public / private（未设公开邮箱时可能为空）
+}
+
+// ListEmails 列出当前 token 用户的全部邮箱（需 user:email 权限）
+func (c *Client) ListEmails() ([]EmailEntry, int, error) {
+	var out []EmailEntry
+	code, err := c.Get("/user/emails?per_page=100", &out)
+	if err != nil {
+		return nil, code, err
+	}
+	return out, code, nil
+}
+
+// SetEmailVisibility 设置主邮箱公开可见性（public / private）
+func (c *Client) SetEmailVisibility(visibility string) ([]EmailEntry, int, error) {
+	var out []EmailEntry
+	code, err := c.PatchJSON("/user/email/visibility", map[string]string{"visibility": visibility}, &out)
+	if err != nil {
+		return nil, code, err
+	}
+	return out, code, nil
+}
+
 // ParseGitHubTime 解析 GitHub RFC3339 时间（失败返回 nil）
 func ParseGitHubTime(s string) *time.Time {
 	if s == "" {

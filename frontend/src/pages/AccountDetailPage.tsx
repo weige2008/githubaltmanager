@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { CopyButton } from '@/components/ui/copy-button'
 import { BreadcrumbNav } from '@/components/breadcrumb-nav'
 import { Input, Textarea } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { useTranslation } from 'react-i18next'
 
 export default function AccountDetailPage() {
@@ -257,9 +258,65 @@ function ProfileSettings({ accId, login }: { accId: number; login: string }) {
               {saveMut.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>{t('accounts.profileSave')}</Button>
             </div>
+            <EmailVisibilityRow accId={accId} />
           </>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function EmailVisibilityRow({ accId }: { accId: number }) {
+  const { t } = useTranslation()
+  const [visibility, setVisibility] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['email-visibility', accId],
+    queryFn: () => accountApi.getEmailVisibility(accId),
+    retry: false,
+  })
+  useEffect(() => { if (data?.visibility) setVisibility(data.visibility) }, [data])
+
+  const toggle = async (makePublic: boolean) => {
+    const next = makePublic ? 'public' : 'private'
+    setSaving(true)
+    try {
+      await accountApi.setEmailVisibility(accId, next)
+      setVisibility(next)
+      toast.success(next === 'public' ? t('accounts.emailVisOn') : t('accounts.emailVisOff'))
+    } catch (e: any) {
+      toast.error(e?.message || t('common.operationFailed'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-muted-foreground">
+        {t('accounts.emailVisNoScope')}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+      <div>
+        <div className="text-sm font-medium">{t('accounts.emailVisibility')}</div>
+        <div className="mt-0.5 text-xs text-muted-foreground">
+          {isLoading ? t('common.loading') : (
+            <>
+              {t('accounts.profileEmail')}: <code className="font-mono">{data?.email || '—'}</code>
+              {visibility && <Badge variant={visibility === 'public' ? 'warning' : 'secondary'} className="ml-2 text-[10px]">{visibility === 'public' ? t('accounts.emailVisOn') : t('accounts.emailVisOff')}</Badge>}
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+        <Switch checked={visibility === 'public'} disabled={isLoading || saving} onCheckedChange={(v) => toggle(v === true)} />
+        <span className="text-xs text-muted-foreground">{visibility === 'public' ? t('accounts.emailVisOn') : t('accounts.emailVisOff')}</span>
+      </div>
+    </div>
   )
 }

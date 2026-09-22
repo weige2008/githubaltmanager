@@ -372,6 +372,14 @@
       "accounts_profile_update": {
         "summary": "Обновление публичного профиля GitHub",
         "detail": "Через token аккаунта вызывает PATCH /user и меняет публичный профиль на GitHub: name/email/blog/company/location/bio/twitter_username; пустая строка очищает поле. Публичный email должен быть подтверждён. Локальный кэш display_name синхронизируется."
+      },
+      "accounts_email_visibility_get": {
+        "summary": "Видимость основного email",
+        "detail": "Через token аккаунта вызывает GET /user/emails и возвращает основной email и его видимость (public/private). Требуется scope user:email."
+      },
+      "accounts_email_visibility_set": {
+        "summary": "Изменить видимость основного email",
+        "detail": "Вызывает PATCH /user/email/visibility с {\"visibility\":\"public\"|\"private\"} — меняет, виден ли основной email в публичном профиле. Требуется scope user:email."
       }
     },
     "danger": {
@@ -393,7 +401,8 @@
       "d_system_update": "Сервис скачает новый бинарник и перезапустится — кратковременный простой",
       "d_batch_set_secrets": "В выбранные репозитории будут реально записаны Actions secrets (обновление по имени)",
       "d_batch_delete_secrets": "Actions secrets выбранных репозиториев будут реально удалены — невосстановимо",
-      "d_accounts_profile_update": "Публичный профиль этого GitHub-аккаунта будет реально изменён (можно вернуть повторным вызовом)"
+      "d_accounts_profile_update": "Публичный профиль этого GitHub-аккаунта будет реально изменён (можно вернуть повторным вызовом)",
+      "d_accounts_email_visibility": "Видимость основного email этого GitHub-аккаунта будет реально изменена"
     },
     "p": {
       "p_id_account": "ID аккаунта (id из списка accounts)",
@@ -541,7 +550,11 @@
     "profileLocation": "Расположение",
     "profileBio": "О себе",
     "profileSave": "Сохранить в GitHub",
-    "profileSaveSuccess": "Синхронизировано с GitHub"
+    "profileSaveSuccess": "Синхронизировано с GitHub",
+    "emailVisibility": "Видимость email",
+    "emailVisOn": "Публичный",
+    "emailVisOff": "Приватный",
+    "emailVisNoScope": "У токена нет права user:email — видимость email нельзя прочитать или изменить (переимпортируйте с token, содержащим user:email)."
   },
   "repos": {
     "title": "Репозитории",
