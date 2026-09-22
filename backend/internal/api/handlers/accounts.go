@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -269,6 +270,12 @@ func (h *AccountHandler) UpdateGitHubProfile(c *gin.Context) {
 	}
 	u, err := h.s.UpdateGitHubProfile(h.c, uint(id), payload)
 	if err != nil {
+		// 透传 GitHub 的状态码与原因（如 422：公开邮箱未验证）
+		var apiErr *github.APIError
+		if errors.As(err, &apiErr) {
+			resp.Fail(c, apiErr.Status, "github_error", apiErr.Error())
+			return
+		}
 		resp.Internal(c, "更新资料失败: "+err.Error(), err)
 		return
 	}
