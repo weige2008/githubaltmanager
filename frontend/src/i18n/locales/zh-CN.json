@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "批量同步模板（清空重写）",
-        "detail": "逐个：删除目标仓库全部现有文件，再从模板复制全部文件。每个文件 2 次上游请求，仓库大时很慢；原内容不可恢复。"
+        "detail": "逐个：删除目标仓库全部现有文件，再从模板复制全部文件；可选同时批量设置 Actions secrets（secrets 数组，后端用 repo public key 加密）。每个文件 2 次上游请求，仓库大时很慢；原内容不可恢复。"
       },
       "batch_toggle_visibility": {
         "summary": "批量切换可见性",

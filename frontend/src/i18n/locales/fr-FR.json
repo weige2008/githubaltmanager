@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Synchroniser depuis le gabarit (effacer et réécrire)",
-        "detail": "Pour chaque dépôt : supprime tous les fichiers existants puis copie tous les fichiers du gabarit. Deux appels par fichier — lent pour les gros dépôts. Contenu d’origine irrécupérable."
+        "detail": "Pour chaque dépôt : supprime tous les fichiers existants puis copie tous les fichiers du gabarit ; définit optionnellement en lot des secrets Actions (tableau secrets, chiffrés via la clé publique du dépôt). Deux appels par fichier — lent pour les gros dépôts. Contenu d'origine irrécupérable."
       },
       "batch_toggle_visibility": {
         "summary": "Basculer la visibilité par lot",

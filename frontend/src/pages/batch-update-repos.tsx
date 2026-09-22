@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, repoApi, batchApi, type Repo } from '@/api'
+import { accountApi, repoApi, batchApi, type Repo, type SecretEntry } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { LoadingState } from '@/components/ui/loading-state'
-import { Search, Download, RefreshCw, Lock, Globe, Loader2, CircleCheck, CircleX } from 'lucide-react'
+import { Search, Download, RefreshCw, Lock, Globe, Loader2, CircleCheck, CircleX, KeyRound, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 function BatchUpdateRepos() {
@@ -29,6 +29,8 @@ function BatchUpdateRepos() {
   const [templateUrl, setTemplateUrl] = useState('')
   // Visibility mode
   const [targetPrivate, setTargetPrivate] = useState(true)
+  // Secrets (update mode)
+  const [secrets, setSecrets] = useState<{ name: string; value: string; show: boolean }[]>([])
 
   const [executing, setExecuting] = useState(false)
   const [progress, setProgress] = useState<{ current: number; total: number; currentName: string } | null>(null)
@@ -81,7 +83,12 @@ function BatchUpdateRepos() {
         if (subMode === 'update') {
           const match = templateUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
           if (!match) throw new Error('源仓库 URL 格式错误')
-          data = await batchApi.updateRepos({ repo_ids: [rid], template_owner: match[1], template_repo: match[2] })
+          data = await batchApi.updateRepos({
+            repo_ids: [rid],
+            template_owner: match[1],
+            template_repo: match[2],
+            secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
+          })
         } else {
           data = await batchApi.toggleVisibility({ repo_ids: [rid], is_private: targetPrivate })
         }
@@ -198,6 +205,49 @@ function BatchUpdateRepos() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">源仓库 URL</label>
                   <Input value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} placeholder="https://github.com/owner/repo" />
+                </div>
+
+                {/* Repository Secrets */}
+                <div className="space-y-3 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <KeyRound className="h-4 w-4" /> Repository Secrets
+                      {secrets.length > 0 && <Badge variant="secondary">{secrets.length}</Badge>}
+                    </div>
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSecrets(prev => [...prev, { name: '', value: '', show: false }])}>
+                      <Plus className="h-3.5 w-3.5" /> 添加 Secret
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">文件同步完成后自动设置 Actions secrets，值会被加密传输。</p>
+                  {secrets.map((secret, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        value={secret.name}
+                        onChange={e => setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, name: e.target.value } : s))}
+                        placeholder="SECRET_NAME"
+                        className="font-mono text-sm sm:w-48"
+                      />
+                      <div className="relative flex-1">
+                        <Input
+                          type={secret.show ? 'text' : 'password'}
+                          value={secret.value}
+                          onChange={e => setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, value: e.target.value } : s))}
+                          placeholder="secret value"
+                          className="pr-10 font-mono text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSecrets(prev => prev.map((s, i) => i === idx ? { ...s, show: !s.show } : s))}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {secret.show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setSecrets(prev => prev.filter((_, i) => i !== idx))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (

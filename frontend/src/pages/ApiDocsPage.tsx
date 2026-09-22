@@ -127,7 +127,7 @@ const GROUPS: EndpointGroup[] = [
       { key: 'batch_dispatch', method: 'POST', path: '/api/batch/dispatch', danger: 'd_batch_dispatch', body: { repo_ids: [1, 2, 3], filename: 'keepalive.yml', ref: 'main', inputs: {} } },
       { key: 'batch_create_repos', method: 'POST', path: '/api/batch/create-repos', danger: 'd_batch_create_repos', body: { account_ids: [1, 2], repo_name: 'my-repo', description: '', private: true, count: 1, files: [{ path: 'README.md', content: 'aGVsbG8=' }], secrets: [] } },
       { key: 'batch_fetch_template', method: 'POST', path: '/api/batch/fetch-template', body: { account_id: 1, owner: 'some-user', repo: 'template-repo', ref: '' } },
-      { key: 'batch_update_repos', method: 'POST', path: '/api/batch/update-repos', danger: 'd_batch_update_repos', body: { repo_ids: [1, 2], template_owner: 'some-user', template_repo: 'template-repo', template_ref: '' } },
+      { key: 'batch_update_repos', method: 'POST', path: '/api/batch/update-repos', danger: 'd_batch_update_repos', body: { repo_ids: [1, 2], template_owner: 'some-user', template_repo: 'template-repo', template_ref: '', secrets: [] } },
       { key: 'batch_toggle_visibility', method: 'POST', path: '/api/batch/toggle-visibility', danger: 'd_batch_toggle_visibility', body: { repo_ids: [1, 2], is_private: true } },
     ],
   },

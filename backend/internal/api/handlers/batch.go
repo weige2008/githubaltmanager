@@ -164,10 +164,11 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 }
 
 type BatchUpdateReposPayload struct {
-	RepoIDs       []uint `json:"repo_ids" binding:"required"`
-	TemplateOwner string `json:"template_owner" binding:"required"`
-	TemplateRepo  string `json:"template_repo" binding:"required"`
-	TemplateRef   string `json:"template_ref"`
+	RepoIDs       []uint                `json:"repo_ids" binding:"required"`
+	TemplateOwner string                `json:"template_owner" binding:"required"`
+	TemplateRepo  string                `json:"template_repo" binding:"required"`
+	TemplateRef   string                `json:"template_ref"`
+	Secrets       []service.SecretEntry `json:"secrets"`
 }
 
 func (h *BatchHandler) UpdateRepos(c *gin.Context) {
@@ -183,7 +184,7 @@ func (h *BatchHandler) UpdateRepos(c *gin.Context) {
 	success := []gin.H{}
 	failed := []gin.H{}
 	for _, rid := range p.RepoIDs {
-		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef)
+		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef, p.Secrets)
 		if err != nil {
 			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
 		} else {

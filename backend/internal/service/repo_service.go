@@ -604,8 +604,8 @@ func (s *RepoService) CreateRepoForAccount(c *Container, accountID uint, repoNam
 	return repo, nil
 }
 
-// UpdateRepoFromTemplate 清空目标仓库所有文件，然后从模板仓库拉取所有文件写入
-func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, templateOwner, templateRepo, templateRef string) error {
+// UpdateRepoFromTemplate 清空目标仓库所有文件，然后从模板仓库拉取所有文件写入，可选批量设置 Actions secrets
+func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, templateOwner, templateRepo, templateRef string, secrets []SecretEntry) error {
 	r, ghc, err := s.loadClient(c, repoID)
 	if err != nil {
 		return err
@@ -661,8 +661,25 @@ func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, template
 		time.Sleep(100 * time.Millisecond)
 	}
 
+	failedSecrets := []string{}
+	for _, sec := range secrets {
+		if sec.Name == "" {
+			continue
+		}
+		if sc, sErr := ghc.CreateSecret(owner, repoName, sec.Name, sec.Value); sErr != nil {
+			failedSecrets = append(failedSecrets, fmt.Sprintf("%s (HTTP %d: %s)", sec.Name, sc, sErr.Error()))
+		}
+	}
+
+	var problems []string
 	if len(failedFiles) > 0 {
-		return fmt.Errorf("更新完成但 %d 个文件失败: %s", len(failedFiles), strings.Join(failedFiles, ", "))
+		problems = append(problems, fmt.Sprintf("%d 个文件推送失败: %s", len(failedFiles), strings.Join(failedFiles, ", ")))
+	}
+	if len(failedSecrets) > 0 {
+		problems = append(problems, fmt.Sprintf("%d 个 secret 设置失败: %s", len(failedSecrets), strings.Join(failedSecrets, "; ")))
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("%s", strings.Join(problems, "；"))
 	}
 	return nil
 }
