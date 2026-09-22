@@ -204,7 +204,7 @@ function BatchUpdateRepos() {
             <Tabs value={subMode} onValueChange={(v) => { setSubMode(v as 'update' | 'secrets' | 'visibility'); setResults(null) }}>
               <TabsList>
                 <TabsTrigger value="update"><RefreshCw className="mr-2 h-3.5 w-3.5" />拉取更新</TabsTrigger>
-                <TabsTrigger value="secrets"><KeyRound className="mr-2 h-3.5 w-3.5" />批量 Secrets</TabsTrigger>
+                <TabsTrigger value="secrets"><KeyRound className="mr-2 h-3.5 w-3.5" />Repository Secrets</TabsTrigger>
                 <TabsTrigger value="visibility"><Lock className="mr-2 h-3.5 w-3.5" />切换可见性</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -234,7 +234,7 @@ function BatchUpdateRepos() {
                 <div className="space-y-3 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm font-medium">
-                      <KeyRound className="h-4 w-4" /> 添加 / 更新 Secrets
+                      <KeyRound className="h-4 w-4" /> Repository Secrets
                       {secrets.length > 0 && <Badge variant="secondary">{secrets.length}</Badge>}
                     </div>
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSecrets(prev => [...prev, { name: '', value: '', show: false }])}>
@@ -276,7 +276,7 @@ function BatchUpdateRepos() {
                 <div className="space-y-2 rounded-lg border border-destructive/30 p-4">
                   <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-destructive">
                     <Checkbox checked={deleteAllSecrets} onCheckedChange={(v) => setDeleteAllSecrets(!!v)} />
-                    同时删除选中仓库的全部现有 secrets
+                    同时删除选中仓库的全部现有 Repository Secrets
                   </label>
                   <p className="text-xs text-muted-foreground">按各仓库当前 secrets 逐个删除，不可恢复；仓库没有 secrets 时自动跳过。</p>
                 </div>
@@ -352,7 +352,7 @@ function BatchUpdateRepos() {
                 {executing ? '执行中...' : subMode === 'update'
                   ? `更新 ${selectedRepoIds.length} 个仓库`
                   : subMode === 'secrets'
-                  ? `执行 ${selectedRepoIds.length} 个仓库的 Secrets 操作`
+                  ? `执行 ${selectedRepoIds.length} 个仓库的 Repository Secrets 操作`
                   : `切换 ${selectedRepoIds.length} 个仓库为${targetPrivate ? '私有' : '公有'}`}
               </Button>
             </div>
