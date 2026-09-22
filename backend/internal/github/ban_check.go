@@ -76,6 +76,7 @@ func aggregateStatus(apiRes, webRes *AccountStatus) AccountStatus {
 	aggregated := AccountStatus{}
 	if apiRes != nil {
 		aggregated.Methods = append(aggregated.Methods, "api_user")
+		aggregated.GithubCreatedAt = apiRes.GithubCreatedAt
 	}
 	if webRes != nil {
 		aggregated.Methods = append(aggregated.Methods, "web_profile")
