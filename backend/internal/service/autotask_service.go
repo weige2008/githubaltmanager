@@ -134,25 +134,47 @@ func (s *AutoTaskService) RunAutoSync(c *Container) {
 
 	logID := s.startLog("sync")
 	start := time.Now()
-	log.Printf("[auto-sync] 开始同步 %d 个账户的仓库...", len(accs))
+	workers := c.CFG.Scheduler.AutoSyncConcurrency
+	if workers < 1 {
+		workers = 1
+	}
+	log.Printf("[auto-sync] 开始同步 %d 个账户的仓库（并发 %d）...", len(accs), workers)
 
 	repoSvc := NewRepoService(s.DB)
+	// 有界并发池：账户级并发，结果按原顺序汇总（保持日志格式与串行版一致）
+	type syncResult struct {
+		count int
+		err   error
+	}
+	results := make([]syncResult, len(accs))
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	for i, acc := range accs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int, acc model.Account) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			count, err := repoSvc.RefreshRepos(c, acc.ID)
+			results[i] = syncResult{count: count, err: err}
+		}(i, acc)
+	}
+	wg.Wait()
+
 	totalRepos := 0
 	successCnt := 0
 	failedCnt := 0
 	details := ""
-
-	for _, acc := range accs {
-		count, err := repoSvc.RefreshRepos(c, acc.ID)
-		if err != nil {
+	for i, acc := range accs {
+		if results[i].err != nil {
 			failedCnt++
-			details += fmt.Sprintf("%s: 失败 (%v)\n", acc.GithubLogin, err)
-			log.Printf("[auto-sync] 账户 %s 同步失败: %v", acc.GithubLogin, err)
+			details += fmt.Sprintf("%s: 失败 (%v)\n", acc.GithubLogin, results[i].err)
+			log.Printf("[auto-sync] 账户 %s 同步失败: %v", acc.GithubLogin, results[i].err)
 			continue
 		}
 		successCnt++
-		totalRepos += count
-		details += fmt.Sprintf("%s: %d 个仓库\n", acc.GithubLogin, count)
+		totalRepos += results[i].count
+		details += fmt.Sprintf("%s: %d 个仓库\n", acc.GithubLogin, results[i].count)
 	}
 
 	duration := time.Since(start).Milliseconds()
@@ -195,22 +217,48 @@ func (s *AutoTaskService) RunAutoCheck(c *Container) {
 
 	logID := s.startLog("check")
 	start := time.Now()
-	log.Printf("[auto-check] 开始检测 %d 个账户状态...", len(accs))
+	workers := c.CFG.Scheduler.AutoCheckConcurrency
+	if workers < 1 {
+		workers = 1
+	}
+	log.Printf("[auto-check] 开始检测 %d 个账户状态（并发 %d）...", len(accs), workers)
 
 	accSvc := NewAccountService(s.DB)
+	// 有界并发池：结果按原顺序汇总（保持日志格式与串行版一致）
+	type checkResult struct {
+		status string
+		err    error
+	}
+	results := make([]checkResult, len(accs))
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	for i, acc := range accs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int, acc model.Account) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			result, err := accSvc.CheckStatus(c, acc.ID)
+			if err != nil {
+				results[i] = checkResult{err: err}
+			} else {
+				results[i] = checkResult{status: result.Status}
+			}
+		}(i, acc)
+	}
+	wg.Wait()
+
 	successCnt := 0
 	failedCnt := 0
 	details := ""
-
-	for _, acc := range accs {
-		result, err := accSvc.CheckStatus(c, acc.ID)
-		if err != nil {
+	for i, acc := range accs {
+		if results[i].err != nil {
 			failedCnt++
-			details += fmt.Sprintf("%s: 检测失败 (%v)\n", acc.GithubLogin, err)
+			details += fmt.Sprintf("%s: 检测失败 (%v)\n", acc.GithubLogin, results[i].err)
 			continue
 		}
 		successCnt++
-		details += fmt.Sprintf("%s: %s\n", acc.GithubLogin, result.Status)
+		details += fmt.Sprintf("%s: %s\n", acc.GithubLogin, results[i].status)
 	}
 
 	duration := time.Since(start).Milliseconds()

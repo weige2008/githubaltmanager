@@ -60,16 +60,19 @@ func ensureDefaults() {
 	loadDotEnv()
 
 	changed := false
-	defaults := map[string]string{
-		"GAM_HOST":          "0.0.0.0",
-		"GAM_PORT":          "19527",
-		"GAM_ENV":           "prod",
-		"GAM_DB_PATH":       "data/githubaltmanager.db",
-		"GAM_GH_API":        "https://api.github.com",
-		"GAM_GH_TIMEOUT":    "20",
-		"GAM_GH_CONCURRENCY": "8",
-		"GAM_TZ":            "Asia/Shanghai",
-	}
+		defaults := map[string]string{
+			"GAM_HOST":               "0.0.0.0",
+			"GAM_PORT":               "19527",
+			"GAM_ENV":                "prod",
+			"GAM_DB_PATH":            "data/githubaltmanager.db",
+			"GAM_GH_API":             "https://api.github.com",
+			"GAM_GH_TIMEOUT":         "20",
+			"GAM_GH_CONCURRENCY":     "8",
+			"GAM_TZ":                 "Asia/Shanghai",
+			"GAM_AUTOCHECK_CONCURRENCY": "10",
+			"GAM_AUTOSYNC_CONCURRENCY":  "4",
+			"GAM_BAN_CHECK_WEB":         "true",
+		}
 
 	for key, val := range defaults {
 		if os.Getenv(key) == "" {
@@ -100,6 +103,7 @@ func saveDotEnv() {
 		"GAM_JWT_SECRET", "GAM_MASTER_SALT",
 		"GAM_GH_API", "GAM_GH_TIMEOUT", "GAM_GH_CONCURRENCY",
 		"GAM_TZ", "GAM_MASTER_PASSWORD",
+		"GAM_AUTOCHECK_CONCURRENCY", "GAM_AUTOSYNC_CONCURRENCY", "GAM_BAN_CHECK_WEB",
 	}
 	f, err := os.OpenFile(".env", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {

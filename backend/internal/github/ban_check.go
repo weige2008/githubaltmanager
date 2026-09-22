@@ -18,11 +18,12 @@ type AccountStatus struct {
 
 // CheckBanStatus 多方案并发检测账户是否被封禁
 // 方案1: API /user 错误码 + 响应体关键字（suspended/flagged/invalid token）
-// 方案2: 抓取 github.com/<user> 主页，404 判异常
+// 方案2(可选 webCheck): 抓取 github.com/<user> 主页，404 判异常
+//   （大规模账户时建议关闭：无认证网页请求都出自服务器同一 IP，易被 GitHub 网页侧限流）
 // 方案3: token 验证失败信号
-func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStatus {
+func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int, webCheck bool) AccountStatus {
 	client := New(apiBaseURL, token, timeoutSec)
-	results := make(chan AccountStatus, 3)
+	results := make(chan AccountStatus, 2)
 
 	// 方案1：API /user
 	go func() {
@@ -32,23 +33,19 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStat
 	}()
 
 	// 方案2：网页主页（可选，封禁可能 404）
-	if login != "" {
+	wantCount := 1
+	if webCheck && login != "" {
+		wantCount = 2
 		go func() {
 			s := checkViaWebProfile(login, timeoutSec)
 			s.Methods = append(s.Methods, "web_profile")
 			results <- s
 		}()
-	} else {
-		results <- AccountStatus{Status: "unknown"}
 	}
 
 	// 收集结果（至少方案1）
 	var aggregated AccountStatus
 	count := 0
-	wantCount := 2
-	if login == "" {
-		wantCount = 1
-	}
 	for count < wantCount {
 		select {
 		case r := <-results:

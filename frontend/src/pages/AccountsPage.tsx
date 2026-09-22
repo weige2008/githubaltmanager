@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -124,6 +124,17 @@ export default function AccountsPage() {
     for (const acc of sortedAccounts) { const g = acc.group || ''; if (!map.has(g)) map.set(g, []); map.get(g)!.push(acc) }
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
   }, [sortedAccounts])
+
+  // 分页（仅扁平视图；数据仍全量拉取与筛选排序，只渲染当前页，账户量大时避免 DOM 过载）
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
+  useEffect(() => { setPage(1) }, [searchQuery, activeGroup, sortMode])
+  const totalPages = Math.max(1, Math.ceil(sortedAccounts.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const pageAccounts = useMemo(
+    () => sortedAccounts.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [sortedAccounts, safePage, pageSize]
+  )
 
   const batchCheckMutation = useMutation({
     mutationFn: (ids: number[]) => accountApi.batchCheck(ids),
@@ -412,7 +423,7 @@ export default function AccountsPage() {
                 <TH className="w-8"><Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(v) => toggleSelectVisible(v === true)} /></TH>
                 <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.repos')}</TH><TH>{t('accounts.workflows')}</TH><TH>{t('nav.tasks')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
               </TR></THead>
-              <TBody>{sortedAccounts.map(renderAccountRow)}</TBody>
+              <TBody>{pageAccounts.map(renderAccountRow)}</TBody>
             </Table>
           ) : (
             <Accordion type="multiple" defaultValue={groupedAccounts.map(([g]) => g || 'ungrouped')} className="w-full">
@@ -436,6 +447,27 @@ export default function AccountsPage() {
           )
         ) : <EmptyState title={t('accounts.noAccounts')} description={t('accounts.noAccountsDescription')} action={<Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" />{t('accounts.importNow')}</Button>} />}
       </CardContent></Card>
+
+      {/* 分页（仅扁平视图） */}
+      {viewMode === 'flat' && sortedAccounts.length > pageSize && (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>共 {sortedAccounts.length} 个账户 · 第 {safePage}/{totalPages} 页（全选作用于当前筛选的全部账户）</span>
+          <div className="flex items-center gap-2">
+            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1) }}>
+              <SelectTrigger className="h-8 w-[100px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[50, 100, 200].map(s => <SelectItem key={s} value={String(s)}>{s} 条/页</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" className="h-8 gap-1" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+              <ChevronLeft className="h-4 w-4" />上一页
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 gap-1" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
+              下一页<ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog open={!!deleteTarget} onConfirm={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null) }} onCancel={() => setDeleteTarget(null)} title={t('accounts.deleteConfirm', { name: deleteTarget?.github_login })} />
       <ConfirmDialog open={!!permDeleteTarget} onConfirm={() => { if (permDeleteTarget) permDeleteMutation.mutate(permDeleteTarget.id); setPermDeleteTarget(null) }} onCancel={() => setPermDeleteTarget(null)} title={`永久删除 ${permDeleteTarget?.github_login}?`} />
