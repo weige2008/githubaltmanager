@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "テンプレート同期（全消去・再書き込み）",
-        "detail": "各リポジトリ：既存ファイルを全削除し、テンプレートから全ファイルをコピー。任意で Actions secrets を一括設定（secrets 配列、repo public key で暗号化）。1 ファイル 2 リクエストで大容量は遅い。元の内容は復元不可。"
+        "detail": "repo_ids（≤100）の各リポジトリ：ファイルツリーを取得し、既存ファイルを全削除してからテンプレートの全ファイルをコピー（template_owner/template_repo 必須、secrets 同時設定可）。secrets_only:true なら同期をスキップし secrets のみ設定、ファイルは無変更。1 ファイル 2 リクエストで大容量は遅い。同期モードは復元不可。"
       },
       "batch_toggle_visibility": {
         "summary": "公開状態の一括切替",

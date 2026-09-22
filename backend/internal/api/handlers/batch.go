@@ -165,10 +165,12 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 
 type BatchUpdateReposPayload struct {
 	RepoIDs       []uint                `json:"repo_ids" binding:"required"`
-	TemplateOwner string                `json:"template_owner" binding:"required"`
-	TemplateRepo  string                `json:"template_repo" binding:"required"`
+	TemplateOwner string                `json:"template_owner"`
+	TemplateRepo  string                `json:"template_repo"`
 	TemplateRef   string                `json:"template_ref"`
 	Secrets       []service.SecretEntry `json:"secrets"`
+	// SecretsOnly 为 true 时跳过模板同步，仅为仓库批量设置 secrets（不动仓库文件）
+	SecretsOnly bool `json:"secrets_only"`
 }
 
 func (h *BatchHandler) UpdateRepos(c *gin.Context) {
@@ -181,10 +183,19 @@ func (h *BatchHandler) UpdateRepos(c *gin.Context) {
 		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
 		return
 	}
+	if !p.SecretsOnly && (p.TemplateOwner == "" || p.TemplateRepo == "") {
+		resp.BadRequest(c, "template_owner/template_repo 不能为空（或改用 secrets_only 模式）", nil)
+		return
+	}
 	success := []gin.H{}
 	failed := []gin.H{}
 	for _, rid := range p.RepoIDs {
-		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef, p.Secrets)
+		var err error
+		if p.SecretsOnly {
+			err = h.s.SetRepoSecrets(h.c, rid, p.Secrets)
+		} else {
+			err = h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef, p.Secrets)
+		}
 		if err != nil {
 			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
 		} else {

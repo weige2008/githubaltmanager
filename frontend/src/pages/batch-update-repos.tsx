@@ -27,6 +27,7 @@ function BatchUpdateRepos() {
 
   // Update mode
   const [templateUrl, setTemplateUrl] = useState('')
+  const [updateMode, setUpdateMode] = useState<'sync' | 'secrets'>('sync')
   // Visibility mode
   const [targetPrivate, setTargetPrivate] = useState(true)
   // Secrets (update mode)
@@ -81,14 +82,19 @@ function BatchUpdateRepos() {
       try {
         let data: { success: any[]; failed: any[] }
         if (subMode === 'update') {
-          const match = templateUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
-          if (!match) throw new Error('源仓库 URL 格式错误')
-          data = await batchApi.updateRepos({
-            repo_ids: [rid],
-            template_owner: match[1],
-            template_repo: match[2],
-            secrets: secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value })),
-          })
+          const secretsData = secrets.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value }))
+          if (updateMode === 'sync') {
+            const match = templateUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
+            if (!match) throw new Error('源仓库 URL 格式错误')
+            data = await batchApi.updateRepos({
+              repo_ids: [rid],
+              template_owner: match[1],
+              template_repo: match[2],
+              secrets: secretsData,
+            })
+          } else {
+            data = await batchApi.updateRepos({ repo_ids: [rid], secrets_only: true, secrets: secretsData })
+          }
         } else {
           data = await batchApi.toggleVisibility({ repo_ids: [rid], is_private: targetPrivate })
         }
@@ -107,7 +113,7 @@ function BatchUpdateRepos() {
     else toast.warning(`完成：${allSuccess.length} 成功，${fCount} 失败`)
   }
 
-  const canExecute = selectedRepoIds.length > 0 && (subMode === 'visibility' || templateUrl.trim())
+  const canExecute = selectedRepoIds.length > 0 && (subMode === 'visibility' || (updateMode === 'sync' ? templateUrl.trim() : secrets.some(s => s.name.trim())))
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -196,16 +202,37 @@ function BatchUpdateRepos() {
           <CardContent className="space-y-4">
             {subMode === 'update' ? (
               <>
-                <Alert>
-                  <AlertDescription>
-                    <p className="font-medium text-warning">⚠️ 此操作会清空目标仓库的所有文件，然后从源仓库复制全部文件。</p>
-                    <p className="mt-1 text-sm text-muted-foreground">操作不可撤销，请确认目标仓库选择正确。</p>
-                  </AlertDescription>
-                </Alert>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">源仓库 URL</label>
-                  <Input value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} placeholder="https://github.com/owner/repo" />
+                {/* 模式切换 */}
+                <div className="flex gap-2">
+                  <button onClick={() => setUpdateMode('sync')} className={cn('flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors', updateMode === 'sync' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent')}>
+                    <RefreshCw className="h-4 w-4" /> 同步模板
+                  </button>
+                  <button onClick={() => setUpdateMode('secrets')} className={cn('flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors', updateMode === 'secrets' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-accent')}>
+                    <KeyRound className="h-4 w-4" /> 仅添加 Secrets
+                  </button>
                 </div>
+
+                {updateMode === 'sync' ? (
+                  <Alert>
+                    <AlertDescription>
+                      <p className="font-medium text-warning">⚠️ 此操作会清空目标仓库的所有文件，然后从源仓库复制全部文件。</p>
+                      <p className="mt-1 text-sm text-muted-foreground">操作不可撤销，请确认目标仓库选择正确。</p>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert>
+                    <AlertDescription>
+                      <p className="font-medium text-success">✓ 只为选中仓库批量设置 Actions secrets，不修改仓库的任何文件。</p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {updateMode === 'sync' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">源仓库 URL</label>
+                    <Input value={templateUrl} onChange={e => setTemplateUrl(e.target.value)} placeholder="https://github.com/owner/repo" />
+                  </div>
+                )}
 
                 {/* Repository Secrets */}
                 <div className="space-y-3 rounded-lg border p-4">
@@ -218,7 +245,9 @@ function BatchUpdateRepos() {
                       <Plus className="h-3.5 w-3.5" /> 添加 Secret
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">文件同步完成后自动设置 Actions secrets，值会被加密传输。</p>
+                  <p className="text-xs text-muted-foreground">
+                    {updateMode === 'sync' ? '文件同步完成后自动设置 Actions secrets，值会被加密传输。' : '将为选中仓库设置以下 Actions secrets，值会被加密传输，仓库文件不受影响。'}
+                  </p>
                   {secrets.map((secret, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <Input
@@ -316,8 +345,10 @@ function BatchUpdateRepos() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setResults(null); setSelectedRepoIds([]) }}>重置</Button>
               <Button size="lg" disabled={!canExecute || executing} onClick={executeBatch} className="gap-2">
-                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : subMode === 'update' ? <RefreshCw className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                {executing ? '执行中...' : subMode === 'update' ? `更新 ${selectedRepoIds.length} 个仓库` : `切换 ${selectedRepoIds.length} 个仓库为${targetPrivate ? '私有' : '公有'}`}
+                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : subMode === 'update' ? (updateMode === 'sync' ? <RefreshCw className="h-4 w-4" /> : <KeyRound className="h-4 w-4" />) : <Lock className="h-4 w-4" />}
+                {executing ? '执行中...' : subMode === 'update'
+                  ? (updateMode === 'sync' ? `更新 ${selectedRepoIds.length} 个仓库` : `为 ${selectedRepoIds.length} 个仓库设置 Secrets`)
+                  : `切换 ${selectedRepoIds.length} 个仓库为${targetPrivate ? '私有' : '公有'}`}
               </Button>
             </div>
           </CardContent>

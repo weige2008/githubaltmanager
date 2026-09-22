@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Đồng bộ từ mẫu (xóa sạch & ghi đè)",
-        "detail": "Với từng repo: xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu; tùy chọn đặt hàng loạt Actions secrets (mảng secrets, mã hóa bằng repo public key). Hai request mỗi tệp — chậm với repo lớn. Nội dung gốc không thể phục hồi."
+        "detail": "Với từng repo trong repo_ids (≤100): lấy cây tệp, xóa mọi tệp hiện có rồi sao chép mọi tệp từ repo mẫu (bắt buộc template_owner/template_repo; có thể đặt secrets cùng lúc). Khi secrets_only:true sẽ bỏ qua đồng bộ, chỉ đặt secrets — không đổi tệp nào. Hai request mỗi tệp; chậm với repo lớn. Chế độ đồng bộ không thể phục hồi."
       },
       "batch_toggle_visibility": {
         "summary": "Đổi chế độ hiển thị hàng loạt",

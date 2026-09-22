@@ -684,6 +684,27 @@ func (s *RepoService) UpdateRepoFromTemplate(c *Container, repoID uint, template
 	return nil
 }
 
+// SetRepoSecrets 为仓库批量设置 Actions secrets（不改动仓库文件）
+func (s *RepoService) SetRepoSecrets(c *Container, repoID uint, secrets []SecretEntry) error {
+	r, ghc, err := s.loadClient(c, repoID)
+	if err != nil {
+		return err
+	}
+	failed := []string{}
+	for _, sec := range secrets {
+		if sec.Name == "" {
+			continue
+		}
+		if sc, sErr := ghc.CreateSecret(r.OwnerLogin, r.Name, sec.Name, sec.Value); sErr != nil {
+			failed = append(failed, fmt.Sprintf("%s (HTTP %d: %s)", sec.Name, sc, sErr.Error()))
+		}
+	}
+	if len(failed) > 0 {
+		return fmt.Errorf("%d 个 secret 设置失败: %s", len(failed), strings.Join(failed, "; "))
+	}
+	return nil
+}
+
 // ToggleRepoVisibility 切换仓库公有/私有
 func (s *RepoService) ToggleRepoVisibility(c *Container, repoID uint, isPrivate bool) error {
 	r, ghc, err := s.loadClient(c, repoID)

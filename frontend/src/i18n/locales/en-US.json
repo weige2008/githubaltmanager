@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "Batch sync from template (wipe & rewrite)",
-        "detail": "For each repo: deletes all existing files, then copies every file from the template; optionally sets Actions secrets in bulk (secrets array, encrypted with the repo public key). Two upstream calls per file — slow for big repos. Original content cannot be recovered."
+        "detail": "For each repo in repo_ids (≤100): fetches its file tree, deletes all existing files, then copies every file from the template (template_owner/template_repo required; optional secrets set at the same time). With secrets_only:true it skips the sync and only sets secrets — no file changes. Two upstream calls per file; slow for big repos. Sync mode is unrecoverable."
       },
       "batch_toggle_visibility": {
         "summary": "Batch toggle visibility",

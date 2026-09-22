@@ -291,7 +291,7 @@
       },
       "batch_update_repos": {
         "summary": "批量同步模板（清空重写）",
-        "detail": "逐个：删除目标仓库全部现有文件，再从模板复制全部文件；可选同时批量设置 Actions secrets（secrets 数组，后端用 repo public key 加密）。每个文件 2 次上游请求，仓库大时很慢；原内容不可恢复。"
+        "detail": "对 repo_ids（≤100）逐个执行：拉取目标仓库文件树 → 删除全部现有文件 → 从模板复制全部文件（此时 template_owner/template_repo 必填，可带 secrets 一并设置）。传 secrets_only:true 则跳过模板同步，仅为每个仓库设置 secrets，不改任何文件。每个文件 2 次上游请求，仓库大时很慢；同步模式下原内容不可恢复。"
       },
       "batch_toggle_visibility": {
         "summary": "批量切换可见性",
