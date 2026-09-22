@@ -332,6 +332,11 @@ func (s *AccountService) SetEmailVisibility(c *Container, id uint, visibility st
 	ghc := github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout)
 	_, code, err := ghc.SetEmailVisibility(visibility)
 	if err != nil {
+		// GitHub 对"设置成当前已有值"返回 422 unchanged，视为成功（幂等）
+		var apiErr *github.APIError
+		if errors.As(err, &apiErr) && apiErr.Status == 422 && strings.Contains(apiErr.Body, "unchanged") {
+			return nil
+		}
 		return fmt.Errorf("api %d: %w", code, err)
 	}
 	return nil
