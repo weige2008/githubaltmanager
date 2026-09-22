@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "导入账户",
-        "detail": "提交 GitHub token，先调 /user 验证并读取用户名/头像/scope，再加密入库；同名账户在回收站则恢复并更新 token。password、recovery_email、note、group 可选。"
+        "detail": "提交 GitHub token，先调 /user 验证并读取用户名/头像/scope，再加密入库；入库后立即执行一次完整封禁检测（API + 网页双探测），返回即时的真实状态（正常/受限/封禁/Token过期），而非固定标记正常。同名账户在回收站则恢复并更新 token。password、recovery_email、note、group 可选。"
       },
       "accounts_update": {
         "summary": "更新账户信息",

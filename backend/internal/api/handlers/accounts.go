@@ -71,6 +71,11 @@ func (h *AccountHandler) Import(c *gin.Context) {
 		h.c.DB.Model(&model.Account{}).Where("id = ?", acc.ID).Update("account_group", p.Group)
 		acc.Group = p.Group
 	}
+	// 导入后立即做一次完整检测（API + 网页双探测），区分正常/受限/封禁/Token过期，
+	// 而非固定标记 active；检测失败（如网络抖动）则保留导入时的默认状态
+	if checked, err := h.s.CheckStatus(h.c, acc.ID); err == nil {
+		acc = checked
+	}
 	resp.Created(c, h.s.ToOut(acc))
 }
 

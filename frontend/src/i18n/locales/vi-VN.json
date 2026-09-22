@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "Nhập tài khoản",
-        "detail": "Gửi PAT GitHub: backend xác minh qua /user (login, avatar, scope) rồi lưu đã mã hóa. Tài khoản trùng login trong thùng rác sẽ được phục hồi với token mới. password/recovery_email/note/group là tùy chọn."
+        "detail": "Gửi PAT GitHub: backend xác minh qua /user (login, avatar, scope) rồi lưu đã mã hóa, ngay lập tức chạy kiểm tra đầy đủ (API + web) — trạng thái trả về là trạng thái thật (active/restricted/banned/token_expired), không cố định là active. Tài khoản trùng login trong thùng rác sẽ được phục hồi với token mới. password/recovery_email/note/group là tùy chọn."
       },
       "accounts_update": {
         "summary": "Cập nhật tài khoản",

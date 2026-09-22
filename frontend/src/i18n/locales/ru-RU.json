@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "Импорт аккаунта",
-        "detail": "Принимает GitHub PAT: сервер проверяет его через /user (логин, аватар, scope) и сохраняет зашифрованным. Аккаунт с тем же логином из корзины восстанавливается с новым token. password/recovery_email/note/group — необязательны."
+        "detail": "Принимает GitHub PAT: сервер проверяет его через /user (логин, аватар, scope), сохраняет зашифрованным и сразу запускает полную проверку (API + веб) — возвращается реальный статус (active/restricted/banned/token_expired), а не фиксированный active. Аккаунт с тем же логином из корзины восстанавливается с новым token. password/recovery_email/note/group — необязательны."
       },
       "accounts_update": {
         "summary": "Обновление аккаунта",

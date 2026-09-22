@@ -147,7 +147,7 @@
       },
       "accounts_import": {
         "summary": "Import an account",
-        "detail": "Submits a GitHub PAT: the backend validates it against /user (login, avatar, scopes) and stores it encrypted. A soft-deleted account with the same login is revived and its token updated. password/recovery_email/note/group are optional."
+        "detail": "Submits a GitHub PAT: the backend validates it against /user (login, avatar, scopes) and stores it encrypted, then immediately runs a full ban detection (API + web probe) — the returned status is the real one (active/restricted/banned/token_expired), not a fixed active. A soft-deleted account with the same login is revived and its token updated. password/recovery_email/note/group are optional."
       },
       "accounts_update": {
         "summary": "Update an account",
