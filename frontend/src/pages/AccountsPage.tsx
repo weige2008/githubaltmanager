@@ -212,6 +212,7 @@ export default function AccountsPage() {
     const map: Record<string, { variant: 'success' | 'destructive' | 'warning' | 'secondary'; label: string }> = {
       active: { variant: 'success', label: t('accounts.statusActive') },
       banned: { variant: 'destructive', label: t('accounts.statusBanned') },
+      restricted: { variant: 'warning', label: t('accounts.statusRestricted') },
       token_expired: { variant: 'warning', label: 'Token过期' },
       error: { variant: 'warning', label: t('accounts.statusError') },
       unknown: { variant: 'secondary', label: t('accounts.statusUnknown') },

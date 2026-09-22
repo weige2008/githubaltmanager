@@ -11,9 +11,10 @@ import (
 
 // AccountStatus 封禁检测结果
 type AccountStatus struct {
-	Status  string // active / banned / token_expired / unknown / error
-	Reason  string // 详细原因
-	Methods []string // 命中的检测方法
+	Status      string // active / banned / token_expired / restricted / unknown / error
+	Reason      string // 详细原因
+	Methods     []string // 命中的检测方法
+	WebNotFound bool // 仅网页探测：主页 404
 }
 
 // CheckBanStatus 多方案并发检测账户是否被封禁
@@ -23,13 +24,16 @@ type AccountStatus struct {
 // 方案3: token 验证失败信号
 func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int, webCheck bool) AccountStatus {
 	client := New(apiBaseURL, token, timeoutSec)
-	results := make(chan AccountStatus, 2)
+	type probe struct {
+		src string
+		st  AccountStatus
+	}
+	results := make(chan probe, 2)
 
 	// 方案1：API /user
 	go func() {
 		s := checkViaAPI(client, login)
-		s.Methods = append(s.Methods, "api_user")
-		results <- s
+		results <- probe{src: "api", st: s}
 	}()
 
 	// 方案2：网页主页（可选，封禁可能 404）
@@ -37,50 +41,95 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int, webCheck bo
 	if webCheck && login != "" {
 		wantCount = 2
 		go func() {
-			s := checkViaWebProfile(login, timeoutSec)
-			s.Methods = append(s.Methods, "web_profile")
-			results <- s
+			results <- probe{src: "web", st: checkViaWebProfile(login, timeoutSec)}
 		}()
 	}
 
-	// 收集结果（至少方案1）
-	var aggregated AccountStatus
-	count := 0
-	for count < wantCount {
+	var apiRes, webRes *AccountStatus
+	collected := 0
+	for collected < wantCount {
 		select {
 		case r := <-results:
-			count++
-			aggregated.Methods = append(aggregated.Methods, r.Methods...)
-			// 任一判异常 → banned
-			if r.Status == "banned" {
-				aggregated.Status = "banned"
-				if aggregated.Reason == "" {
-					aggregated.Reason = r.Reason
-				} else {
-					aggregated.Reason = aggregated.Reason + "; " + r.Reason
-				}
-			} else if r.Status == "token_expired" && aggregated.Status == "" {
-				aggregated.Status = "token_expired"
-				aggregated.Reason = r.Reason
-			} else if r.Status == "active" && aggregated.Status == "" {
-				aggregated.Status = "active"
-				if aggregated.Reason == "" {
-					aggregated.Reason = r.Reason
-				}
-			} else if r.Status == "error" && aggregated.Status == "" {
-				aggregated.Status = "error"
-				aggregated.Reason = r.Reason
+			collected++
+			s := r.st
+			if r.src == "api" {
+				apiRes = &s
+			} else {
+				webRes = &s
 			}
 		case <-time.After(time.Duration(timeoutSec+5) * time.Second):
-			count = wantCount
-			if aggregated.Status == "" {
-				aggregated.Status = "error"
-				aggregated.Reason = "detection timeout"
+			collected = wantCount
+			if apiRes == nil {
+				apiRes = &AccountStatus{Status: "error", Reason: "detection timeout"}
 			}
 		}
 	}
 
-	if aggregated.Status == "" {
+	return aggregateStatus(apiRes, webRes)
+}
+
+// aggregateStatus 汇总两路探测结果：
+//   - API 正常(active) + 网页 404 → restricted（token 有效但主页不可访问，可能受限/风控或已改名）
+//   - 其余维持 banned > token_expired > active > error 的既有优先级
+func aggregateStatus(apiRes, webRes *AccountStatus) AccountStatus {
+	aggregated := AccountStatus{}
+	if apiRes != nil {
+		aggregated.Methods = append(aggregated.Methods, "api_user")
+	}
+	if webRes != nil {
+		aggregated.Methods = append(aggregated.Methods, "web_profile")
+	}
+	if apiRes == nil {
+		apiRes = &AccountStatus{Status: "error", Reason: "detection timeout"}
+	}
+
+	// 新规则：token 有效但网页主页 404 → 受限
+	if apiRes.Status == "active" && webRes != nil && webRes.WebNotFound {
+		aggregated.Status = "restricted"
+		aggregated.Reason = "API 探测正常但 " + webRes.Reason
+		return aggregated
+	}
+
+	bannedReasons := []string{}
+	hasExpired := false
+	hasActive := false
+	activeReason := ""
+	errReason := ""
+	for _, r := range []*AccountStatus{apiRes, webRes} {
+		if r == nil {
+			continue
+		}
+		switch r.Status {
+		case "banned":
+			bannedReasons = append(bannedReasons, r.Reason)
+		case "token_expired":
+			hasExpired = true
+		case "active":
+			hasActive = true
+			if activeReason == "" {
+				activeReason = r.Reason
+			}
+		case "error":
+			if errReason == "" {
+				errReason = r.Reason
+			}
+		}
+	}
+
+	switch {
+	case len(bannedReasons) > 0:
+		aggregated.Status = "banned"
+		aggregated.Reason = strings.Join(bannedReasons, "; ")
+	case hasExpired:
+		aggregated.Status = "token_expired"
+		aggregated.Reason = apiRes.Reason
+	case hasActive:
+		aggregated.Status = "active"
+		aggregated.Reason = activeReason
+	case errReason != "":
+		aggregated.Status = "error"
+		aggregated.Reason = errReason
+	default:
 		aggregated.Status = "unknown"
 	}
 	return aggregated
@@ -161,7 +210,7 @@ func checkViaWebProfile(login string, timeoutSec int) AccountStatus {
 
 	switch {
 	case resp.StatusCode == 404:
-		return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）"}
+		return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）", WebNotFound: true}
 	case resp.StatusCode >= 400:
 		return AccountStatus{Status: "error", Reason: fmt.Sprintf("web profile %d", resp.StatusCode)}
 	}

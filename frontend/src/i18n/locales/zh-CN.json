@@ -515,7 +515,8 @@
     "unpin": "取消置顶",
     "pinned": "已置顶",
     "allGroups": "全部",
-    "workflows": "工作流"
+    "workflows": "工作流",
+    "statusRestricted": "受限"
   },
   "repos": {
     "title": "仓库浏览",

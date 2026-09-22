@@ -515,7 +515,8 @@
     "unpin": "ピン解除",
     "pinned": "固定済み",
     "allGroups": "すべて",
-    "workflows": "ワークフロー"
+    "workflows": "ワークフロー",
+    "statusRestricted": "制限中"
   },
   "repos": {
     "title": "リポジトリ",

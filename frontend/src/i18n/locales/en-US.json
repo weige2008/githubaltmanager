@@ -515,7 +515,8 @@
     "unpin": "Unpin",
     "pinned": "Pinned",
     "allGroups": "All",
-    "workflows": "Workflows"
+    "workflows": "Workflows",
+    "statusRestricted": "Restricted"
   },
   "repos": {
     "title": "Repositories",

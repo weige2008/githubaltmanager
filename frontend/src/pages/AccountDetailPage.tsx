@@ -66,8 +66,11 @@ export default function AccountDetailPage() {
           <AvatarImage src={acc.avatar_url} alt={acc.github_login} />
           <AvatarFallback className="text-lg font-bold text-primary">{acc.github_login[0]?.toUpperCase()}</AvatarFallback>
         </Avatar>
-        <Badge variant={acc.status === 'active' ? 'success' : acc.status === 'banned' ? 'destructive' : 'secondary'}>
-          {acc.status === 'active' ? t('accounts.statusActive') : acc.status === 'banned' ? t('accounts.statusBanned') : acc.status}
+        <Badge variant={acc.status === 'active' ? 'success' : acc.status === 'banned' ? 'destructive' : acc.status === 'restricted' ? 'warning' : 'secondary'}>
+          {acc.status === 'active' ? t('accounts.statusActive')
+            : acc.status === 'banned' ? t('accounts.statusBanned')
+            : acc.status === 'restricted' ? t('accounts.statusRestricted')
+            : acc.status}
         </Badge>
       </div>
 

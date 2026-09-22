@@ -515,7 +515,8 @@
     "unpin": "Открепить",
     "pinned": "Закреплено",
     "allGroups": "Все",
-    "workflows": "Workflows"
+    "workflows": "Workflows",
+    "statusRestricted": "Ограничен"
   },
   "repos": {
     "title": "Репозитории",

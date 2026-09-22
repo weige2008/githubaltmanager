@@ -515,7 +515,8 @@
     "unpin": "Désépingler",
     "pinned": "Épinglé",
     "allGroups": "Tous",
-    "workflows": "Workflows"
+    "workflows": "Workflows",
+    "statusRestricted": "Restreint"
   },
   "repos": {
     "title": "Dépôts",

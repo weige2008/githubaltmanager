@@ -23,6 +23,7 @@ type Overview struct {
 	Active   int64 `json:"active"`
 	Banned   int64 `json:"banned"`
 	TokenExpired int64 `json:"token_expired"`
+	Restricted   int64 `json:"restricted"`
 	Error    int64 `json:"error"`
 	Unknown  int64 `json:"unknown"`
 	Repos    int64 `json:"repos"`
@@ -40,6 +41,7 @@ func (h *StatsHandler) Overview(c *gin.Context) {
 	base.Session(&gorm.Session{}).Where("status = ?", "active").Count(&o.Active)
 	base.Session(&gorm.Session{}).Where("status = ?", "banned").Count(&o.Banned)
 	base.Session(&gorm.Session{}).Where("status = ?", "token_expired").Count(&o.TokenExpired)
+	base.Session(&gorm.Session{}).Where("status = ?", "restricted").Count(&o.Restricted)
 	base.Session(&gorm.Session{}).Where("status = ?", "error").Count(&o.Error)
 	base.Session(&gorm.Session{}).Where("status = ?", "unknown").Count(&o.Unknown)
 

@@ -16,7 +16,7 @@ export function getSortMode(): string {
   return localStorage.getItem('gam-account-sort') || 'default'
 }
 
-const statusOrder: Record<string, number> = { banned: 0, error: 1, unknown: 2, active: 3 }
+const statusOrder: Record<string, number> = { banned: 0, restricted: 1, error: 2, unknown: 3, active: 4 }
 
 export function sortAccounts<T extends Account>(accounts: T[]): T[] {
   const pinnedIds = getPinnedIds()

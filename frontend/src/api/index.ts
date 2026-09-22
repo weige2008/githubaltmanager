@@ -240,6 +240,7 @@ export interface Stats {
   active: number
   banned: number
   token_expired: number
+  restricted: number
   error: number
   unknown: number
   repos: number

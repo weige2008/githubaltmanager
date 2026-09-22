@@ -515,7 +515,8 @@
     "unpin": "Bỏ ghim",
     "pinned": "Đã ghim",
     "allGroups": "Tất cả",
-    "workflows": "Workflow"
+    "workflows": "Workflow",
+    "statusRestricted": "Bị hạn chế"
   },
   "repos": {
     "title": "Kho lưu trữ",
