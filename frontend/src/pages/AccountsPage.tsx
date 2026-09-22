@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { LegacyDialog as Dialog, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2 } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -271,6 +271,24 @@ export default function AccountsPage() {
           </div>
         </TD>
         <TD><Badge variant={sb.variant}>{sb.label}</Badge></TD>
+        <TD className="whitespace-nowrap text-sm">
+          <span className="flex items-center gap-1.5" title={t('accounts.repos')}>
+            <FolderGit2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium tabular-nums">{acc.repo_count ?? 0}</span>
+          </span>
+        </TD>
+        <TD className="whitespace-nowrap text-sm">
+          <span className="flex items-center gap-1.5" title={t('accounts.workflows')}>
+            <Workflow className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium tabular-nums">{acc.workflow_count ?? 0}</span>
+          </span>
+        </TD>
+        <TD className="whitespace-nowrap text-sm">
+          <span className="flex items-center gap-1.5" title={t('nav.tasks')}>
+            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium tabular-nums">{acc.task_count ?? 0}</span>
+          </span>
+        </TD>
         <TD className="text-sm text-muted-foreground">{acc.last_checked_at ? new Date(acc.last_checked_at).toLocaleString() : '—'}</TD>
         <TD>
           <div className="flex justify-end gap-1">
@@ -390,7 +408,7 @@ export default function AccountsPage() {
             <Table>
               <THead><TR>
                 <TH className="w-8"><Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(v) => setSelectedIds(v ? sortedAccounts.map(a => a.id) : [])} /></TH>
-                <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
+                <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.repos')}</TH><TH>{t('accounts.workflows')}</TH><TH>{t('nav.tasks')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
               </TR></THead>
               <TBody>{sortedAccounts.map(renderAccountRow)}</TBody>
             </Table>
@@ -405,7 +423,7 @@ export default function AccountsPage() {
                     <Table>
                       <THead><TR>
                         <TH className="w-8"><Checkbox checked={accs.length > 0 && accs.every(a => selectedIds.includes(a.id))} onCheckedChange={(v) => { if (v) setSelectedIds(prev => [...new Set([...prev, ...accs.map(a => a.id)])]); else setSelectedIds(prev => prev.filter(id => !accs.some(a => a.id === id))); }} /></TH>
-                        <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
+                        <TH className="w-8"></TH><TH>{t('accounts.accountColumn')}</TH><TH>{t('common.status')}</TH><TH>{t('accounts.repos')}</TH><TH>{t('accounts.workflows')}</TH><TH>{t('nav.tasks')}</TH><TH>{t('accounts.lastChecked')}</TH><TH className="text-right">{t('common.actions')}</TH>
                       </TR></THead>
                       <TBody>{accs.map(renderAccountRow)}</TBody>
                     </Table>

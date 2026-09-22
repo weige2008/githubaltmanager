@@ -73,6 +73,32 @@ func (h *AccountHandler) Import(c *gin.Context) {
 	resp.Created(c, h.s.ToOut(acc))
 }
 
+// countMaps 一次 GROUP BY 查询返回每个账户的仓库/工作流/定时任务数量，避免 N+1
+func (h *AccountHandler) countMaps() (repo, wf, task map[uint]int64) {
+	type cnt struct {
+		AccountID uint  `json:"account_id"`
+		Cnt       int64 `json:"cnt"`
+	}
+	repo, wf, task = map[uint]int64{}, map[uint]int64{}, map[uint]int64{}
+	var rows []cnt
+	if err := h.c.DB.Model(&model.Repository{}).Select("account_id, COUNT(*) AS cnt").Group("account_id").Scan(&rows).Error; err == nil {
+		for _, r := range rows {
+			repo[r.AccountID] = r.Cnt
+		}
+	}
+	if err := h.c.DB.Model(&model.Workflow{}).Select("account_id, COUNT(*) AS cnt").Group("account_id").Scan(&rows).Error; err == nil {
+		for _, r := range rows {
+			wf[r.AccountID] = r.Cnt
+		}
+	}
+	if err := h.c.DB.Model(&model.ScheduledTask{}).Select("account_id, COUNT(*) AS cnt").Group("account_id").Scan(&rows).Error; err == nil {
+		for _, r := range rows {
+			task[r.AccountID] = r.Cnt
+		}
+	}
+	return
+}
+
 func (h *AccountHandler) List(c *gin.Context) {
 	group := c.Query("group")
 	query := h.c.DB.Where("deleted_at IS NULL")
@@ -84,9 +110,14 @@ func (h *AccountHandler) List(c *gin.Context) {
 		resp.Internal(c, "查询失败", err)
 		return
 	}
+	repoCnt, wfCnt, taskCnt := h.countMaps()
 	out := make([]service.AccountOut, 0, len(accs))
 	for i := range accs {
-		out = append(out, h.s.ToOut(&accs[i]))
+		o := h.s.ToOut(&accs[i])
+		o.RepoCount = repoCnt[accs[i].ID]
+		o.WorkflowCount = wfCnt[accs[i].ID]
+		o.TaskCount = taskCnt[accs[i].ID]
+		out = append(out, o)
 	}
 	resp.OK(c, out)
 }
@@ -98,7 +129,12 @@ func (h *AccountHandler) Get(c *gin.Context) {
 		resp.NotFound(c, "账户不存在")
 		return
 	}
-	resp.OK(c, h.s.ToOut(acc))
+	repoCnt, wfCnt, taskCnt := h.countMaps()
+	out := h.s.ToOut(acc)
+	out.RepoCount = repoCnt[acc.ID]
+	out.WorkflowCount = wfCnt[acc.ID]
+	out.TaskCount = taskCnt[acc.ID]
+	resp.OK(c, out)
 }
 
 func (h *AccountHandler) GetSecrets(c *gin.Context) {

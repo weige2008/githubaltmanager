@@ -135,7 +135,7 @@
       },
       "accounts_list": {
         "summary": "Danh sách tài khoản",
-        "detail": "Trả về mọi tài khoản chưa xóa. Token/mật khẩu/email gốc không xuất hiện — chỉ có trường đã che. ?group= lọc theo nhóm; sắp xếp và ghim do phía client xử lý."
+        "detail": "Trả về mọi tài khoản chưa xóa kèm thống kê từng tài khoản (repo_count, workflow_count, task_count). Token/mật khẩu/email gốc không xuất hiện — chỉ có trường đã che. ?group= lọc theo nhóm."
       },
       "accounts_get": {
         "summary": "Chi tiết tài khoản",
@@ -500,7 +500,8 @@
     "pin": "Ghim",
     "unpin": "Bỏ ghim",
     "pinned": "Đã ghim",
-    "allGroups": "Tất cả"
+    "allGroups": "Tất cả",
+    "workflows": "Workflow"
   },
   "repos": {
     "title": "Kho lưu trữ",

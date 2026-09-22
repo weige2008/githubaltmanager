@@ -135,7 +135,7 @@
       },
       "accounts_list": {
         "summary": "アカウント一覧",
-        "detail": "未削除の全アカウントを返します。token/パスワード/メールは現れず、マスク済みフィールドのみ。?group= でグループ絞り込み。ソートとピン留めはフロント側で処理。"
+        "detail": "未削除の全アカウントとアカウントごとの統計（repo_count・workflow_count・task_count）を返します。token/パスワード/メールは現れず、マスク済みフィールドのみ。?group= でグループ絞り込み。ソートとピン留めはフロント側で処理。"
       },
       "accounts_get": {
         "summary": "アカウント詳細",
@@ -500,7 +500,8 @@
     "pin": "ピン留め",
     "unpin": "ピン解除",
     "pinned": "固定済み",
-    "allGroups": "すべて"
+    "allGroups": "すべて",
+    "workflows": "ワークフロー"
   },
   "repos": {
     "title": "リポジトリ",

@@ -24,6 +24,9 @@ type AccountOut struct {
 	HasPassword    bool   `json:"has_password"`
 	RecoveryMasked string `json:"recovery_masked"`
 	TokenMasked    string `json:"token_masked"`
+	RepoCount      int64  `json:"repo_count"`
+	WorkflowCount  int64  `json:"workflow_count"`
+	TaskCount      int64  `json:"task_count"`
 }
 
 // ToOut 转输出

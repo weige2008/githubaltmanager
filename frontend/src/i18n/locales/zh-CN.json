@@ -135,7 +135,7 @@
       },
       "accounts_list": {
         "summary": "账户列表",
-        "detail": "返回全部未删除账户。token/密码/邮箱不出现，仅有掩码字段。?group= 按分组过滤；排序与置顶由前端本地处理。"
+        "detail": "返回全部未删除账户及每账户统计（repo_count 仓库数、workflow_count 工作流数、task_count 定时任务数）。token/密码/邮箱不出现，仅有掩码字段。?group= 按分组过滤；排序与置顶由前端本地处理。"
       },
       "accounts_get": {
         "summary": "账户详情",
@@ -500,7 +500,8 @@
     "pin": "置顶",
     "unpin": "取消置顶",
     "pinned": "已置顶",
-    "allGroups": "全部"
+    "allGroups": "全部",
+    "workflows": "工作流"
   },
   "repos": {
     "title": "仓库浏览",

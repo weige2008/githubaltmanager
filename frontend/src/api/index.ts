@@ -14,6 +14,9 @@ export interface Account {
   note: string
   group: string
   deleted_at: string | null
+  repo_count: number
+  workflow_count: number
+  task_count: number
   created_at: string
   updated_at: string
 }

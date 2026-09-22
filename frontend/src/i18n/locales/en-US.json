@@ -135,7 +135,7 @@
       },
       "accounts_list": {
         "summary": "List accounts",
-        "detail": "Returns all non-deleted accounts. Raw token/password/email never appear — only masked fields. ?group= filters by group; sorting and pinning are handled client-side."
+        "detail": "Returns all non-deleted accounts plus per-account stats (repo_count, workflow_count, task_count). Raw token/password/email never appear — only masked fields. ?group= filters by group; sorting and pinning are handled client-side."
       },
       "accounts_get": {
         "summary": "Account details",
@@ -500,7 +500,8 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "pinned": "Pinned",
-    "allGroups": "All"
+    "allGroups": "All",
+    "workflows": "Workflows"
   },
   "repos": {
     "title": "Repositories",

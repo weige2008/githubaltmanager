@@ -135,7 +135,7 @@
       },
       "accounts_list": {
         "summary": "Liste des comptes",
-        "detail": "Renvoie tous les comptes non supprimés. Token/mot de passe/e-mail bruts absents — uniquement des champs masqués. ?group= filtre par groupe ; tri et épinglage côté client."
+        "detail": "Renvoie tous les comptes non supprimés avec des statistiques par compte (repo_count, workflow_count, task_count). Token/mot de passe/e-mail bruts absents — uniquement des champs masqués. ?group= filtre par groupe."
       },
       "accounts_get": {
         "summary": "Détails d’un compte",
@@ -500,7 +500,8 @@
     "pin": "Épingler",
     "unpin": "Désépingler",
     "pinned": "Épinglé",
-    "allGroups": "Tous"
+    "allGroups": "Tous",
+    "workflows": "Workflows"
   },
   "repos": {
     "title": "Dépôts",
