@@ -10,6 +10,7 @@ import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces, ClipboardCopy, Download } from 'lucide-react'
 import { formatAccountsText, downloadText } from '@/lib/export'
+import { copyToClipboard } from '@/lib/clipboard'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/ui/error-state'
@@ -38,8 +39,10 @@ export default function AccountDetailPage() {
     catch (e: any) { toast.error(e?.message || t('accounts.decryptFailed')) }
   }
 
-  const copyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => toast.success(label)).catch(() => toast.error(t('accounts.copyFailed')))
+  const copyText = async (text: string, label: string) => {
+    const ok = await copyToClipboard(text)
+    if (ok) toast.success(label)
+    else toast.error(t('accounts.copyFailed'))
   }
 
   const [exporting, setExporting] = useState(false)
@@ -51,7 +54,8 @@ export default function AccountDetailPage() {
       const text = formatAccountsText(data.items)
       const warning = '（含明文 token，请妥善保管）'
       if (mode === 'clipboard') {
-        await navigator.clipboard.writeText(text)
+        const ok = await copyToClipboard(text)
+        if (!ok) { toast.error('剪贴板不可用'); return }
         toast.success(`已复制账户数据到剪贴板${warning}`)
       } else {
         downloadText(`gam-account-${accId}.txt`, text)

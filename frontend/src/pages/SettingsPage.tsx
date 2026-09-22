@@ -24,6 +24,7 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore, type ThemeMode } from '@/store/theme'
 import { LANGUAGES } from '@/i18n/languages'
+import { copyToClipboard } from '@/lib/clipboard'
 
 function formatDeployTime(iso: string): string {
   try {
@@ -797,7 +798,7 @@ function APIKeysTab() {
             <p className="mb-3 text-sm text-muted-foreground">请立即保存，此密钥不会再次显示。</p>
             <div className="flex items-center gap-2 rounded-md border bg-muted p-3">
               <code className="flex-1 break-all font-mono text-xs">{createdKey}</code>
-              <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(createdKey); toast.success('已复制') }}>复制</Button>
+              <Button variant="ghost" size="sm" onClick={async () => { const ok = await copyToClipboard(createdKey); if (ok) toast.success('已复制'); else toast.error('复制失败') }}>复制</Button>
             </div>
             <div className="mt-4 flex justify-end">
               <Button onClick={() => setCreatedKey(null)}>已保存</Button>

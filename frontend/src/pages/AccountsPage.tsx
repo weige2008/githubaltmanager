@@ -14,6 +14,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, RefreshCw, Trash2, ShieldCheck, Edit3, Pin, ArrowUpDown, Search, RotateCcw, Trash, FolderPlus, Users, List, LayoutGrid, FolderInput, Loader2, FolderGit2, Workflow, Clock, ChevronLeft, ChevronRight, ClipboardCopy, Download } from 'lucide-react'
 import { formatAccountsText, downloadText } from '@/lib/export'
+import { copyToClipboard } from '@/lib/clipboard'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingState } from '@/components/ui/loading-state'
@@ -272,7 +273,8 @@ export default function AccountsPage() {
       const name = `gam-accounts-${selectedIds.length}-${new Date().toISOString().slice(0, 10)}.txt`
       const warning = '（含明文 token，请妥善保管）'
       if (mode === 'clipboard') {
-        await navigator.clipboard.writeText(text)
+        const ok = await copyToClipboard(text)
+        if (!ok) { toast.error('剪贴板不可用'); return }
         toast.success(`已复制 ${data.count} 个账户数据到剪贴板${warning}`)
       } else {
         downloadText(name, text)

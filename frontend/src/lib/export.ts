@@ -50,7 +50,8 @@ export function formatAccountsText(items: ExportedAccount[]): string {
 }
 
 export function downloadText(filename: string, content: string) {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  // 前置 UTF-8 BOM：否则 Windows 记事本/Excel 按 GBK 打开会乱码
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
