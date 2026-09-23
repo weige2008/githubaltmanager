@@ -388,19 +388,19 @@
       },
       "batch_star": {
         "summary": "リポジトリへ一括 Star",
-        "detail": "account_ids（≤100）の各アカウントで owner/repo に Star を付けます（冪等）。各アカウントの token で実行。"
+        "detail": "account_ids の各アカウントで owner/repo に Star を付けます（冪等）。各アカウントの token で実行、件数制限なし（フロントは進捗表示のためアカウント単位で呼び出し）。"
       },
       "batch_unstar": {
         "summary": "Star の一括解除",
-        "detail": "各アカウントの owner/repo への Star を解除。未 star は成功扱い。"
+        "detail": "各アカウントの owner/repo への Star を解除。未 star は成功扱い。件数制限なし。"
       },
       "batch_follow": {
         "summary": "ユーザーの一括フォロー",
-        "detail": "各アカウントで username をフォローします（token に user:follow 権限が必要）。"
+        "detail": "各アカウントで username をフォローします（token に user:follow 権限が必要）。件数制限なし。"
       },
       "batch_unfollow": {
         "summary": "フォローの一括解除",
-        "detail": "各アカウントで username のフォローを解除。未フォローは成功扱い。"
+        "detail": "各アカウントで username のフォローを解除。未フォローは成功扱い。件数制限なし。"
       }
     },
     "danger": {

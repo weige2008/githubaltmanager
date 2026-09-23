@@ -388,19 +388,19 @@
       },
       "batch_star": {
         "summary": "Star repo hàng loạt",
-        "detail": "Star owner/repo cho từng tài khoản trong account_ids (≤100), mang tính idempotent — đã star vẫn thành công. Thực hiện bằng token của từng tài khoản."
+        "detail": "Star owner/repo cho từng tài khoản trong account_ids, mang tính idempotent. Thực hiện bằng token của từng tài khoản; không giới hạn số lượng (frontend gọi từng tài khoản để hiển thị tiến độ)."
       },
       "batch_unstar": {
         "summary": "Bỏ Star hàng loạt",
-        "detail": "Bỏ Star owner/repo của từng tài khoản; chưa star tính là thành công."
+        "detail": "Bỏ Star owner/repo của từng tài khoản; chưa star tính là thành công. Không giới hạn."
       },
       "batch_follow": {
         "summary": "Theo dõi người dùng hàng loạt",
-        "detail": "Mỗi tài khoản theo dõi username (token cần quyền user:follow)."
+        "detail": "Mỗi tài khoản theo dõi username (token cần quyền user:follow). Không giới hạn."
       },
       "batch_unfollow": {
         "summary": "Bỏ theo dõi hàng loạt",
-        "detail": "Mỗi tài khoản bỏ theo dõi username; chưa theo dõi tính là thành công."
+        "detail": "Mỗi tài khoản bỏ theo dõi username; chưa theo dõi tính là thành công. Không giới hạn."
       }
     },
     "danger": {

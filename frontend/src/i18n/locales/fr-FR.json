@@ -388,19 +388,19 @@
       },
       "batch_star": {
         "summary": "Star un dépôt par lot",
-        "detail": "Met en Star owner/repo pour chaque compte de account_ids (≤100), idempotent — déjà starré réussit aussi. Exécuté avec le token de chaque compte."
+        "detail": "Met en Star owner/repo pour chaque compte de account_ids, idempotent. Exécuté avec le token de chaque compte ; pas de limite (le frontend appelle compte par compte pour la progression)."
       },
       "batch_unstar": {
         "summary": "Retirer la Star par lot",
-        "detail": "Retire la Star de owner/repo pour chaque compte ; non-starré compte comme succès."
+        "detail": "Retire la Star de owner/repo pour chaque compte ; non-starré compte comme succès. Pas de limite."
       },
       "batch_follow": {
         "summary": "Suivre un utilisateur par lot",
-        "detail": "Chaque compte suit username (le token doit avoir le scope user:follow)."
+        "detail": "Chaque compte suit username (le token doit avoir le scope user:follow). Pas de limite."
       },
       "batch_unfollow": {
         "summary": "Ne plus suivre par lot",
-        "detail": "Chaque compte cesse de suivre username ; non-suivi compte comme succès."
+        "detail": "Chaque compte cesse de suivre username ; non-suivi compte comme succès. Pas de limite."
       }
     },
     "danger": {

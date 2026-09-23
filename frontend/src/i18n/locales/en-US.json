@@ -388,19 +388,19 @@
       },
       "batch_star": {
         "summary": "Batch star a repository",
-        "detail": "Stars owner/repo for every account in account_ids (≤100), idempotent — already-starred still succeeds. Executed with each account's own token."
+        "detail": "Stars owner/repo for every account in account_ids, idempotent — already-starred still succeeds. Executed with each account's own token; no count limit (the frontend calls it per account to show progress)."
       },
       "batch_unstar": {
         "summary": "Batch unstar a repository",
-        "detail": "Removes the star of owner/repo for every account; not-starred counts as success."
+        "detail": "Removes the star of owner/repo for every account; not-starred counts as success. No count limit."
       },
       "batch_follow": {
         "summary": "Batch follow a user",
-        "detail": "Makes every account follow username (requires the user:follow scope on the token)."
+        "detail": "Makes every account follow username (requires the user:follow scope on the token). No count limit."
       },
       "batch_unfollow": {
         "summary": "Batch unfollow a user",
-        "detail": "Makes every account unfollow username; not-following counts as success."
+        "detail": "Makes every account unfollow username; not-following counts as success. No count limit."
       }
     },
     "danger": {

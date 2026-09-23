@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, type Account } from '@/api'
+import { accountApi, batchApi, type Account } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/page-header'
@@ -12,15 +12,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { LoadingState } from '@/components/ui/loading-state'
-import { batchApi } from '@/api'
-import { Star, UserPlus, UserMinus, Loader2, CircleCheck, CircleX, GitBranch, Users as UsersIcon, Search, ShieldAlert } from 'lucide-react'
+import { Star, UserPlus, UserMinus, Loader2, CircleCheck, CircleX, GitBranch, Users as UsersIcon, Search, ShieldAlert, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface MatchedAccount extends Account {
-  // 账户查询结果原样使用
-}
-
 type ActionResult = { success: any[]; failed: any[] }
+type Action = 'star' | 'unstar' | 'follow' | 'unfollow'
+// 前端并发执行：账户间互不影响配额（各用自己的 token），5 路并发在速度与礼貌之间取平衡
+const CONCURRENCY = 5
 
 export default function BatchActionsPage() {
   const { t } = useTranslation()
@@ -29,10 +27,12 @@ export default function BatchActionsPage() {
   const [accountSearch, setAccountSearch] = useState('')
   const [starTarget, setStarTarget] = useState('')
   const [followTarget, setFollowTarget] = useState('')
-  const [executing, setExecuting] = useState<'star' | 'unstar' | 'follow' | 'unfollow' | null>(null)
+  const [executing, setExecuting] = useState<Action | null>(null)
   const [results, setResults] = useState<ActionResult | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number; ok: number; fail: number } | null>(null)
+  const cancelRef = useRef(false)
 
-  const { data: accounts, isLoading: accLoading, isError: accError, refetch: accRefetch } = useQuery({
+  const { data: accounts, isLoading: accLoading, isError: accError } = useQuery({
     queryKey: ['accounts'],
     queryFn: () => accountApi.list(),
   })
@@ -76,33 +76,58 @@ export default function BatchActionsPage() {
   const parseRepo = (): { owner: string; repo: string } | null => {
     const s = starTarget.trim()
     if (!s) return null
-    // 支持 https://github.com/owner/repo 或 owner/repo
     const m = s.match(/github\.com\/([^/]+)\/([^/]+)/) || s.match(/^([\w.-]+)\/([\w.-]+)$/)
     if (!m) return null
     return { owner: m[1], repo: m[2].replace(/\.git$/, '') }
   }
 
-  const execute = async (action: 'star' | 'unstar' | 'follow' | 'unfollow') => {
+  const execute = async (action: Action) => {
     const repo = parseRepo()
+    const targetUser = followTarget.trim()
     if ((action === 'star' || action === 'unstar') && !repo) { toast.error('请输入正确的仓库地址或 owner/repo'); return }
-    if ((action === 'follow' || action === 'unfollow') && !followTarget.trim()) { toast.error('请输入要操作的用户名'); return }
+    if ((action === 'follow' || action === 'unfollow') && !targetUser) { toast.error('请输入要操作的用户名'); return }
+
+    const ids = [...selectedAccounts]
+    const total = ids.length
     setExecuting(action)
     setResults(null)
-    try {
-      let data: ActionResult
-      if (action === 'star') data = await batchApi.star({ account_ids: selectedAccounts, owner: repo!.owner, repo: repo!.repo })
-      else if (action === 'unstar') data = await batchApi.unstar({ account_ids: selectedAccounts, owner: repo!.owner, repo: repo!.repo })
-      else if (action === 'follow') data = await batchApi.follow({ account_ids: selectedAccounts, username: followTarget.trim() })
-      else data = await batchApi.unfollow({ account_ids: selectedAccounts, username: followTarget.trim() })
-      setResults(data)
-      const ok = data.success.length, fail = data.failed.length
-      if (fail === 0) toast.success(`全部成功：${ok} 个账户`)
-      else toast.warning(`完成：${ok} 成功，${fail} 失败`)
-    } catch (e: any) {
-      toast.error(e?.message || '执行失败')
-    } finally {
-      setExecuting(null)
+    cancelRef.current = false
+    setProgress({ done: 0, total, ok: 0, fail: 0 })
+
+    let ok = 0, fail = 0, cursor = 0
+    const allSuccess: any[] = [], allFailed: any[] = []
+
+    const worker = async () => {
+      while (!cancelRef.current) {
+        const idx = cursor++
+        if (idx >= ids.length) return
+        const id = ids[idx]
+        try {
+          let data: ActionResult
+          if (action === 'star') data = await batchApi.star({ account_ids: [id], owner: repo!.owner, repo: repo!.repo })
+          else if (action === 'unstar') data = await batchApi.unstar({ account_ids: [id], owner: repo!.owner, repo: repo!.repo })
+          else if (action === 'follow') data = await batchApi.follow({ account_ids: [id], username: targetUser })
+          else data = await batchApi.unfollow({ account_ids: [id], username: targetUser })
+          const f = data.failed?.[0]
+          if (f) { fail++; allFailed.push({ ...f, account_id: id }) } else { ok++; allSuccess.push(...(data.success.length ? data.success : [{ account_id: id }])) }
+        } catch (e: any) {
+          fail++
+          allFailed.push({ account_id: id, error: e?.message || '请求失败' })
+        }
+        const done = ok + fail
+        setProgress({ done, total, ok, fail })
+        setResults({ success: [...allSuccess], failed: [...allFailed] })
+      }
     }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, ids.length) }, worker))
+
+    setExecuting(null)
+    const wasCanceled = cancelRef.current
+    setProgress(null)
+    const canceledCount = total - ok - fail
+    if (wasCanceled && canceledCount > 0) toast.info(`已取消，剩余 ${canceledCount} 个账户未执行`)
+    if (fail === 0) toast.success(`全部成功：${ok} 个账户`)
+    else toast.warning(`完成：${ok} 成功，${fail} 失败`)
   }
 
   if (accLoading) return <LoadingState />
@@ -112,6 +137,8 @@ export default function BatchActionsPage() {
       <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">账户加载失败</CardContent></Card>
     </div>
   )
+
+  const canStar = selectedAccounts.length > 0 && !!parseRepo()
 
   return (
     <div className="space-y-6">
@@ -170,9 +197,32 @@ export default function BatchActionsPage() {
         <div className="space-y-6">
           <Alert>
             <AlertDescription>
-              以每个账户自己的 token 执行动作：Star/关注记录会计入该账户，失败逐账户反馈。选中数：{selectedAccounts.length}
+              以每个账户自己的 token 执行（互不挤占 API 配额），数量不限、5 路并发、可随时取消。选中数：{selectedAccounts.length}
             </AlertDescription>
           </Alert>
+
+          {/* 执行进度 */}
+          {progress && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-sm font-medium text-primary">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {executing === 'star' ? 'Star 执行中' : executing === 'unstar' ? '取消 Star 执行中' : executing === 'follow' ? '关注执行中' : '取消关注执行中'}
+                    ：{progress.done} / {progress.total}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => { cancelRef.current = true }}>取消剩余</Button>
+                </div>
+                <div className="flex gap-3 text-xs text-muted-foreground">
+                  <span className="text-success">成功 {progress.ok}</span>
+                  <span className="text-destructive">失败 {progress.fail}</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${Math.round((progress.done / Math.max(1, progress.total)) * 100)}%` }} />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 批量 Star */}
           <Card>
@@ -226,7 +276,7 @@ export default function BatchActionsPage() {
             </CardContent>
           </Card>
 
-          {/* 结果 */}
+          {/* 结果（实时刷新） */}
           {results && (
             <Card>
               <CardHeader>

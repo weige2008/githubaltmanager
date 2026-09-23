@@ -388,19 +388,19 @@
       },
       "batch_star": {
         "summary": "批量 Star 仓库",
-        "detail": "为 account_ids（≤100）的每个账户对 owner/repo 点 Star（幂等，已 star 仍成功）。以各账户自己的 token 执行。"
+        "detail": "为 account_ids 的每个账户对 owner/repo 点 Star（幂等，已 star 仍成功）。以各账户自己的 token 执行，数量不限，前端按账户分批调用以展示进度。"
       },
       "batch_unstar": {
         "summary": "批量取消 Star",
-        "detail": "为每个账户取消 owner/repo 的 Star；未 star 视为成功。"
+        "detail": "为每个账户取消 owner/repo 的 Star；未 star 视为成功。数量不限。"
       },
       "batch_follow": {
         "summary": "批量关注用户",
-        "detail": "让每个账户关注 username（需 token 含 user:follow 权限）。"
+        "detail": "让每个账户关注 username（需 token 含 user:follow 权限）。数量不限。"
       },
       "batch_unfollow": {
         "summary": "批量取消关注",
-        "detail": "让每个账户取消关注 username；未关注视为成功。"
+        "detail": "让每个账户取消关注 username；未关注视为成功。数量不限。"
       }
     },
     "danger": {

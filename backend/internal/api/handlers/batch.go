@@ -342,9 +342,13 @@ type BatchUserTargetPayload struct {
 	Username   string `json:"username" binding:"required"`
 }
 
-func (h *BatchHandler) checkIDsAndTarget(c *gin.Context, ids []uint, target string) bool {
-	if len(ids) == 0 || len(ids) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "account_ids 数量必须在 1-100 之间", nil)
+func (h *BatchHandler) checkIDsAndTarget(c *gin.Context, ids []uint, target string, max int) bool {
+	if len(ids) == 0 {
+		resp.BadRequest(c, "account_ids 数量必须大于 0", nil)
+		return false
+	}
+	if max > 0 && len(ids) > max {
+		resp.BadRequest(c, fmt.Sprintf("account_ids 数量必须在 1-%d 之间", max), nil)
 		return false
 	}
 	if target != "" && !validTarget(target) {
@@ -361,7 +365,7 @@ func (h *BatchHandler) BatchStar(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo) {
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo, 0) {
 		return
 	}
 	accSvc := h.accountSvc()
@@ -381,7 +385,7 @@ func (h *BatchHandler) BatchUnstar(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo) {
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo, 0) {
 		return
 	}
 	accSvc := h.accountSvc()
@@ -401,7 +405,7 @@ func (h *BatchHandler) BatchFollow(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username) {
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username, 0) {
 		return
 	}
 	accSvc := h.accountSvc()
@@ -421,7 +425,7 @@ func (h *BatchHandler) BatchUnfollow(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username) {
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username, 0) {
 		return
 	}
 	accSvc := h.accountSvc()
