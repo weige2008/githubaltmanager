@@ -128,6 +128,10 @@ func aggregateStatus(apiRes, webRes *AccountStatus) AccountStatus {
 	case hasActive:
 		aggregated.Status = "active"
 		aggregated.Reason = activeReason
+		// 网页探测失败（网络不通等）时在原因中明示，避免用户误信"正常"而未察觉受限
+		if webRes != nil && webRes.Status == "error" {
+			aggregated.Reason += "；⚠️ 网页探测失败（当前网络可能无法访问 github.com 主页，本轮无法识别受限）: " + webRes.Reason
+		}
 	case errReason != "":
 		aggregated.Status = "error"
 		aggregated.Reason = errReason
@@ -193,32 +197,42 @@ func checkViaAPI(c *Client, login string) AccountStatus {
 	return AccountStatus{Status: "active", Reason: "API /user 正常", GithubCreatedAt: githubCreated}
 }
 
-// checkViaWebProfile 抓取 github.com/<login> 主页判断
+// checkViaWebProfile 抓取 github.com/<login> 主页判断（失败自动重试一次：
+// 新账户主页与被限流场景偶发瞬时失败；若运行环境根本无法访问 github.com 网页，
+// 两连败后返回 error——汇总时会退化为仅按 API 结果判定，并在原因中注明）
 func checkViaWebProfile(login string, timeoutSec int) AccountStatus {
 	if login == "" {
 		return AccountStatus{Status: "unknown"}
 	}
 	hc := &http.Client{Timeout: time.Duration(timeoutSec) * time.Second}
-	url := "https://github.com/" + login
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (githubaltmanager)")
-	resp, err := hc.Do(req)
-	if err != nil {
-		return AccountStatus{Status: "error", Reason: "web profile error: " + err.Error()}
-	}
-	defer resp.Body.Close()
-	bodyBytes, _ := io.ReadAll(resp.Body)
-	body := string(bodyBytes)
-	low := strings.ToLower(body)
+	target := "https://github.com/" + login
+	var lastErr error
+	for attempt := 0; attempt < 2; attempt++ {
+		if attempt > 0 {
+			time.Sleep(500 * time.Millisecond)
+		}
+		req, _ := http.NewRequest("GET", target, nil)
+		req.Header.Set("User-Agent", "Mozilla/5.0 (githubaltmanager)")
+		resp, err := hc.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		defer resp.Body.Close()
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		body := string(bodyBytes)
+		low := strings.ToLower(body)
 
-	switch {
-	case resp.StatusCode == 404:
-		return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）", WebNotFound: true}
-	case resp.StatusCode >= 400:
-		return AccountStatus{Status: "error", Reason: fmt.Sprintf("web profile %d", resp.StatusCode)}
+		switch {
+		case resp.StatusCode == 404:
+			return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）", WebNotFound: true}
+		case resp.StatusCode >= 400:
+			return AccountStatus{Status: "error", Reason: fmt.Sprintf("web profile %d", resp.StatusCode)}
+		}
+		if strings.Contains(low, "suspended account") || strings.Contains(low, "account suspended") {
+			return AccountStatus{Status: "banned", Reason: "网页检测到 suspended account 标记"}
+		}
+		return AccountStatus{Status: "active", Reason: "github.com/" + login + " 正常可访问"}
 	}
-	if strings.Contains(low, "suspended account") || strings.Contains(low, "account suspended") {
-		return AccountStatus{Status: "banned", Reason: "网页检测到 suspended account 标记"}
-	}
-	return AccountStatus{Status: "active", Reason: "github.com/" + login + " 正常可访问"}
+	return AccountStatus{Status: "error", Reason: "web profile error（2 次尝试均失败，当前网络可能无法访问 github.com 主页）: " + lastErr.Error()}
 }
