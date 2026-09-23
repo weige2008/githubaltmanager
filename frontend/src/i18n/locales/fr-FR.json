@@ -276,15 +276,15 @@
       },
       "batch_create_workflows": {
         "summary": "Créer des workflows par lot",
-        "detail": "Committe le même fichier sur chaque dépôt de repo_ids (≤100), de façon synchrone et séquentielle ; content en base64. Les id en échec peuvent être retentés seuls."
+        "detail": "Commite le même workflow dans chaque dépôt de repo_ids (sans limite), avec 5 workers parallèles et progression. Les id en échec peuvent être retentés seuls."
       },
       "batch_dispatch": {
         "summary": "Déclencher des workflows par lot",
-        "detail": "Déclenche workflow_dispatch sur chaque dépôt. Longueur totale de repo_ids ≤100 (les répétitions de l’UI dupliquent simplement les ids)."
+        "detail": "Déclenche workflow_dispatch sur chaque dépôt (sans limite), 5 en parallèle. Les répétitions de l'UI dupliquent simplement les ids."
       },
       "batch_create_repos": {
         "summary": "Créer des dépôts par lot",
-        "detail": "Crée count (1-50) dépôts par compte (suffixes -1, -2…), avec fichiers de gabarit et secrets optionnels (chiffrés via la clé publique du dépôt). Synchrone ; les gros volumes prennent des minutes."
+        "detail": "Crée count (1-50) dépôts par compte (sans limite de comptes ; création séquentielle), avec fichiers de gabarit et secrets optionnels."
       },
       "batch_fetch_template": {
         "summary": "Récupérer les fichiers du gabarit",
@@ -296,7 +296,7 @@
       },
       "batch_toggle_visibility": {
         "summary": "Basculer la visibilité par lot",
-        "detail": "Passe tous les dépôts listés dans la visibilité indiquée et met à jour le cache. Aucun fichier modifié."
+        "detail": "Passe chaque dépôt de repo_ids dans la visibilité indiquée (sans limite), 5 en parallèle. Aucun fichier modifié."
       },
       "autotask_get": {
         "summary": "Config des tâches auto",

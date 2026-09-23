@@ -276,15 +276,15 @@
       },
       "batch_create_workflows": {
         "summary": "Tạo workflow hàng loạt",
-        "detail": "Commit cùng một tệp vào từng repo trong repo_ids (≤100), đồng bộ tuần tự; content là base64. Id thất bại có thể thử lại riêng."
+        "detail": "Commit cùng một tệp workflow vào từng repo trong repo_ids (không giới hạn), 5 luồng song song có tiến độ. Id thất bại có thể thử lại riêng."
       },
       "batch_dispatch": {
         "summary": "Kích hoạt workflow hàng loạt",
-        "detail": "Kích hoạt workflow_dispatch cho từng repo. Tổng độ dài repo_ids ≤100 (số lần kích hoạt trong UI chỉ là lặp lại ids)."
+        "detail": "Kích hoạt workflow_dispatch cho từng repo (không giới hạn), 5 luồng song song. Số lần kích hoạt trong UI chỉ là lặp lại ids."
       },
       "batch_create_repos": {
         "summary": "Tạo repo hàng loạt",
-        "detail": "Mỗi tài khoản tạo count (1-50) repo (tên thêm hậu tố -1, -2…), có thể kèm tệp mẫu và secrets (mã hóa bằng repo public key). Chạy đồng bộ; lô lớn mất vài phút."
+        "detail": "Tạo count (1-50) repo cho mỗi tài khoản (không giới hạn số tài khoản; tạo chạy tuần tự), kèm tệp mẫu và secrets tùy chọn."
       },
       "batch_fetch_template": {
         "summary": "Lấy tệp từ repo mẫu",
@@ -296,7 +296,7 @@
       },
       "batch_toggle_visibility": {
         "summary": "Đổi chế độ hiển thị hàng loạt",
-        "detail": "Chuyển mọi repo được liệt kê sang trạng thái chỉ định và cập nhật cache. Không sửa tệp."
+        "detail": "Chuyển mọi repo trong repo_ids sang chế độ chỉ định (không giới hạn), 5 luồng song song. Không sửa tệp."
       },
       "autotask_get": {
         "summary": "Cấu hình tác vụ tự động",

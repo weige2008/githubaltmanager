@@ -2,13 +2,45 @@ package handlers
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/service"
 )
 
-const MAX_BATCH_SIZE = 100
+// runIndexed 有界并发执行（workers 为并发数，<1 时取 1）
+func runIndexed(items int, workers int, fn func(i int)) {
+	if workers < 1 {
+		workers = 1
+	}
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	for i := 0; i < items; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			fn(i)
+		}(i)
+	}
+	wg.Wait()
+}
+
+// splitSuccessFailed 把按索引的结果数组按成功/失败拆分（保持顺序）
+func splitSuccessFailed(results []gin.H) (success, failed []gin.H) {
+	success = []gin.H{}
+	failed = []gin.H{}
+	for _, r := range results {
+		if r["error"] != nil {
+			failed = append(failed, r)
+		} else {
+			success = append(success, r)
+		}
+	}
+	return
+}
 
 type BatchHandler struct {
 	c *service.Container
@@ -52,24 +84,25 @@ func (h *BatchHandler) CreateWorkflows(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
 	msg := p.CommitMessage
 	if msg == "" {
 		msg = "Batch create workflow " + p.Filename
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
-		_, err := h.s.CreateWorkflow(h.c, rid, p.Filename, p.Content, msg, p.Branch)
-		if err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+	// 有界并发执行（5 路），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 5, func(i int) {
+		rid := p.RepoIDs[i]
+		if _, err := h.s.CreateWorkflow(h.c, rid, p.Filename, p.Content, msg, p.Branch); err != nil {
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
-			success = append(success, gin.H{"repo_id": rid})
+			results[i] = gin.H{"repo_id": rid}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 
@@ -86,20 +119,21 @@ func (h *BatchHandler) Dispatch(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
-		err := h.s.DispatchWorkflow(h.c, rid, p.Filename, p.Ref, p.Inputs)
-		if err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+	// 有界并发执行（5 路），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 5, func(i int) {
+		rid := p.RepoIDs[i]
+		if err := h.s.DispatchWorkflow(h.c, rid, p.Filename, p.Ref, p.Inputs); err != nil {
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
-			success = append(success, gin.H{"repo_id": rid})
+			results[i] = gin.H{"repo_id": rid}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 
@@ -140,8 +174,8 @@ func (h *BatchHandler) CreateRepos(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.AccountIDs) == 0 || len(p.AccountIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "account_ids 数量必须在 1-100 之间", nil)
+	if len(p.AccountIDs) == 0 {
+		resp.BadRequest(c, "请提供 account_ids", nil)
 		return
 	}
 	if p.Count <= 0 {
@@ -183,24 +217,25 @@ func (h *BatchHandler) UpdateRepos(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
 	if p.TemplateOwner == "" || p.TemplateRepo == "" {
 		resp.BadRequest(c, "template_owner/template_repo 不能为空", nil)
 		return
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
-		err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef)
-		if err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+	// 有界并发执行（3 路：清空重写为重操作，不宜过高并发），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 3, func(i int) {
+		rid := p.RepoIDs[i]
+		if err := h.s.UpdateRepoFromTemplate(h.c, rid, p.TemplateOwner, p.TemplateRepo, p.TemplateRef); err != nil {
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
-			success = append(success, gin.H{"repo_id": rid})
+			results[i] = gin.H{"repo_id": rid}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 
@@ -229,8 +264,8 @@ func (h *BatchHandler) SetSecrets(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
 	if len(p.Secrets) == 0 || len(p.Secrets) > 100 {
@@ -243,15 +278,17 @@ func (h *BatchHandler) SetSecrets(c *gin.Context) {
 			return
 		}
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
+	// 有界并发执行（5 路），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 5, func(i int) {
+		rid := p.RepoIDs[i]
 		if err := h.s.SetRepoSecrets(h.c, rid, p.Secrets); err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
-			success = append(success, gin.H{"repo_id": rid, "message": fmt.Sprintf("已设置 %d 个 secrets", len(p.Secrets))})
+			results[i] = gin.H{"repo_id": rid, "message": fmt.Sprintf("已设置 %d 个 secrets", len(p.Secrets))}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 
@@ -268,8 +305,8 @@ func (h *BatchHandler) DeleteSecrets(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
 	if !p.All && len(p.Names) == 0 {
@@ -282,20 +319,22 @@ func (h *BatchHandler) DeleteSecrets(c *gin.Context) {
 			return
 		}
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
+	// 有界并发执行（3 路），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 3, func(i int) {
+		rid := p.RepoIDs[i]
 		deleted, err := h.s.DeleteRepoSecrets(h.c, rid, p.All, p.Names)
 		if err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
 			scope := "指定"
 			if p.All {
 				scope = "全部"
 			}
-			success = append(success, gin.H{"repo_id": rid, "deleted": deleted, "message": fmt.Sprintf("已删除 %s secrets %d 个", scope, deleted)})
+			results[i] = gin.H{"repo_id": rid, "deleted": deleted, "message": fmt.Sprintf("已删除 %s secrets %d 个", scope, deleted)}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 
@@ -449,21 +488,22 @@ func (h *BatchHandler) ToggleVisibility(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
-	if len(p.RepoIDs) == 0 || len(p.RepoIDs) > MAX_BATCH_SIZE {
-		resp.BadRequest(c, "repo_ids 数量必须在 1-100 之间", nil)
+	if len(p.RepoIDs) == 0 {
+		resp.BadRequest(c, "请提供 repo_ids", nil)
 		return
 	}
-	success := []gin.H{}
-	failed := []gin.H{}
-	for _, rid := range p.RepoIDs {
-		err := h.s.ToggleRepoVisibility(h.c, rid, p.IsPrivate)
-		if err != nil {
-			failed = append(failed, gin.H{"repo_id": rid, "error": err.Error()})
+	// 有界并发执行（5 路），数量不限
+	results := make([]gin.H, len(p.RepoIDs))
+	runIndexed(len(p.RepoIDs), 5, func(i int) {
+		rid := p.RepoIDs[i]
+		if err := h.s.ToggleRepoVisibility(h.c, rid, p.IsPrivate); err != nil {
+			results[i] = gin.H{"repo_id": rid, "error": err.Error()}
 		} else {
 			vis := "public"
 			if p.IsPrivate { vis = "private" }
-			success = append(success, gin.H{"repo_id": rid, "visibility": vis})
+			results[i] = gin.H{"repo_id": rid, "visibility": vis}
 		}
-	}
+	})
+	success, failed := splitSuccessFailed(results)
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }

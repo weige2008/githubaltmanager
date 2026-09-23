@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { accountApi, repoApi, batchApi, type Repo, type Account, type Workflow, type WorkflowInput } from '@/api'
@@ -221,72 +221,60 @@ export default function BatchPage() {
     return info ? `${info.login}/${info.name}` : `repo_id: ${repoId}`
   }
 
-  // Retry handlers
-  const retryCreateMut = useMutation({
-    mutationFn: (repoIds: number[]) => batchApi.createWorkflows({ repo_ids: repoIds, filename: wfFilename, content: b64(wfContent), commit_message: commitMsg }),
-    onSuccess: (data) => {
-      setResults(prev => prev ? { success: [...prev.success, ...data.success], failed: data.failed } : data)
-      toast.success(`重试完成：${data.success.length} 成功，${data.failed.length} 仍然失败`)
-      setRetrying(false)
-    },
-    onError: () => { toast.error('重试失败'); setRetrying(false) },
-  })
-  const retryDispatchMut = useMutation({
-    mutationFn: (repoIds: number[]) => batchApi.dispatch({ repo_ids: repoIds, filename: dispatchFilename, ref: dispatchRef || undefined, inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined }),
-    onSuccess: (data) => {
-      setResults(prev => prev ? { success: [...prev.success, ...data.success], failed: data.failed } : data)
-      toast.success(`重试完成：${data.success.length} 成功，${data.failed.length} 仍然失败`)
-      setRetrying(false)
-    },
-    onError: () => { toast.error('重试失败'); setRetrying(false) },
-  })
-  const [retrying, setRetrying] = useState(false)
-  const handleRetry = () => {
-    if (!results?.failed?.length) return
-    setRetrying(true)
-    const failedIds = results.failed.map((f: any) => f.repo_id)
-    if (mode === 'create') retryCreateMut.mutate(failedIds)
-    else retryDispatchMut.mutate(failedIds)
-  }
-
   const b64 = useCallback((s: string) => btoa(unescape(encodeURIComponent(s))), [])
 
-  const createMut = useMutation({
-    mutationFn: () => batchApi.createWorkflows({
-      repo_ids: selectedRepoIds,
-      filename: wfFilename,
-      content: b64(wfContent),
-      commit_message: commitMsg,
-    }),
-    onSuccess: (data) => {
-      setResults(data)
-      toast.success(t('batchWorkflow.partialMsg', { success: data.success?.length || 0, failed: data.failed?.length || 0 }))
-    },
-    onError: (e: any) => toast.error(e?.message || t('batchWorkflow.createFailed')),
-  })
+  // 统一执行器：5 路并发逐仓库执行，进度实时更新，可取消剩余
+  const cancelRef = useRef(false)
+  const [executing, setExecuting] = useState(false)
+  const [progress, setProgress] = useState<{ done: number; total: number; ok: number; fail: number } | null>(null)
 
-  const dispatchMut = useMutation({
-    mutationFn: async () => {
-      const allRepoIds: number[] = []
-      for (let i = 0; i < dispatchCount; i++) {
-        allRepoIds.push(...selectedRepoIds)
+  const executeIds = async (runMode: 'create' | 'dispatch', ids: number[], isRetry = false) => {
+    // dispatch 模式下"每个仓库触发次数"= 把 ids 重复 dispatchCount 份
+    const expIds = runMode === 'dispatch' ? ids.flatMap(id => Array.from({ length: dispatchCount }, () => id)) : ids
+    const total = expIds.length
+    if (!total) return
+    setExecuting(true)
+    cancelRef.current = false
+    if (!isRetry) setResults(null)
+    setProgress({ done: 0, total, ok: 0, fail: 0 })
+    let ok = 0, fail = 0, cursor = 0
+    const allSuccess: any[] = [], allFailed: any[] = []
+    const worker = async () => {
+      while (!cancelRef.current) {
+        const idx = cursor++
+        if (idx >= expIds.length) return
+        const rid = expIds[idx]
+        try {
+          let data: any
+          if (runMode === 'create') data = await batchApi.createWorkflows({ repo_ids: [rid], filename: wfFilename, content: b64(wfContent), commit_message: commitMsg })
+          else data = await batchApi.dispatch({ repo_ids: [rid], filename: dispatchFilename, ref: dispatchRef || undefined, inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined })
+          const f = data.failed?.[0]
+          if (f) { fail++; allFailed.push({ ...f, repo_id: rid }) } else { ok++; allSuccess.push(...(data.success.length ? data.success : [{ repo_id: rid }])) }
+        } catch (e: any) {
+          fail++
+          allFailed.push({ repo_id: rid, error: e?.message || '请求失败' })
+        }
+        setProgress({ done: ok + fail, total, ok, fail })
+        setResults({ success: [...allSuccess], failed: [...allFailed] })
       }
-      return batchApi.dispatch({
-        repo_ids: allRepoIds,
-        filename: dispatchFilename,
-        ref: dispatchRef || undefined,
-        inputs: Object.keys(dispatchInputs).length > 0 ? dispatchInputs : undefined,
-      })
-    },
-    onSuccess: (data) => {
-      setResults(data)
-      toast.success(t('batchWorkflow.partialMsg', { success: data.success?.length || 0, failed: data.failed?.length || 0 }))
-    },
-    onError: (e: any) => toast.error(e?.message || t('batchWorkflow.dispatchFailed')),
-  })
+    }
+    await Promise.all(Array.from({ length: Math.min(5, expIds.length) }, worker))
+    setExecuting(false)
+    setProgress(null)
+    const canceledCount = total - ok - fail
+    if (cancelRef.current && canceledCount > 0) toast.info(`已取消，剩余 ${canceledCount} 次未执行`)
+    if (fail === 0) toast.success(`全部成功：${ok} 次`)
+    else toast.warning(`完成：${ok} 成功，${fail} 失败`)
+  }
+
+  const handleExecute = () => executeIds(mode, selectedRepoIds)
+  const handleRetry = () => {
+    if (!results?.failed?.length) return
+    executeIds(mode === 'create' ? 'create' : 'dispatch', results.failed.map((f: any) => f.repo_id), true)
+  }
 
   const canExecute = selectedRepoIds.length > 0 && (mode === 'dispatch' ? !!dispatchFilename.trim() : !!wfFilename.trim())
-  const isExecuting = createMut.isPending || dispatchMut.isPending
+  const isExecuting = executing
 
   if (accLoading) return <LoadingState />
   if (accError) return <ErrorState retry={accRefetch} />
@@ -638,6 +626,22 @@ export default function BatchPage() {
                 </TabsContent>
               </Tabs>
 
+              {/* 执行进度 */}
+              {progress && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      执行中：{progress.done} / {progress.total} · <span className="text-success">成功 {progress.ok}</span> · <span className="text-destructive">失败 {progress.fail}</span>
+                    </span>
+                    <Button size="sm" variant="outline" onClick={() => { cancelRef.current = true }}>取消剩余</Button>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${Math.round((progress.done / Math.max(1, progress.total)) * 100)}%` }} />
+                  </div>
+                </div>
+              )}
+
               {/* Execution results */}
               {results && (
                 <Alert className="mt-4">
@@ -668,15 +672,15 @@ export default function BatchPage() {
                   {t('ui.reset')}
                 </Button>
                 {results && results.failed.length > 0 && (
-                  <Button variant="outline" onClick={handleRetry} disabled={retrying || isExecuting} className="gap-1.5">
-                    {retrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  <Button variant="outline" onClick={handleRetry} disabled={isExecuting} className="gap-1.5">
+                    {executing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                     重试失败的 {results.failed.length} 个
                   </Button>
                 )}
                 <Button
                   size="lg"
                   disabled={!canExecute || isExecuting}
-                  onClick={() => mode === 'create' ? createMut.mutate() : dispatchMut.mutate()}
+                  onClick={handleExecute}
                 >
                   {isExecuting ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('batchWorkflow.executing')}</>

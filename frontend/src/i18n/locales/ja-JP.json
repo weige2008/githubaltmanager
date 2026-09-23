@@ -276,15 +276,15 @@
       },
       "batch_create_workflows": {
         "summary": "workflow 一括作成",
-        "detail": "repo_ids（≤100）の各リポジトリに同一ファイルを順次コミット（同期・直列）。content は base64。failed の id は個別リトライ可。"
+        "detail": "repo_ids の各リポジトリに同一 workflow をコミット（件数制限なし、5 並列・進捗表示あり）。失敗 id は個別リトライ可。"
       },
       "batch_dispatch": {
         "summary": "workflow 一括起動",
-        "detail": "各リポジトリで workflow_dispatch を発火。repo_ids の合計長 ≤100（UI の「起動回数」は ids の繰り返しで実現）。"
+        "detail": "各リポジトリで workflow_dispatch を発火（件数制限なし、5 並列）。UI の回数指定は ids の繰り返しで実現。"
       },
       "batch_create_repos": {
         "summary": "リポジトリ一括作成",
-        "detail": "アカウントごとに count（1-50）個作成。count>1 では -1、-2… と接尾。テンプレートファイルや secrets（repo public key で暗号化）も可。同期実行、大量時は数分。"
+        "detail": "account_ids の各アカウントで count（1-50）個のリポジトリを作成（アカウント数上限なし、作成は直列実行）。テンプレートや secrets も設定可。"
       },
       "batch_fetch_template": {
         "summary": "テンプレートファイルの取得",
@@ -296,7 +296,7 @@
       },
       "batch_toggle_visibility": {
         "summary": "公開状態の一括切替",
-        "detail": "指定リポジトリを public ↔ private 一括切替しローカルキャッシュを更新。ファイルは変更しない。"
+        "detail": "repo_ids の各リポジトリを指定の公開状態へ切替（件数制限なし、5 並列）。ファイルは変更しません。"
       },
       "autotask_get": {
         "summary": "自動タスク設定の取得",

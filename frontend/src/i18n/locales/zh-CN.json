@@ -276,15 +276,15 @@
       },
       "batch_create_workflows": {
         "summary": "批量创建 workflow",
-        "detail": "对 repo_ids（≤100）逐个提交同一文件，同步串行；content 为 base64。failed 的 id 可单独重试。"
+        "detail": "对 repo_ids 的每个仓库提交同一 workflow 文件（幂等无上限），以各仓库所属账户的 token 执行，前端 5 路并发并展示进度。失败可单独重试。"
       },
       "batch_dispatch": {
         "summary": "批量触发 workflow",
-        "detail": "逐个触发 workflow_dispatch；repo_ids 总长 ≤100（前端“触发次数”即把 ids 重复 N 份）。"
+        "detail": "对每个仓库触发 workflow_dispatch（幂等无上限），前端 5 路并发并展示进度。\"触发次数\"由前端把 ids 重复 N 份实现。"
       },
       "batch_create_repos": {
         "summary": "批量创建仓库",
-        "detail": "每个账户创建 count（1-50）个仓库，count>1 时名称追加 -1、-2…；可带模板文件与 secrets（后端用 repo public key 加密）。同步执行，量大耗时数分钟。"
+        "detail": "为 account_ids 的每个账户创建 count（1-50）个仓库（无账户数上限；创建为敏感操作，串行执行），count>1 时名称追加 -1、-2…；可带模板文件与 secrets。"
       },
       "batch_fetch_template": {
         "summary": "拉取模板文件",
@@ -296,7 +296,7 @@
       },
       "batch_toggle_visibility": {
         "summary": "批量切换可见性",
-        "detail": "统一切换 public ↔ private 并同步本地缓存，不改文件。"
+        "detail": "把 repo_ids 的每个仓库切换为 is_private 指定状态并更新本地缓存，数量不限，5 路并发。不修改文件。"
       },
       "autotask_get": {
         "summary": "读取自动任务配置",

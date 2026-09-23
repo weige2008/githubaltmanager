@@ -276,15 +276,15 @@
       },
       "batch_create_workflows": {
         "summary": "Batch create workflows",
-        "detail": "Commits the same workflow file to each repo in repo_ids (≤100), synchronously and serially; content is base64. Failed ids can be retried alone."
+        "detail": "Commits the same workflow file to each repo in repo_ids (no count limit), using each repo token, with 5-way concurrency and progress in the UI. Failed ids can be retried alone."
       },
       "batch_dispatch": {
         "summary": "Batch dispatch workflows",
-        "detail": "Triggers workflow_dispatch on each repo. repo_ids total length ≤100 (the UI's per-repo repeat count simply duplicates ids)."
+        "detail": "Triggers workflow_dispatch on each repo (no count limit), 5-way concurrent. The UI repeat count simply duplicates ids."
       },
       "batch_create_repos": {
         "summary": "Batch create repos",
-        "detail": "Creates count (1-50) repos per account (names get -1, -2… suffixes), optionally pushing template files and secrets (encrypted with the repo public key). Synchronous; large batches take minutes."
+        "detail": "Creates count (1-50) repos per account (no account-count limit; creation runs serially as an abuse-sensitive action), names get -1/-2 suffixes; optional template files and secrets."
       },
       "batch_fetch_template": {
         "summary": "Fetch template files",
@@ -296,7 +296,7 @@
       },
       "batch_toggle_visibility": {
         "summary": "Batch toggle visibility",
-        "detail": "Switches all listed repos to the given visibility and updates the local cache. No file changes."
+        "detail": "Switches every repo in repo_ids to the given visibility (no count limit) and updates the local cache, 5-way concurrent. No file changes."
       },
       "autotask_get": {
         "summary": "Get automation config",
