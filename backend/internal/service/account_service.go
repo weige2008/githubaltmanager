@@ -342,6 +342,60 @@ func (s *AccountService) SetEmailVisibility(c *Container, id uint, visibility st
 	return nil
 }
 
+// ghFor 用账户 token 构造 GitHub 客户端
+func (s *AccountService) ghFor(c *Container, id uint) (*github.Client, error) {
+	token, _, err := s.GetDecryptedToken(id)
+	if err != nil {
+		return nil, err
+	}
+	return github.New(c.CFG.GitHub.APIBaseURL, token, c.CFG.GitHub.RequestTimeout), nil
+}
+
+// StarRepo / UnstarRepo / FollowUser / UnfollowUser：以账户身份执行的社交动作
+func (s *AccountService) StarRepo(c *Container, id uint, owner, repo string) error {
+	ghc, err := s.ghFor(c, id)
+	if err != nil {
+		return err
+	}
+	if code, err := ghc.StarRepo(owner, repo); err != nil {
+		return fmt.Errorf("api %d: %w", code, err)
+	}
+	return nil
+}
+
+func (s *AccountService) UnstarRepo(c *Container, id uint, owner, repo string) error {
+	ghc, err := s.ghFor(c, id)
+	if err != nil {
+		return err
+	}
+	if _, err := ghc.UnstarRepo(owner, repo); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AccountService) FollowUser(c *Container, id uint, username string) error {
+	ghc, err := s.ghFor(c, id)
+	if err != nil {
+		return err
+	}
+	if code, err := ghc.FollowUser(username); err != nil {
+		return fmt.Errorf("api %d: %w", code, err)
+	}
+	return nil
+}
+
+func (s *AccountService) UnfollowUser(c *Container, id uint, username string) error {
+	ghc, err := s.ghFor(c, id)
+	if err != nil {
+		return err
+	}
+	if _, err := ghc.UnfollowUser(username); err != nil {
+		return err
+	}
+	return nil
+}
+
 // ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。
 // 用于导入后的二次复检：新账户信息在 GitHub 侧可能延迟生效，导致导入瞬间的首检偏差。
 // 定时器驻留在内存中（进程重启丢失，由周期性自动检测兜底）；账户已进入回收站则跳过。

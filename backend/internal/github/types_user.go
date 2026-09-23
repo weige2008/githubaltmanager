@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -84,6 +85,26 @@ func (c *Client) SetEmailVisibility(visibility string) ([]EmailEntry, int, error
 		return nil, code, err
 	}
 	return out, code, nil
+}
+
+// StarRepo 给仓库点 Star（幂等：已 star 再次调用仍为 204）
+func (c *Client) StarRepo(owner, repo string) (int, error) {
+	return c.PutJSON(fmt.Sprintf("/user/starred/%s/%s", owner, repo), nil, nil)
+}
+
+// UnstarRepo 取消 Star（未 star 时 GitHub 返回 404，与成功同样处理）
+func (c *Client) UnstarRepo(owner, repo string) (int, error) {
+	return c.Delete(fmt.Sprintf("/user/starred/%s/%s", owner, repo))
+}
+
+// FollowUser 关注用户
+func (c *Client) FollowUser(username string) (int, error) {
+	return c.PutJSON("/user/following/"+username, nil, nil)
+}
+
+// UnfollowUser 取消关注（未关注时 404，与成功同样处理）
+func (c *Client) UnfollowUser(username string) (int, error) {
+	return c.Delete("/user/following/" + username)
 }
 
 // ParseGitHubTime 解析 GitHub RFC3339 时间（失败返回 nil）

@@ -67,12 +67,13 @@
     "accounts": "Comptes",
     "repos": "Dépôts",
     "tasks": "Tâches planifiées",
-    "batch": "Opérations en lot",
+    "batch": "Workflows par lot",
     "batchRepos": "Création de dépôts en lot",
     "automationLogs": "Journaux d'automatisation",
     "settings": "Paramètres",
     "workflowRuns": "Exécutions de workflow",
-    "apiDocs": "Documentation API"
+    "apiDocs": "Documentation API",
+    "batchActions": "Actions par lot"
   },
   "apiDocs": {
     "title": "Documentation API",
@@ -384,6 +385,22 @@
       "accounts_export": {
         "summary": "Export complet des données de comptes",
         "detail": "Exporte tous les champs des comptes indiqués, **y compris token, mot de passe et e-mail de récupération déchiffrés** (en clair). Les comptes absents/supprimés sont ignorés. Renvoie items et count. Protégez soigneusement le contenu exporté."
+      },
+      "batch_star": {
+        "summary": "Star un dépôt par lot",
+        "detail": "Met en Star owner/repo pour chaque compte de account_ids (≤100), idempotent — déjà starré réussit aussi. Exécuté avec le token de chaque compte."
+      },
+      "batch_unstar": {
+        "summary": "Retirer la Star par lot",
+        "detail": "Retire la Star de owner/repo pour chaque compte ; non-starré compte comme succès."
+      },
+      "batch_follow": {
+        "summary": "Suivre un utilisateur par lot",
+        "detail": "Chaque compte suit username (le token doit avoir le scope user:follow)."
+      },
+      "batch_unfollow": {
+        "summary": "Ne plus suivre par lot",
+        "detail": "Chaque compte cesse de suivre username ; non-suivi compte comme succès."
       }
     },
     "danger": {
@@ -407,7 +424,11 @@
       "d_batch_delete_secrets": "Les secrets Actions des dépôts sélectionnés seront réellement supprimés — irrécupérable",
       "d_accounts_profile_update": "Le profil public de ce compte GitHub sera réellement modifié (réversible en rappelant)",
       "d_accounts_email_visibility": "La visibilité de l'e-mail principal de ce compte GitHub sera réellement modifiée",
-      "d_accounts_export": "L'export contient token, mot de passe et e-mail de récupération en clair — protégez-le"
+      "d_accounts_export": "L'export contient token, mot de passe et e-mail de récupération en clair — protégez-le",
+      "d_batch_star": "Ces comptes mettront réellement en Star le dépôt",
+      "d_batch_unstar": "La Star de ces comptes sera réellement retirée",
+      "d_batch_follow": "Ces comptes suivront réellement l'utilisateur cible",
+      "d_batch_unfollow": "Ces comptes cesseront réellement de suivre l'utilisateur cible"
     },
     "p": {
       "p_id_account": "ID du compte (id de la liste accounts)",
@@ -1033,5 +1054,8 @@
     "warning": " (contient des tokens en clair — à conserver précieusement)",
     "clipboardUnavailable": "Presse-papiers indisponible",
     "failed": "Échec de l'export"
+  },
+  "batchActions": {
+    "description": "Star des dépôts et suit des utilisateurs en masse via le token de chaque compte"
   }
 }

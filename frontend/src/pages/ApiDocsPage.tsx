@@ -138,6 +138,10 @@ const GROUPS: EndpointGroup[] = [
       { key: 'batch_set_secrets', method: 'POST', path: '/api/batch/set-secrets', danger: 'd_batch_set_secrets', body: { repo_ids: [1, 2], secrets: [{ name: 'TOKEN', value: 'xxx' }] } },
       { key: 'batch_delete_secrets', method: 'POST', path: '/api/batch/delete-secrets', danger: 'd_batch_delete_secrets', body: { repo_ids: [1, 2], all: true } },
       { key: 'batch_toggle_visibility', method: 'POST', path: '/api/batch/toggle-visibility', danger: 'd_batch_toggle_visibility', body: { repo_ids: [1, 2], is_private: true } },
+      { key: 'batch_star', method: 'POST', path: '/api/batch/star', danger: 'd_batch_star', body: { account_ids: [1, 2], owner: 'owner', repo: 'repo' } },
+      { key: 'batch_unstar', method: 'POST', path: '/api/batch/unstar', danger: 'd_batch_unstar', body: { account_ids: [1, 2], owner: 'owner', repo: 'repo' } },
+      { key: 'batch_follow', method: 'POST', path: '/api/batch/follow', danger: 'd_batch_follow', body: { account_ids: [1, 2], username: 'torvalds' } },
+      { key: 'batch_unfollow', method: 'POST', path: '/api/batch/unfollow', danger: 'd_batch_unfollow', body: { account_ids: [1, 2], username: 'torvalds' } },
     ],
   },
   {

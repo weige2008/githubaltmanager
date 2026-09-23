@@ -67,12 +67,13 @@
     "accounts": "アカウント",
     "repos": "リポジトリ",
     "tasks": "スケジュールタスク",
-    "batch": "一括操作",
+    "batch": "ワークフロー一括操作",
     "batchRepos": "リポジトリ一括作成",
     "automationLogs": "オートメーションログ",
     "settings": "設定",
     "workflowRuns": "ワークフロー実行",
-    "apiDocs": "API ドキュメント"
+    "apiDocs": "API ドキュメント",
+    "batchActions": "一括操作"
   },
   "apiDocs": {
     "title": "API ドキュメント",
@@ -384,6 +385,22 @@
       "accounts_export": {
         "summary": "アカウントデータの全量エクスポート",
         "detail": "指定 ids の全フィールドをエクスポートします（**復号済みの token・パスワード・復旧メールを含む平文**）。存在しない/削除済みはスキップ。items と count を返す。エクスポート内容の管理に注意。"
+      },
+      "batch_star": {
+        "summary": "リポジトリへ一括 Star",
+        "detail": "account_ids（≤100）の各アカウントで owner/repo に Star を付けます（冪等）。各アカウントの token で実行。"
+      },
+      "batch_unstar": {
+        "summary": "Star の一括解除",
+        "detail": "各アカウントの owner/repo への Star を解除。未 star は成功扱い。"
+      },
+      "batch_follow": {
+        "summary": "ユーザーの一括フォロー",
+        "detail": "各アカウントで username をフォローします（token に user:follow 権限が必要）。"
+      },
+      "batch_unfollow": {
+        "summary": "フォローの一括解除",
+        "detail": "各アカウントで username のフォローを解除。未フォローは成功扱い。"
       }
     },
     "danger": {
@@ -407,7 +424,11 @@
       "d_batch_delete_secrets": "選択したリポジトリの Actions secrets を実際に削除します。復元不可",
       "d_accounts_profile_update": "この GitHub アカウントの公開プロフィールを実際に変更します（再呼び出しで元に戻せます）",
       "d_accounts_email_visibility": "この GitHub アカウントの主メールの公開設定を実際に変更します",
-      "d_accounts_export": "エクスポートには平文の token・パスワード・復旧メールが含まれます。管理に注意してください"
+      "d_accounts_export": "エクスポートには平文の token・パスワード・復旧メールが含まれます。管理に注意してください",
+      "d_batch_star": "これらのアカウントで実際に Star を付けます",
+      "d_batch_unstar": "これらのアカウントの Star を実際に解除します",
+      "d_batch_follow": "これらのアカウントで実際に対象ユーザーをフォローします",
+      "d_batch_unfollow": "これらのアカウントで実際にフォローを解除します"
     },
     "p": {
       "p_id_account": "アカウント ID（accounts 一覧の id）",
@@ -1033,5 +1054,8 @@
     "warning": "（平文 token を含むため取り扱い注意）",
     "clipboardUnavailable": "クリップボードを使用できません",
     "failed": "エクスポートに失敗しました"
+  },
+  "batchActions": {
+    "description": "アカウントの token でリポジトリの Star やフォローを一括実行します"
   }
 }

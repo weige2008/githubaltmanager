@@ -67,12 +67,13 @@
     "accounts": "账户管理",
     "repos": "仓库浏览",
     "tasks": "定时任务",
-    "batch": "批量操作",
+    "batch": "批量工作流",
     "batchRepos": "批量建仓",
     "automationLogs": "自动化日志",
     "settings": "设置",
     "workflowRuns": "工作流运行",
-    "apiDocs": "API 文档"
+    "apiDocs": "API 文档",
+    "batchActions": "批量操作"
   },
   "apiDocs": {
     "title": "API 文档",
@@ -384,6 +385,22 @@
       "accounts_export": {
         "summary": "全量导出账户数据",
         "detail": "按 ids 导出账户的全部数据，**含解密后的 token、密码、恢复邮箱**（明文）。跳过不存在或已删除的账户。返回 items 数组与 count。请妥善保管导出内容。"
+      },
+      "batch_star": {
+        "summary": "批量 Star 仓库",
+        "detail": "为 account_ids（≤100）的每个账户对 owner/repo 点 Star（幂等，已 star 仍成功）。以各账户自己的 token 执行。"
+      },
+      "batch_unstar": {
+        "summary": "批量取消 Star",
+        "detail": "为每个账户取消 owner/repo 的 Star；未 star 视为成功。"
+      },
+      "batch_follow": {
+        "summary": "批量关注用户",
+        "detail": "让每个账户关注 username（需 token 含 user:follow 权限）。"
+      },
+      "batch_unfollow": {
+        "summary": "批量取消关注",
+        "detail": "让每个账户取消关注 username；未关注视为成功。"
       }
     },
     "danger": {
@@ -407,7 +424,11 @@
       "d_batch_delete_secrets": "将真实删除选中仓库的 Actions secrets，不可恢复",
       "d_accounts_profile_update": "将真实修改该 GitHub 账户的公开资料（可通过再次调用改回）",
       "d_accounts_email_visibility": "将真实修改该 GitHub 账户的主邮箱公开可见性",
-      "d_accounts_export": "导出内容包含明文 token / 密码 / 恢复邮箱，请妥善保管"
+      "d_accounts_export": "导出内容包含明文 token / 密码 / 恢复邮箱，请妥善保管",
+      "d_batch_star": "将真实为这些账户点 Star",
+      "d_batch_unstar": "将真实取消这些账户的 Star",
+      "d_batch_follow": "将让这些账户真实关注目标用户",
+      "d_batch_unfollow": "将让这些账户真实取消关注目标用户"
     },
     "p": {
       "p_id_account": "账户 ID（accounts 列表返回的 id）",
@@ -1033,5 +1054,8 @@
     "warning": "（含明文 token，请妥善保管）",
     "clipboardUnavailable": "剪贴板不可用",
     "failed": "导出失败"
+  },
+  "batchActions": {
+    "description": "以各账户自己的 token 批量执行 Star 仓库、关注用户等社交动作"
   }
 }

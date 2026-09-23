@@ -31,6 +31,10 @@ func RegisterBatchRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/set-secrets", h.SetSecrets)
 		grp.POST("/delete-secrets", h.DeleteSecrets)
 		grp.POST("/toggle-visibility", h.ToggleVisibility)
+		grp.POST("/star", h.BatchStar)
+		grp.POST("/unstar", h.BatchUnstar)
+		grp.POST("/follow", h.BatchFollow)
+		grp.POST("/unfollow", h.BatchUnfollow)
 	}
 }
 
@@ -292,6 +296,141 @@ func (h *BatchHandler) DeleteSecrets(c *gin.Context) {
 			success = append(success, gin.H{"repo_id": rid, "deleted": deleted, "message": fmt.Sprintf("已删除 %s secrets %d 个", scope, deleted)})
 		}
 	}
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+// validTarget 校验 GitHub 用户名 / 仓库名（防路径注入，宽松对齐 GitHub 字符集）
+func validTarget(s string) bool {
+	if s == "" || len(s) > 200 {
+		return false
+	}
+	for _, r := range s {
+		if r == '/' || r == '\\' || r == ' ' || r == '?' || r == '#' {
+			return false
+		}
+	}
+	return true
+}
+
+// runAccountAction 对 account_ids 逐个执行动作，返回统一 success/failed 结构
+func (h *BatchHandler) runAccountAction(ids []uint, fn func(id uint) (string, error)) (success, failed []gin.H) {
+	success = []gin.H{}
+	failed = []gin.H{}
+	for _, id := range ids {
+		msg, err := fn(id)
+		if err != nil {
+			failed = append(failed, gin.H{"account_id": id, "error": err.Error()})
+		} else {
+			success = append(success, gin.H{"account_id": id, "message": msg})
+		}
+	}
+	return
+}
+
+func (h *BatchHandler) accountSvc() *service.AccountService {
+	return service.NewAccountService(h.c.DB)
+}
+
+type BatchRepoTargetPayload struct {
+	AccountIDs []uint `json:"account_ids" binding:"required"`
+	Owner      string `json:"owner" binding:"required"`
+	Repo       string `json:"repo" binding:"required"`
+}
+
+type BatchUserTargetPayload struct {
+	AccountIDs []uint `json:"account_ids" binding:"required"`
+	Username   string `json:"username" binding:"required"`
+}
+
+func (h *BatchHandler) checkIDsAndTarget(c *gin.Context, ids []uint, target string) bool {
+	if len(ids) == 0 || len(ids) > MAX_BATCH_SIZE {
+		resp.BadRequest(c, "account_ids 数量必须在 1-100 之间", nil)
+		return false
+	}
+	if target != "" && !validTarget(target) {
+		resp.BadRequest(c, "目标名称包含非法字符: "+target, nil)
+		return false
+	}
+	return true
+}
+
+// BatchStar 为每个账户对指定仓库点 Star
+func (h *BatchHandler) BatchStar(c *gin.Context) {
+	var p BatchRepoTargetPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo) {
+		return
+	}
+	accSvc := h.accountSvc()
+	success, failed := h.runAccountAction(p.AccountIDs, func(id uint) (string, error) {
+		if err := accSvc.StarRepo(h.c, id, p.Owner, p.Repo); err != nil {
+			return "", err
+		}
+		return "已 Star " + p.Owner + "/" + p.Repo, nil
+	})
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+// BatchUnstar 为每个账户取消指定仓库的 Star
+func (h *BatchHandler) BatchUnstar(c *gin.Context) {
+	var p BatchRepoTargetPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Owner+p.Repo) {
+		return
+	}
+	accSvc := h.accountSvc()
+	success, failed := h.runAccountAction(p.AccountIDs, func(id uint) (string, error) {
+		if err := accSvc.UnstarRepo(h.c, id, p.Owner, p.Repo); err != nil {
+			return "", err
+		}
+		return "已取消 Star " + p.Owner + "/" + p.Repo, nil
+	})
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+// BatchFollow 让每个账户关注指定用户
+func (h *BatchHandler) BatchFollow(c *gin.Context) {
+	var p BatchUserTargetPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username) {
+		return
+	}
+	accSvc := h.accountSvc()
+	success, failed := h.runAccountAction(p.AccountIDs, func(id uint) (string, error) {
+		if err := accSvc.FollowUser(h.c, id, p.Username); err != nil {
+			return "", err
+		}
+		return "已关注 " + p.Username, nil
+	})
+	resp.OK(c, gin.H{"success": success, "failed": failed})
+}
+
+// BatchUnfollow 让每个账户取消关注指定用户
+func (h *BatchHandler) BatchUnfollow(c *gin.Context) {
+	var p BatchUserTargetPayload
+	if err := c.ShouldBindJSON(&p); err != nil {
+		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if !h.checkIDsAndTarget(c, p.AccountIDs, p.Username) {
+		return
+	}
+	accSvc := h.accountSvc()
+	success, failed := h.runAccountAction(p.AccountIDs, func(id uint) (string, error) {
+		if err := accSvc.UnfollowUser(h.c, id, p.Username); err != nil {
+			return "", err
+		}
+		return "已取消关注 " + p.Username, nil
+	})
 	resp.OK(c, gin.H{"success": success, "failed": failed})
 }
 

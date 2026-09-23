@@ -67,12 +67,13 @@
     "accounts": "Tài khoản",
     "repos": "Kho lưu trữ",
     "tasks": "Tác vụ định kỳ",
-    "batch": "Thao tác hàng loạt",
+    "batch": "Hàng loạt workflow",
     "batchRepos": "Tạo kho hàng loạt",
     "automationLogs": "Nhật ký tự động hóa",
     "settings": "Cài đặt",
     "workflowRuns": "Lịch sử chạy",
-    "apiDocs": "Tài liệu API"
+    "apiDocs": "Tài liệu API",
+    "batchActions": "Thao tác hàng loạt"
   },
   "apiDocs": {
     "title": "Tài liệu API",
@@ -384,6 +385,22 @@
       "accounts_export": {
         "summary": "Xuất toàn bộ dữ liệu tài khoản",
         "detail": "Xuất mọi trường của các tài khoản theo ids, **bao gồm token, mật khẩu, email khôi phục đã giải mã** (dạng rõ). Bỏ qua tài khoản không tồn tại/đã xóa. Trả về items và count. Hãy bảo quản nội dung xuất cẩn thận."
+      },
+      "batch_star": {
+        "summary": "Star repo hàng loạt",
+        "detail": "Star owner/repo cho từng tài khoản trong account_ids (≤100), mang tính idempotent — đã star vẫn thành công. Thực hiện bằng token của từng tài khoản."
+      },
+      "batch_unstar": {
+        "summary": "Bỏ Star hàng loạt",
+        "detail": "Bỏ Star owner/repo của từng tài khoản; chưa star tính là thành công."
+      },
+      "batch_follow": {
+        "summary": "Theo dõi người dùng hàng loạt",
+        "detail": "Mỗi tài khoản theo dõi username (token cần quyền user:follow)."
+      },
+      "batch_unfollow": {
+        "summary": "Bỏ theo dõi hàng loạt",
+        "detail": "Mỗi tài khoản bỏ theo dõi username; chưa theo dõi tính là thành công."
       }
     },
     "danger": {
@@ -407,7 +424,11 @@
       "d_batch_delete_secrets": "Actions secrets của các repo đã chọn sẽ bị xóa thật — không thể phục hồi",
       "d_accounts_profile_update": "Hồ sơ công khai của tài khoản GitHub này sẽ thực sự bị thay đổi (có thể gọi lại để hoàn tác)",
       "d_accounts_email_visibility": "Chế độ hiển thị email chính của tài khoản GitHub này sẽ thực sự bị thay đổi",
-      "d_accounts_export": "Nội dung xuất có token, mật khẩu, email khôi phục dạng rõ — hãy bảo quản cẩn thận"
+      "d_accounts_export": "Nội dung xuất có token, mật khẩu, email khôi phục dạng rõ — hãy bảo quản cẩn thận",
+      "d_batch_star": "Các tài khoản này sẽ thực sự Star repo",
+      "d_batch_unstar": "Star của các tài khoản này sẽ thực sự bị bỏ",
+      "d_batch_follow": "Các tài khoản này sẽ thực sự theo dõi người dùng mục tiêu",
+      "d_batch_unfollow": "Các tài khoản này sẽ thực sự bỏ theo dõi người dùng mục tiêu"
     },
     "p": {
       "p_id_account": "ID tài khoản (id từ danh sách accounts)",
@@ -1033,5 +1054,8 @@
     "warning": " (chứa token dạng rõ — hãy bảo quản cẩn thận)",
     "clipboardUnavailable": "Không thể dùng clipboard",
     "failed": "Xuất thất bại"
+  },
+  "batchActions": {
+    "description": "Hàng loạt Star repo và theo dõi người dùng bằng token của từng tài khoản"
   }
 }

@@ -260,6 +260,14 @@ export const batchApi = {
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/delete-secrets', data),
   toggleVisibility: (data: { repo_ids: number[]; is_private: boolean }) =>
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/toggle-visibility', data),
+  star: (data: { account_ids: number[]; owner: string; repo: string }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/star', data),
+  unstar: (data: { account_ids: number[]; owner: string; repo: string }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/unstar', data),
+  follow: (data: { account_ids: number[]; username: string }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/follow', data),
+  unfollow: (data: { account_ids: number[]; username: string }) =>
+    http.post<unknown, { success: any[]; failed: any[] }>('/batch/unfollow', data),
 }
 
 export interface Stats {

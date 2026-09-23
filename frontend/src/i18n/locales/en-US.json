@@ -67,12 +67,13 @@
     "accounts": "Accounts",
     "repos": "Repositories",
     "tasks": "Scheduled Tasks",
-    "batch": "Batch Operations",
+    "batch": "Batch Workflows",
     "batchRepos": "Batch Create Repos",
     "automationLogs": "Automation Logs",
     "settings": "Settings",
     "workflowRuns": "Workflow Runs",
-    "apiDocs": "API Docs"
+    "apiDocs": "API Docs",
+    "batchActions": "Batch Actions"
   },
   "apiDocs": {
     "title": "API Documentation",
@@ -384,6 +385,22 @@
       "accounts_export": {
         "summary": "Export full account data",
         "detail": "Exports every field of the given accounts, **including decrypted token, password and recovery email** (plaintext). Missing/deleted accounts are skipped. Returns items and count. Guard the exported content carefully."
+      },
+      "batch_star": {
+        "summary": "Batch star a repository",
+        "detail": "Stars owner/repo for every account in account_ids (≤100), idempotent — already-starred still succeeds. Executed with each account's own token."
+      },
+      "batch_unstar": {
+        "summary": "Batch unstar a repository",
+        "detail": "Removes the star of owner/repo for every account; not-starred counts as success."
+      },
+      "batch_follow": {
+        "summary": "Batch follow a user",
+        "detail": "Makes every account follow username (requires the user:follow scope on the token)."
+      },
+      "batch_unfollow": {
+        "summary": "Batch unfollow a user",
+        "detail": "Makes every account unfollow username; not-following counts as success."
       }
     },
     "danger": {
@@ -407,7 +424,11 @@
       "d_batch_delete_secrets": "Actions secrets of the selected repos will really be deleted — unrecoverable",
       "d_accounts_profile_update": "The public profile of this GitHub account will really be changed (revert by calling again)",
       "d_accounts_email_visibility": "The primary email visibility of this GitHub account will really be changed",
-      "d_accounts_export": "The export contains plaintext token / password / recovery email — guard it carefully"
+      "d_accounts_export": "The export contains plaintext token / password / recovery email — guard it carefully",
+      "d_batch_star": "These accounts will really star the repository",
+      "d_batch_unstar": "The star will really be removed for these accounts",
+      "d_batch_follow": "These accounts will really follow the target user",
+      "d_batch_unfollow": "These accounts will really unfollow the target user"
     },
     "p": {
       "p_id_account": "Account ID (the id from the accounts list)",
@@ -1033,5 +1054,8 @@
     "warning": " (contains plaintext tokens — keep them safe)",
     "clipboardUnavailable": "Clipboard unavailable",
     "failed": "Export failed"
+  },
+  "batchActions": {
+    "description": "Batch Star repositories and follow users using each account token"
   }
 }
