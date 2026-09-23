@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { accountApi, repoApi, batchApi, type Repo, type Account, type Workflow, type WorkflowInput } from '@/api'
+import { accountApi, repoApi, batchApi, runsApi, type Repo, type Account, type Workflow, type WorkflowInput } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +17,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap, RefreshCw } from 'lucide-react'
+import { Users, GitBranch, FileCode, Play, Loader2, CircleCheck, CircleX, Search, Zap, RefreshCw, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface MatchedRepo extends Repo {
@@ -42,7 +42,7 @@ export default function BatchPage() {
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([])
   const [repoName, setRepoName] = useState('')
   const [selectedRepoIds, setSelectedRepoIds] = useState<number[]>([])
-  const [mode, setMode] = useState<'create' | 'dispatch'>('create')
+  const [mode, setMode] = useState<'create' | 'dispatch' | 'cancel-runs'>('create')
 
   const [wfFilename, setWfFilename] = useState('keepalive.yml')
   const [wfContent, setWfContent] = useState(DEFAULT_WORKFLOW)
@@ -225,7 +225,7 @@ export default function BatchPage() {
 
   // 统一执行器：5 路并发逐仓库执行，进度实时更新，可取消剩余
   const cancelRef = useRef(false)
-  const [executing, setExecuting] = useState(false)
+  const [executing, setExecuting] = useState<string | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number; ok: number; fail: number } | null>(null)
 
   const executeIds = async (runMode: 'create' | 'dispatch', ids: number[], isRetry = false) => {
@@ -233,7 +233,7 @@ export default function BatchPage() {
     const expIds = runMode === 'dispatch' ? ids.flatMap(id => Array.from({ length: dispatchCount }, () => id)) : ids
     const total = expIds.length
     if (!total) return
-    setExecuting(true)
+    setExecuting(runMode)
     cancelRef.current = false
     if (!isRetry) setResults(null)
     setProgress({ done: 0, total, ok: 0, fail: 0 })
@@ -259,7 +259,7 @@ export default function BatchPage() {
       }
     }
     await Promise.all(Array.from({ length: Math.min(5, expIds.length) }, worker))
-    setExecuting(false)
+    setExecuting(null)
     setProgress(null)
     const canceledCount = total - ok - fail
     if (cancelRef.current && canceledCount > 0) toast.info(`已取消，剩余 ${canceledCount} 次未执行`)
@@ -267,14 +267,78 @@ export default function BatchPage() {
     else toast.warning(`完成：${ok} 成功，${fail} 失败`)
   }
 
-  const handleExecute = () => executeIds(mode, selectedRepoIds)
+  const handleExecute = () => {
+    if (mode === 'cancel-runs') return
+    executeIds(mode, selectedRepoIds)
+  }
+
+  // 批量取消：扫描选中账户所有仓库的在运行/排队运行并逐个取消（5 路并发，实时进度，可取消剩余）
+  const executeCancelRuns = async () => {
+    const repos = allRepos || []
+    if (!repos.length) { toast.error('选中账户没有仓库'); return }
+    setExecuting('cancel-runs')
+    setResults(null)
+    cancelRef.current = false
+
+    // 阶段1：扫描各仓库的在运行/排队运行
+    setProgress({ done: 0, total: repos.length, ok: 0, fail: 0 })
+    const targets: { repoId: number; runId: number }[] = []
+    let scanned = 0
+    const scanWorker = async () => {
+      while (!cancelRef.current) {
+        const idx = scanned++
+        if (idx >= repos.length) return
+        const r = repos[idx]
+        try {
+          const data = await runsApi.list(r.id, 100)
+          for (const run of (data.workflow_runs || [])) {
+            if (['in_progress', 'queued', 'waiting'].includes(run.status)) {
+              targets.push({ repoId: r.id, runId: run.id })
+            }
+          }
+        } catch { /* 单仓库扫描失败不阻断 */ }
+        setProgress(p => ({ done: (p?.done ?? 0) + 1, total: repos.length, ok: 0, fail: 0 }))
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(5, repos.length) }, scanWorker))
+
+    // 阶段2：逐个取消
+    const allSuccess: any[] = [], allFailed: any[] = []
+    let ok = 0, fail = 0, cursor = 0
+    setProgress({ done: 0, total: targets.length, ok: 0, fail: 0 })
+    const cancelWorker = async () => {
+      while (!cancelRef.current) {
+        const idx = cursor++
+        if (idx >= targets.length) return
+        const tg = targets[idx]
+        try {
+          await runsApi.cancel(tg.repoId, tg.runId)
+          ok++
+          allSuccess.push({ repo_id: tg.repoId, message: `已取消运行 #${tg.runId}` })
+        } catch (e: any) {
+          fail++
+          allFailed.push({ repo_id: tg.repoId, error: e?.message || `取消运行 #${tg.runId} 失败` })
+        }
+        setProgress({ done: ok + fail, total: targets.length, ok, fail })
+        setResults({ success: [...allSuccess], failed: [...allFailed] })
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(5, targets.length) }, cancelWorker))
+
+    setExecuting(null)
+    setProgress(null)
+    const canceledCount = targets.length - ok - fail
+    if (cancelRef.current && canceledCount > 0) toast.info(`已取消操作，剩余 ${canceledCount} 个运行未处理`)
+    if (fail === 0) toast.success(`完成：取消 ${ok} 个运行`)
+    else toast.warning(`完成：${ok} 成功，${fail} 失败`)
+  }
   const handleRetry = () => {
     if (!results?.failed?.length) return
     executeIds(mode === 'create' ? 'create' : 'dispatch', results.failed.map((f: any) => f.repo_id), true)
   }
 
   const canExecute = selectedRepoIds.length > 0 && (mode === 'dispatch' ? !!dispatchFilename.trim() : !!wfFilename.trim())
-  const isExecuting = executing
+  const isExecuting = executing !== null
 
   if (accLoading) return <LoadingState />
   if (accError) return <ErrorState retry={accRefetch} />
@@ -484,6 +548,7 @@ export default function BatchPage() {
                 <TabsList className="mb-4">
                   <TabsTrigger value="create"><FileCode className="mr-2 h-4 w-4" />{t('batchWorkflow.createWorkflow')}</TabsTrigger>
                   <TabsTrigger value="dispatch"><Play className="mr-2 h-4 w-4" />{t('batchWorkflow.dispatchWorkflow')}</TabsTrigger>
+                  <TabsTrigger value="cancel-runs"><Ban className="mr-2 h-4 w-4" />取消运行</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="create" className="space-y-3">
@@ -624,6 +689,23 @@ export default function BatchPage() {
                     </AlertDescription>
                   </Alert>
                 </TabsContent>
+
+                <TabsContent value="cancel-runs" className="space-y-3">
+                  <Alert>
+                    <AlertDescription>
+                      <p className="font-medium text-warning">⚠️ 将取消选中账户<b>所有仓库</b>中正在运行 / 排队中的全部工作流运行。</p>
+                      <p className="mt-1 text-sm text-muted-foreground">已完成的运行不受影响；取消操作通过各账户自己的 token 执行。</p>
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    className="gap-2"
+                    disabled={isExecuting || selectedAccounts.length === 0}
+                    onClick={executeCancelRuns}
+                  >
+                    {executing === 'cancel-runs' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+                    扫描并取消运行中工作流（{selectedAccounts.length} 个账户）
+                  </Button>
+                </TabsContent>
               </Tabs>
 
               {/* 执行进度 */}
@@ -679,7 +761,7 @@ export default function BatchPage() {
                 )}
                 <Button
                   size="lg"
-                  disabled={!canExecute || isExecuting}
+                  disabled={!canExecute || isExecuting || mode === 'cancel-runs'}
                   onClick={handleExecute}
                 >
                   {isExecuting ? (
