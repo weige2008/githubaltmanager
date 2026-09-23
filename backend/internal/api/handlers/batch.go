@@ -150,6 +150,11 @@ func (h *BatchHandler) FetchTemplate(c *gin.Context) {
 		resp.BadRequest(c, "参数错误", err)
 		return
 	}
+	// owner/repo 会拼入 GitHub API 路径，做字符校验（防路径注入）
+	if !validTarget(p.Owner) || !validTarget(p.Repo) {
+		resp.BadRequest(c, "owner/repo 包含非法字符", nil)
+		return
+	}
 	files, err := h.s.FetchTemplateFiles(h.c, p.AccountID, p.Owner, p.Repo, p.Ref)
 	if err != nil {
 		resp.Internal(c, "获取模板文件失败: "+err.Error(), err)

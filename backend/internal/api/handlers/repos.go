@@ -2,11 +2,17 @@ package handlers
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"githubaltmanager/internal/api/resp"
 	"githubaltmanager/internal/service"
 )
+
+// safeRepoPath 仓库内文件路径校验：拒绝 .. 与绝对路径（路径会拼入 GitHub API URL）
+func safeRepoPath(p string) bool {
+	return !strings.Contains(p, "..") && !strings.HasPrefix(p, "/") && !strings.Contains(p, "\\")
+}
 
 type RepoHandler struct {
 	c *service.Container
@@ -75,6 +81,10 @@ func (h *RepoHandler) ListContents(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var q ListContentsQuery
 	_ = c.ShouldBindQuery(&q)
+	if !safeRepoPath(q.Path) {
+		resp.BadRequest(c, "路径非法", nil)
+		return
+	}
 	entries, err := h.s.ListContents(h.c, uint(id), q.Path, q.Ref)
 	if err != nil {
 		resp.Internal(c, "读取目录失败: "+err.Error(), err)
@@ -89,6 +99,10 @@ func (h *RepoHandler) GetFile(c *gin.Context) {
 	ref := c.Query("ref")
 	if path == "" {
 		resp.BadRequest(c, "缺少 path 参数")
+		return
+	}
+	if !safeRepoPath(path) {
+		resp.BadRequest(c, "路径非法", nil)
 		return
 	}
 	fc, err := h.s.GetFile(h.c, uint(id), path, ref)
@@ -111,6 +125,10 @@ func (h *RepoHandler) UpdateFile(c *gin.Context) {
 	var p UpdateFilePayload
 	if err := c.ShouldBindJSON(&p); err != nil {
 		resp.BadRequest(c, "参数错误", err)
+		return
+	}
+	if !safeRepoPath(p.Path) {
+		resp.BadRequest(c, "路径非法", nil)
 		return
 	}
 	sha, err := h.s.UpdateFile(h.c, uint(id), p.Path, p.Content, p.Message, p.Branch)

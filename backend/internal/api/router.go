@@ -20,6 +20,11 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	// 全局请求体上限 64MB：所有业务请求均为小型 JSON，防超大 body 内存耗尽
+	r.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 64<<20)
+		c.Next()
+	})
 
 	// CORS: 默认同源不需要 CORS；如果用户在 GAM_CORS_ORIGINS 中配置了允许的来源，则启用
 	corsOrigins := cfg.Security.CORSOrigins

@@ -226,9 +226,18 @@ func (h *AccountHandler) Update(c *gin.Context) {
 
 // Export 全量导出账户数据（含解密后的 token/密码/恢复邮箱），POST /api/accounts/export
 func (h *AccountHandler) Export(c *gin.Context) {
+	if !crypto.IsUnlocked() {
+		resp.BadRequest(c, "密钥未解锁，请先登录后再导出", nil)
+		return
+	}
 	var p BatchCheckPayload
 	if err := c.ShouldBindJSON(&p); err != nil || len(p.IDs) == 0 {
 		resp.BadRequest(c, "请提供 ids", err)
+		return
+	}
+	// 内存保护：ids 数量上限（正常使用远达不到）
+	if len(p.IDs) > 2000 {
+		resp.BadRequest(c, "单次导出最多 2000 个账户", nil)
 		return
 	}
 	items := make([]gin.H, 0, len(p.IDs))
@@ -443,6 +452,11 @@ func (h *AccountHandler) BatchCheckStatus(c *gin.Context) {
 	var p BatchCheckPayload
 	if err := c.ShouldBindJSON(&p); err != nil || len(p.IDs) == 0 {
 		resp.BadRequest(c, "请提供 ids", err)
+		return
+	}
+	// 内存保护上限（正常使用远达不到）
+	if len(p.IDs) > 5000 {
+		resp.BadRequest(c, "单次最多 5000 个账户", nil)
 		return
 	}
 	// 有界并发执行；不再限制 100 个（数量越多耗时越长，前端 300 秒超时后后端仍会跑完）
