@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { autoTaskApi, authApi, accountApi, apiKeyApi, systemApi, type AutoTaskConfig, type APIKey } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,6 +64,9 @@ export default function SettingsPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { mode, setMode } = useThemeStore()
+  // 标签页深链：/settings?tab=apikeys 等（命令面板/搜索可直达子设置）
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') || 'automation'
 
   const { data: config, isLoading, isError, refetch } = useQuery({
     queryKey: ['autotask-config'],
@@ -165,7 +168,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
-      <Tabs defaultValue="automation">
+      <Tabs value={tab} onValueChange={(v) => setSearchParams(v === 'automation' ? {} : { tab: v }, { replace: true })}>
         <TabsList>
           <TabsTrigger value="automation"><Activity className="mr-2 h-4 w-4" />{t('settings.automation')}</TabsTrigger>
           <TabsTrigger value="apikeys"><KeyRound className="mr-2 h-4 w-4" />API Keys</TabsTrigger>
