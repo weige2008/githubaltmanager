@@ -123,6 +123,7 @@ export default function BatchPage() {
     setResults(null)
   }
 
+  const quickSelectByStatus = (status: string) => setSelectedAccounts(prev => [...new Set([...prev, ...sortedAccountsList.filter(a => a.status === status).map(a => a.id)])])
   const toggleAllAccounts = () => {
     setSelectedAccounts((prev) => allVisibleSelected ? prev.filter(id => !visibleAccountIds.includes(id)) : [...new Set([...prev, ...visibleAccountIds])])
     setSelectedRepoIds([])
@@ -379,7 +380,13 @@ export default function BatchPage() {
                 ))}
               </div>
             )}
-          </CardHeader>
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+              <span className="text-xs text-muted-foreground">按状态快选：</span>
+              {([['active', '正常'], ['restricted', '受限'], ['banned', '封禁'], ['token_expired', 'Token过期']] as [string, string][]).map(([st, label]) => (
+                <button key={st} onClick={() => quickSelectByStatus(st)} title={'勾选所有' + label + '的可见账户'} className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground">{label}</button>
+              ))}
+            </div>
+</CardHeader>
           <CardContent className="max-h-[400px] space-y-1 overflow-y-auto">
             {sortedAccountsList.map((acc) => {
               const checked = selectedAccounts.includes(acc.id)

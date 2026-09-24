@@ -60,6 +60,7 @@ export default function BatchActionsPage() {
   const allVisibleSelected = visibleAccountIds.length > 0 && visibleAccountIds.every(id => selectedAccounts.includes(id))
 
   const toggleAccount = (id: number) => setSelectedAccounts(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id])
+  const quickSelectByStatus = (status: string) => setSelectedAccounts(prev => [...new Set([...prev, ...sortedAccounts.filter(a => a.status === status).map(a => a.id)])])
   const toggleAllAccounts = () => {
     setSelectedAccounts(prev => allVisibleSelected ? prev.filter(id => !visibleAccountIds.includes(id)) : [...new Set([...prev, ...visibleAccountIds])])
   }
@@ -174,7 +175,13 @@ export default function BatchActionsPage() {
                 ))}
               </div>
             )}
-          </CardHeader>
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+              <span className="text-xs text-muted-foreground">按状态快选：</span>
+              {([['active', '正常'], ['restricted', '受限'], ['banned', '封禁'], ['token_expired', 'Token过期']] as [string, string][]).map(([st, label]) => (
+                <button key={st} onClick={() => quickSelectByStatus(st)} title={'勾选所有' + label + '的可见账户'} className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground">{label}</button>
+              ))}
+            </div>
+</CardHeader>
           <CardContent className="space-y-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

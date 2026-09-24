@@ -155,6 +155,7 @@ export default function BatchRepoPage() {
   }) : [], [accounts, groupFilter])
   const allVisibleSelected = visibleAccounts.length > 0 && visibleAccounts.every(a => accountIds.includes(a.id))
 
+  const quickSelectByStatus = (status: string) => setAccountIds(prev => [...new Set([...prev, ...visibleAccounts.filter(a => a.status === status).map(a => a.id)])])
   const toggleAll = () => {
     const ids = visibleAccounts.map(a => a.id)
     setAccountIds(prev => allVisibleSelected ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])])
@@ -221,7 +222,13 @@ export default function BatchRepoPage() {
                 ))}
               </div>
             )}
-          </CardHeader>
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+              <span className="text-xs text-muted-foreground">按状态快选：</span>
+              {([['active', '正常'], ['restricted', '受限'], ['banned', '封禁'], ['token_expired', 'Token过期']] as [string, string][]).map(([st, label]) => (
+                <button key={st} onClick={() => quickSelectByStatus(st)} title={'勾选所有' + label + '的可见账户'} className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground">{label}</button>
+              ))}
+            </div>
+</CardHeader>
           <CardContent className="max-h-[500px] space-y-1 overflow-y-auto">
             {visibleAccounts.map(acc => (
               <label key={acc.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-accent">
