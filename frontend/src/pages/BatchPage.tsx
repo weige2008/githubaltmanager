@@ -231,7 +231,13 @@ export default function BatchPage() {
 
   const executeIds = async (runMode: 'create' | 'dispatch', ids: number[], isRetry = false) => {
     // dispatch 模式下"每个仓库触发次数"= 把 ids 重复 dispatchCount 份
-    const expIds = runMode === 'dispatch' ? ids.flatMap(id => Array.from({ length: dispatchCount }, () => id)) : ids
+    // dispatch 模式下"每个仓库触发次数"= 把 ids 重复 dispatchCount 份；
+    // 重试（isRetry）不乘次数且先去重：失败几个就只重试几个
+    const expIds = isRetry
+      ? [...new Set(ids)]
+      : runMode === 'dispatch'
+        ? ids.flatMap(id => Array.from({ length: dispatchCount }, () => id))
+        : ids
     const total = expIds.length
     if (!total) return
     setExecuting(runMode)
