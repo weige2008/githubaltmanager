@@ -269,9 +269,9 @@ export default function BatchPage() {
     setExecuting(null)
     setProgress(null)
     const canceledCount = total - ok - fail
-    if (cancelRef.current && canceledCount > 0) toast.info(`已取消，剩余 ${canceledCount} 次未执行`)
-    if (fail === 0) toast.success(`全部成功：${ok} 次`)
-    else toast.warning(`完成：${ok} 成功，${fail} 失败`)
+    if (cancelRef.current && canceledCount > 0) toast.info(`已取消，剩余 ${canceledCount} 个任务未执行`)
+    if (fail === 0) toast.success(`全部成功：${ok} 个任务`)
+    else toast.warning(`完成：${ok} 个任务成功，${fail} 个任务失败`)
   }
 
   const handleExecute = () => {
@@ -337,7 +337,7 @@ export default function BatchPage() {
     const canceledCount = targets.length - ok - fail
     if (cancelRef.current && canceledCount > 0) toast.info(`已取消操作，剩余 ${canceledCount} 个运行未处理`)
     if (fail === 0) toast.success(`完成：取消 ${ok} 个运行`)
-    else toast.warning(`完成：${ok} 成功，${fail} 失败`)
+    else toast.warning(`完成：${ok} 个任务成功，${fail} 个任务失败`)
   }
   const handleRetry = () => {
     if (!results?.failed?.length) return
@@ -740,7 +740,7 @@ export default function BatchPage() {
               {/* Execution results */}
               {results && (
                 <Alert className="mt-4">
-                  <AlertTitle>执行结果（成功 {results.success.length} / 失败 {results.failed.length}）</AlertTitle>
+                  <AlertTitle>执行结果（成功 {results.success.length} / 失败 {results.failed.length} 个任务）</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 max-h-[250px] space-y-1 overflow-y-auto">
                       {results.success.map((s, i) => (
@@ -769,7 +769,7 @@ export default function BatchPage() {
                 {results && results.failed.length > 0 && (
                   <Button variant="outline" onClick={handleRetry} disabled={isExecuting} className="gap-1.5">
                     {executing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    重试失败的 {results.failed.length} 个
+                    重试失败的 {results.failed.length} 个任务
                   </Button>
                 )}
                 <Button
