@@ -918,9 +918,9 @@
       "techStackDesc": "React + Tailwind + Go + Gin + GORM + SQLite, tệp nhị phân đơn"
     },
     "stats": {
-      "api": "Độ phủ API GitHub",
+      "api": "Độ phủ GitHub API",
       "platforms": "Đa nền tảng",
-      "endpoints": "Endpoints API REST",
+      "endpoints": "REST API endpoint",
       "encryption": "Mã hóa AES"
     },
     "features": {
@@ -928,32 +928,44 @@
       "title": "Xây dựng cho hiệu suất",
       "subtitle": "Từ nhập đến tự động hóa",
       "sync": {
-        "title": "Đồng bộ chớp nhoáng",
-        "desc": "Lấy tất cả kho và workflow đồng thời"
+        "title": "Mọi tài khoản trong một bảng điều khiển",
+        "desc": "Nhập token mã hóa, đồng bộ repo tự động, sửa tệp trực tuyến, quét và kích hoạt workflow"
       },
       "crypto": {
-        "title": "Mã hóa an toàn",
-        "desc": "Lưu trữ mã hóa AES-256-GCM, suy xuất khóa Argon2id"
+        "title": "Mã hóa đầu cuối",
+        "desc": "AES-256-GCM + Argon2id, khóa khi khởi động lại, không bao giờ lưu bản rõ"
       },
       "detect": {
-        "title": "Phát hiện thông minh",
-        "desc": "Phát hiện cấm đa chiến lược đồng thời"
+        "title": "Phát hiện ban / hạn chế / hết hạn",
+        "desc": "Song song API + web: hoạt động, hạn chế (token sống, profile không truy cập được), bị ban, token hết hạn — kiểm ngay khi nhập và tự kiểm lại sau 3 phút"
       },
       "auto": {
-        "title": "Động cơ tự động hóa",
-        "desc": "Tự động kiểm tra, đồng bộ và kích hoạt theo lịch"
+        "title": "Cỗ máy tự động",
+        "desc": "workflow_dispatch định kỳ, tự kiểm ban, tự đồng bộ repo, tự dọn thùng rác"
       },
-      "alwaysOn": "Luôn trực tuyến"
+      "alwaysOn": "Luôn trực tuyến",
+      "batch": {
+        "title": "Ma trận thao tác hàng loạt",
+        "desc": "Tạo repo, kích hoạt workflow, đổi chế độ hiển thị, đặt secrets, Star, theo dõi — không giới hạn, 5 luồng song song có tiến độ và hủy"
+      },
+      "settings": {
+        "title": "Sửa hồ sơ GitHub tại chỗ",
+        "desc": "7 trường hồ sơ công khai + hiển thị email, áp thẳng lên GitHub từ panel"
+      }
     },
     "more": {
-      "viz": "Trực quan hóa dữ liệu",
-      "vizDesc": "Biểu đồ thời gian thực với Recharts",
-      "repos": "Duyệt kho lưu trữ",
-      "reposDesc": "Cây tệp + trình soạn thảo mã",
-      "batch": "Thao tác hàng loạt",
-      "batchDesc": "Tạo/kích hoạt một chạm",
-      "openSource": "Mã nguồn mở",
-      "openSourceDesc": "Giấy phép MIT, tự lưu trữ"
+      "viz": "Dashboard trực quan",
+      "vizDesc": "Biểu đồ trạng thái tài khoản, thống kê repo/workflow, trình xem run theo job",
+      "repos": "Trình duyệt repo",
+      "reposDesc": "Duyệt tệp nhiều tài khoản, sửa & commit online, kích hoạt workflow có phân tích tham số",
+      "batch": "Workflow hàng loạt",
+      "batchDesc": "Tạo/kích hoạt workflow hàng loạt, đồng bộ từ mẫu, hủy các lượt đang chạy",
+      "openSource": "REST API mở",
+      "openSourceDesc": "60+ endpoint với trang tài liệu tích hợp và gỡ lỗi trực tuyến",
+      "secrets": "Quản lý secrets",
+      "secretsDesc": "Đặt / cập nhật / xóa Actions secrets hàng loạt, mã hóa bằng public key",
+      "i18n": "Giao diện đa ngôn ngữ",
+      "i18nDesc": "Đủ 6 ngôn ngữ, gồm cả tài liệu API và nội dung xuất"
     },
     "steps": {
       "eyebrow": "Cách hoạt động",
@@ -980,6 +992,35 @@
       "config": "Cấu hình",
       "techStack": "Stack công nghệ",
       "about": "Giới thiệu"
+    },
+    "changelog": {
+      "title": "Điểm mới gần đây",
+      "items": [
+        {
+          "title": "Nhận diện tài khoản hạn chế",
+          "desc": "API sống nhưng profile 404 → đánh dấu hạn chế, tách khỏi ban để thao tác hàng loạt không nhầm"
+        },
+        {
+          "title": "Thao tác hàng loạt không giới hạn",
+          "desc": "Mọi API hàng loạt bỏ trần số lượng; 5 luồng song song, tiến độ trực quan, hủy mọi lúc"
+        },
+        {
+          "title": "Star / theo dõi hàng loạt",
+          "desc": "Star repo và theo dõi người dùng với tư cách từng tài khoản, không giới hạn, có thể hủy"
+        },
+        {
+          "title": "Xuất toàn bộ dữ liệu",
+          "desc": "Xuất mọi trường (gồm token dạng rõ) theo lô hoặc lẻ, ra clipboard hoặc TXT, đa ngôn ngữ"
+        },
+        {
+          "title": "Tài liệu API + thử trực tuyến",
+          "desc": "Tài liệu đa ngôn ngữ cho mọi endpoint, form tham số, chạy thử một cú nhấp"
+        },
+        {
+          "title": "Liên kết GitHub một cú nhấp",
+          "desc": "Từ trang chi tiết mở nhanh profile / API / trang repo, kèm ngày đăng ký & ngày nhập"
+        }
+      ]
     }
   },
   "ui": {

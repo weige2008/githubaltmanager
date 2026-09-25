@@ -928,32 +928,44 @@
       "title": "为效率而生",
       "subtitle": "从导入到自动化",
       "sync": {
-        "title": "闪电同步",
-        "desc": "并发拉取所有仓库和 Action workflow"
+        "title": "多账户一站式管理",
+        "desc": "Token 加密导入、仓库自动同步、在线文件编辑、工作流扫描与触发——所有账户在同一控制台完成"
       },
       "crypto": {
-        "title": "安全加密",
-        "desc": "AES-256-GCM 加密存储，Argon2id 密钥派生"
+        "title": "端到端加密存储",
+        "desc": "AES-256-GCM + Argon2id 主密码派生，重启即锁，敏感字段永不落盘明文"
       },
       "detect": {
-        "title": "智能检测",
-        "desc": "多方案并发检测封禁状态"
+        "title": "封禁 / 受限 / Token 过期三态检测",
+        "desc": "API + 网页双探测交叉判定：正常、受限（token 有效但主页不可达）、封禁、Token 过期一目了然，导入即检、3 分钟自动复检"
       },
       "auto": {
         "title": "自动化引擎",
-        "desc": "自动检测、自动同步、定时触发，无需人工干预"
+        "desc": "定时 workflow_dispatch、自动封禁检测、自动仓库同步、回收站自动清理，全部后台定时执行"
       },
-      "alwaysOn": "全天候运行"
+      "alwaysOn": "全天候运行",
+      "batch": {
+        "title": "批量操作矩阵",
+        "desc": "建仓库、发工作流、切换可见性、设置 Secrets、Star、关注——全部无数量上限，5 路并发实时进度可取消"
+      },
+      "settings": {
+        "title": "账户设置直改 GitHub",
+        "desc": "公开资料 7 项 + 主邮箱可见性，在面板里直接改到 GitHub，无需登号"
+      }
     },
     "more": {
-      "viz": "数据可视化",
-      "vizDesc": "Recharts 图表实时展示状态分布",
-      "repos": "仓库浏览",
-      "reposDesc": "在线文件树 + 代码编辑器",
-      "batch": "批量操作",
-      "batchDesc": "多仓库一键创建/触发",
-      "openSource": "开源免费",
-      "openSourceDesc": "MIT License，自部署"
+      "viz": "可视化仪表盘",
+      "vizDesc": "账户状态饼图、仓库/工作流统计、运行记录查看器，逐 Job 日志",
+      "repos": "仓库浏览器",
+      "reposDesc": "跨账户浏览仓库文件、在线编辑提交、触发 workflow 并解析参数",
+      "batch": "批量工作流",
+      "batchDesc": "批量创建/触发 workflow、批量同步模板、批量取消运行中的工作流",
+      "openSource": "开放 API",
+      "openSourceDesc": "60+ REST 端点全量开放，内置 API 文档页支持在线调试",
+      "secrets": "仓库 Secrets 管理",
+      "secretsDesc": "批量设置 / 更新 / 删除仓库 Actions secrets，公钥加密传输",
+      "i18n": "多语言界面",
+      "i18nDesc": "中/英/日/俄/法/越六语全量覆盖，含 API 文档与导出内容"
     },
     "steps": {
       "eyebrow": "使用流程",
@@ -980,6 +992,35 @@
       "config": "配置项",
       "techStack": "技术栈",
       "about": "关于"
+    },
+    "changelog": {
+      "title": "最新版本亮点",
+      "items": [
+        {
+          "title": "受限账户识别",
+          "desc": "API 正常但主页 404 → 标记受限，与封禁分离，批量管理不再误伤"
+        },
+        {
+          "title": "批量操作无上限",
+          "desc": "所有批量端点数量不限，5 路并发 + 实时进度条 + 随时取消"
+        },
+        {
+          "title": "批量 Star / 关注",
+          "desc": "以各账户身份批量 Star 仓库、关注用户，无上限可取消"
+        },
+        {
+          "title": "账户数据导出",
+          "desc": "批量/单个导出全部字段（含明文 token），剪贴板或 TXT，多语言"
+        },
+        {
+          "title": "API 文档 + 在线测试",
+          "desc": "全部接口多语言文档、参数表单、一键在线调试，无需 Postman"
+        },
+        {
+          "title": "一键直达 GitHub",
+          "desc": "详情页快捷打开主页 / API 地址 / 仓库页面，显示注册与导入时间"
+        }
+      ]
     }
   },
   "ui": {

@@ -918,42 +918,54 @@
       "techStackDesc": "React + Tailwind + Go + Gin + GORM + SQLite、シングルバイナリ"
     },
     "stats": {
-      "api": "GitHub APIカバレッジ",
+      "api": "GitHub API カバレッジ",
       "platforms": "クロスプラットフォーム",
-      "endpoints": "REST APIエンドポイント",
-      "encryption": "AES暗号化"
+      "endpoints": "REST API エンドポイント",
+      "encryption": "AES 暗号化"
     },
     "features": {
       "eyebrow": "コア機能",
       "title": "効率のために構築",
       "subtitle": "インポートからオートメーションまで",
       "sync": {
-        "title": "高速同期",
-        "desc": "全リポジトリとworkflowを並行取得"
+        "title": "全アカウントを一つの画面で",
+        "desc": "token 暗号化インポート、リポジトリ自動同期、オンライン編集、workflow のスキャンと起動"
       },
       "crypto": {
-        "title": "セキュア暗号化",
-        "desc": "AES-256-GCM暗号化ストレージ、Argon2idキー導出"
+        "title": "エンドツーエンド暗号化",
+        "desc": "AES-256-GCM + Argon2id。再起動でロック、機密は平文保存なし"
       },
       "detect": {
-        "title": "スマート検出",
-        "desc": "複数戦略の並行BAN検出"
+        "title": "BAN / 制限 / 期限切れの検知",
+        "desc": "API と Web の二重プローブで active・制限（token 有効だがプロフィール不可達）・BAN・期限切れを判別。インポート時即検知、3 分後に自動再チェック"
       },
       "auto": {
-        "title": "オートメーションエンジン",
-        "desc": "自動確認、同期、スケジュール実行"
+        "title": "自動化エンジン",
+        "desc": "定期 workflow_dispatch、自動 BAN チェック、リポジトリ同期、ゴミ箱自動クリーンアップ"
       },
-      "alwaysOn": "常時稼働"
+      "alwaysOn": "常時稼働",
+      "batch": {
+        "title": "一括操作マトリクス",
+        "desc": "リポジトリ作成、workflow 起動、公開切替、Secrets 設定、Star、フォロー——件数無制限、5 並列・進捗表示・取消可"
+      },
+      "settings": {
+        "title": "GitHub プロフィールを直接編集",
+        "desc": "公開プロフィール 7 項目 + メール公開設定をパネルから GitHub へ直接反映"
+      }
     },
     "more": {
-      "viz": "データ可視化",
-      "vizDesc": "Rechartsによるリアルタイムチャート",
+      "viz": "可視化ダッシュボード",
+      "vizDesc": "ステータス円グラフ、統計、ジョブごとのログ表示",
       "repos": "リポジトリブラウザ",
-      "reposDesc": "ファイルツリー + コードエディタ",
-      "batch": "一括操作",
-      "batchDesc": "ワンクリック作成/Dispatch",
-      "openSource": "オープンソース",
-      "openSourceDesc": "MITライセンス、自己ホスト"
+      "reposDesc": "ファイル閲覧・編集・コミット、workflow 起動と引数解析",
+      "batch": "ワークフロー一括操作",
+      "batchDesc": "一括作成/起動、テンプレ同期、実行中のキャンセル",
+      "openSource": "公開 REST API",
+      "openSourceDesc": "60+ エンドポイント、API ドキュメントとオンライン実行付き",
+      "secrets": "リポジトリ Secrets 管理",
+      "secretsDesc": "Actions secrets の一括設定/更新/削除、公開鍵暗号化",
+      "i18n": "多言語 UI",
+      "i18nDesc": "6 言語を完全カバー（API ドキュメント・エクスポート含む）"
     },
     "steps": {
       "eyebrow": "使い方",
@@ -980,6 +992,35 @@
       "config": "設定",
       "techStack": "技術スタック",
       "about": "概要"
+    },
+    "changelog": {
+      "title": "最新のハイライト",
+      "items": [
+        {
+          "title": "制限アカウントの検知",
+          "desc": "API 正常・プロフィール 404 → 制限として BAN と分離、一括操作の誤爆を防止"
+        },
+        {
+          "title": "一括操作の件数無制限",
+          "desc": "全一括エンドポイントで上限なし。5 並列・進捗表示・いつでも取消"
+        },
+        {
+          "title": "一括 Star / フォロー",
+          "desc": "各アカウントとして Star やフォローを一括実行、無制限・取消可"
+        },
+        {
+          "title": "アカウント全データ出力",
+          "desc": "全フィールド（平文 token 含む）を一括/個別にクリップボードや TXT へ、多言語対応"
+        },
+        {
+          "title": "API ドキュメント + 試実行",
+          "desc": "全エンドポイントの多言語ドキュメント、パラメータフォーム、ワンクリック実行"
+        },
+        {
+          "title": "GitHub へワンクリック",
+          "desc": "詳細ページからプロフィール/API/リポジトリへ直行、登録日・インポート日も表示"
+        }
+      ]
     }
   },
   "ui": {

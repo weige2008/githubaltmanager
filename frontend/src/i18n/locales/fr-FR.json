@@ -918,9 +918,9 @@
       "techStackDesc": "React + Tailwind + Go + Gin + GORM + SQLite, binaire unique"
     },
     "stats": {
-      "api": "Couverture de l'API GitHub",
+      "api": "Couverture API GitHub",
       "platforms": "Multiplateforme",
-      "endpoints": "Endpoints API REST",
+      "endpoints": "Endpoints REST",
       "encryption": "Chiffrement AES"
     },
     "features": {
@@ -928,32 +928,44 @@
       "title": "Conçu pour l'efficacité",
       "subtitle": "De l'import à l'automatisation",
       "sync": {
-        "title": "Synchronisation éclair",
-        "desc": "Récupérer simultanément tous les dépôts et Workflows"
+        "title": "Tous les comptes, une console",
+        "desc": "Import chiffré des tokens, synchro auto des dépôts, édition en ligne, scan et déclenchement de workflows"
       },
       "crypto": {
-        "title": "Chiffrement sécurisé",
-        "desc": "Stockage chiffré AES-256-GCM, dérivation de clé Argon2id"
+        "title": "Chiffrement de bout en bout",
+        "desc": "AES-256-GCM + Argon2id, verrouillage au redémarrage, jamais de secrets en clair"
       },
       "detect": {
-        "title": "Détection intelligente",
-        "desc": "Détection de bannissement simultanée multi-stratégies"
+        "title": "Détection ban / restreint / expiré",
+        "desc": "Double sonde API + web : actif, restreint (token valide, profil injoignable), banni, token expiré — vérifié à l’import puis re-vérifié après 3 minutes"
       },
       "auto": {
-        "title": "Moteur d'automatisation",
-        "desc": "Vérification, synchronisation et déclenchements planifiés automatiques"
+        "title": "Moteur d’automatisation",
+        "desc": "workflow_dispatch planifiés, vérification auto des bans, synchro des dépôts, purge auto de la corbeille"
       },
-      "alwaysOn": "Toujours actif"
+      "alwaysOn": "Toujours actif",
+      "batch": {
+        "title": "Matrice d’opérations par lot",
+        "desc": "Créer des dépôts, déclencher des workflows, visibilité, secrets, Star, follow — sans limite, 5 workers, progression et annulation"
+      },
+      "settings": {
+        "title": "Éditer les profils GitHub",
+        "desc": "7 champs de profil public + visibilité e-mail, appliqués directement depuis le panneau"
+      }
     },
     "more": {
-      "viz": "Visualisation des données",
-      "vizDesc": "Graphiques en temps réel avec Recharts",
+      "viz": "Tableau de bord visuel",
+      "vizDesc": "Camembert des statuts, statistiques, visionneuse de runs avec logs par job",
       "repos": "Explorateur de dépôts",
-      "reposDesc": "Arborescence + éditeur de code",
-      "batch": "Opérations en lot",
-      "batchDesc": "Création/déclenchement en un clic",
-      "openSource": "Open Source",
-      "openSourceDesc": "Licence MIT, auto-hébergé"
+      "reposDesc": "Parcourir les fichiers, éditer et committer en ligne, déclencher des workflows",
+      "batch": "Workflows par lot",
+      "batchDesc": "Création/déclenchement par lot, synchro gabarit, annulation des runs en cours",
+      "openSource": "API REST ouverte",
+      "openSourceDesc": "60+ endpoints documentés dans l’application avec test en direct",
+      "secrets": "Gestion des secrets",
+      "secretsDesc": "Définir / mettre à jour / supprimer des secrets Actions par lot, chiffrés",
+      "i18n": "Interface multilingue",
+      "i18nDesc": "Six langues couvertes, documentation et export inclus"
     },
     "steps": {
       "eyebrow": "Comment ça marche",
@@ -980,6 +992,35 @@
       "config": "Configuration",
       "techStack": "Stack technique",
       "about": "À propos"
+    },
+    "changelog": {
+      "title": "Points forts récents",
+      "items": [
+        {
+          "title": "Détection des comptes restreints",
+          "desc": "API OK mais profil 404 → restreint, séparé de banni — plus d’opérations par lot à côté de la cible"
+        },
+        {
+          "title": "Opérations par lot sans limite",
+          "desc": "Aucun plafond sur les endpoints par lot ; 5 workers, progression live, annulable"
+        },
+        {
+          "title": "Star / follow par lot",
+          "desc": "Star et follow depuis chaque compte, sans limite et annulable"
+        },
+        {
+          "title": "Export complet des comptes",
+          "desc": "Tous les champs (tokens en clair inclus), par lot ou unitaire, presse-papiers ou TXT"
+        },
+        {
+          "title": "Doc API + panneau de test",
+          "desc": "Documentation multilingue de chaque endpoint avec formulaires et test en un clic"
+        },
+        {
+          "title": "Liens GitHub en un clic",
+          "desc": "Profil / API / pages de dépôts depuis la fiche, dates d’inscription et d’import"
+        }
+      ]
     }
   },
   "ui": {

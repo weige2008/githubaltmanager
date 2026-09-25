@@ -918,42 +918,54 @@
       "techStackDesc": "React + Tailwind + Go + Gin + GORM + SQLite, single binary"
     },
     "stats": {
-      "api": "GitHub API Coverage",
-      "platforms": "Cross-platform",
-      "endpoints": "REST API Endpoints",
-      "encryption": "AES Encryption"
+      "api": "GitHub API coverage",
+      "platforms": "Cross-platform builds",
+      "endpoints": "REST API endpoints",
+      "encryption": "AES encryption"
     },
     "features": {
       "eyebrow": "Core Features",
       "title": "Built for Efficiency",
       "subtitle": "From Import to Automation",
       "sync": {
-        "title": "Lightning Sync",
-        "desc": "Concurrently fetch all repos and workflows"
+        "title": "One console for all accounts",
+        "desc": "Encrypted token import, repo auto-sync, in-browser file editing, workflow scan & dispatch — everything in one place"
       },
       "crypto": {
-        "title": "Secure Encryption",
-        "desc": "AES-256-GCM encrypted storage, Argon2id key derivation"
+        "title": "End-to-end encrypted storage",
+        "desc": "AES-256-GCM + Argon2id master-password derivation, locks on restart, secrets never stored in plaintext"
       },
       "detect": {
-        "title": "Smart Detection",
-        "desc": "Multi-strategy concurrent ban detection"
+        "title": "Banned / restricted / expired detection",
+        "desc": "Dual API + web probe cross-checks: active, restricted (token valid but profile unreachable), banned or token expired — checked on import and re-checked in 3 minutes"
       },
       "auto": {
-        "title": "Automation Engine",
-        "desc": "Auto check, sync, and scheduled triggers"
+        "title": "Automation engine",
+        "desc": "Scheduled workflow_dispatch, automatic ban checks, repo sync and recycle-bin cleanup — all on a background scheduler"
       },
-      "alwaysOn": "Always On"
+      "alwaysOn": "Always On",
+      "batch": {
+        "title": "Batch operation matrix",
+        "desc": "Create repos, dispatch workflows, toggle visibility, set secrets, star, follow — no count limits, 5-way concurrent with live progress and cancel"
+      },
+      "settings": {
+        "title": "Edit GitHub profiles in place",
+        "desc": "7 public-profile fields + primary email visibility, applied straight to GitHub from the panel — no manual login"
+      }
     },
     "more": {
-      "viz": "Data Visualization",
-      "vizDesc": "Real-time charts with Recharts",
-      "repos": "Repo Browser",
-      "reposDesc": "File tree + code editor",
-      "batch": "Batch Operations",
-      "batchDesc": "One-click create/dispatch",
-      "openSource": "Open Source",
-      "openSourceDesc": "MIT License, self-hosted"
+      "viz": "Visual dashboard",
+      "vizDesc": "Account status pie, repo/workflow stats and a run viewer with per-job logs",
+      "repos": "Repo browser",
+      "reposDesc": "Browse files across accounts, edit & commit online, dispatch workflows with parsed inputs",
+      "batch": "Batch workflows",
+      "batchDesc": "Batch create/dispatch workflows, sync from template, cancel running workflow runs",
+      "openSource": "Open REST API",
+      "openSourceDesc": "60+ endpoints fully exposed, with a built-in API docs page and live debugging",
+      "secrets": "Repo secrets management",
+      "secretsDesc": "Batch set / update / delete Actions secrets, encrypted with the repo public key",
+      "i18n": "Multilingual UI",
+      "i18nDesc": "Six languages fully covered, including API docs and export content"
     },
     "steps": {
       "eyebrow": "How It Works",
@@ -980,6 +992,35 @@
       "config": "Configuration",
       "techStack": "Tech Stack",
       "about": "About"
+    },
+    "changelog": {
+      "title": "Latest highlights",
+      "items": [
+        {
+          "title": "Restricted account detection",
+          "desc": "API OK but profile 404 → marked restricted, separated from banned so batch ops never misfire"
+        },
+        {
+          "title": "Unlimited batch operations",
+          "desc": "No count caps on any batch endpoint; 5-way concurrency, live progress and cancel-anytime"
+        },
+        {
+          "title": "Batch star / follow",
+          "desc": "Star repos and follow users as each account, unlimited with cancellable progress"
+        },
+        {
+          "title": "Full account export",
+          "desc": "Export every field (plaintext tokens included) in bulk or singly, to clipboard or TXT, localized"
+        },
+        {
+          "title": "API docs + try-it panel",
+          "desc": "Multilingual docs for every endpoint with parameter forms and one-click live testing"
+        },
+        {
+          "title": "One-click GitHub links",
+          "desc": "Detail page shortcuts to profile / API URL / repo pages, plus registration & import times"
+        }
+      ]
     }
   },
   "ui": {

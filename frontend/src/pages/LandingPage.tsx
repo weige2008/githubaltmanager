@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { authApi } from '@/api'
 import { useAppStore } from '@/store/app'
 import { useThemeStore } from '@/store/theme'
+import { cn } from '@/lib/utils'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { NotificationPopover } from '@/components/notification-popover'
 import { Button } from '@/components/ui/button'
@@ -147,9 +148,9 @@ export default function LandingPage() {
   const isDark = mode === 'dark' || (mode === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   const stats = [
-    { end: 50, suffix: '+', label: t('landing.stats.api') },
+    { end: 60, suffix: '+', label: t('landing.stats.api') },
     { end: 5, suffix: '', label: t('landing.stats.platforms') },
-    { end: 33, suffix: '', label: t('landing.stats.endpoints') },
+    { end: 73, suffix: '', label: t('landing.stats.endpoints') },
     { end: 256, suffix: '-bit', label: t('landing.stats.encryption') },
   ]
 
@@ -182,22 +183,23 @@ export default function LandingPage() {
       ),
     },
     {
-      num: '03', title: t('landing.features.detect.title'), span: 'md:col-span-1', icon: <Eye className="size-4 text-violet-400" />,
+      num: '03', title: t('landing.features.detect.title'), span: 'md:col-span-2', icon: <Eye className="size-4 text-violet-400" />,
       desc: t('landing.features.detect.desc'),
       visual: (
-        <div className="mt-4 space-y-2">
-          {['API /user', 'Web Profile', 'Token Verify'].map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold ${i === 1 ? 'border border-blue-500/30 bg-blue-500/20 text-blue-500' : 'border border-border/40 bg-muted text-muted-foreground'}`}>{i + 1}</div>
-              <div className="h-px flex-1 bg-border/40" />
-              <span className="text-xs text-muted-foreground">{s}</span>
-            </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {[
+            { s: 'Active', c: 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' },
+            { s: 'Restricted', c: 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10' },
+            { s: 'Banned', c: 'text-red-500 border-red-500/30 bg-red-500/10' },
+            { s: 'Token Expired', c: 'text-orange-500 border-orange-500/30 bg-orange-500/10' },
+          ].map(({ s, c }) => (
+            <div key={s} className={cn('flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium', c)}>{s}</div>
           ))}
         </div>
       ),
     },
     {
-      num: '04', title: t('landing.features.auto.title'), span: 'md:col-span-2', icon: <Workflow className="size-4 text-amber-400" />,
+      num: '04', title: t('landing.features.auto.title'), span: 'md:col-span-1', icon: <Workflow className="size-4 text-amber-400" />,
       desc: t('landing.features.auto.desc'),
       visual: (
         <div className="mt-4 flex items-center gap-3">
@@ -206,8 +208,33 @@ export default function LandingPage() {
               <div key={n} className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-gradient-to-br from-muted to-muted/60 text-[9px] font-bold text-muted-foreground">{n}</div>
             ))}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Server className="size-3.5 text-blue-500" /> {t('landing.features.alwaysOn')}
+        </div>
+      ),
+    },
+    {
+      num: '05', title: t('landing.features.batch.title'), span: 'md:col-span-2', icon: <Layers className="size-4 text-rose-400" />,
+      desc: t('landing.features.batch.desc'),
+      visual: (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {['Create Repos', 'Dispatch', 'Secrets', 'Visibility', 'Star', 'Follow', 'Cancel Runs'].map((n) => (
+            <div key={n} className="rounded-full border border-rose-500/25 bg-rose-500/5 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-rose-500/40 hover:bg-rose-500/10">{n}</div>
+          ))}
+          <span className="ml-1 flex items-center gap-1 text-xs font-medium text-rose-400">∞ · 5× · ⏱</span>
+        </div>
+      ),
+    },
+    {
+      num: '06', title: t('landing.features.settings.title'), span: 'md:col-span-1', icon: <Settings className="size-4 text-sky-400" />,
+      desc: t('landing.features.settings.desc'),
+      visual: (
+        <div className="mt-4 flex items-center justify-center">
+          <div className="relative">
+            <div className="flex size-16 items-center justify-center rounded-2xl border border-sky-500/20 bg-sky-500/5">
+              <Settings className="size-7 text-sky-500/70" strokeWidth={1.5} />
+            </div>
+            <div className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-sky-500">
+              <CheckCircle className="size-2.5 text-white" strokeWidth={3} />
+            </div>
           </div>
         </div>
       ),
@@ -219,7 +246,11 @@ export default function LandingPage() {
     { icon: <FolderGit2 className="size-5" strokeWidth={1.5} />, title: t('landing.more.repos'), desc: t('landing.more.reposDesc') },
     { icon: <Layers className="size-5" strokeWidth={1.5} />, title: t('landing.more.batch'), desc: t('landing.more.batchDesc') },
     { icon: <Github className="size-5" strokeWidth={1.5} />, title: t('landing.more.openSource'), desc: t('landing.more.openSourceDesc') },
+    { icon: <KeyRound className="size-5" strokeWidth={1.5} />, title: t('landing.more.secrets'), desc: t('landing.more.secretsDesc') },
+    { icon: <Terminal className="size-5" strokeWidth={1.5} />, title: t('landing.more.i18n'), desc: t('landing.more.i18nDesc') },
   ]
+
+  const highlights = t('landing.changelog.items', { returnObjects: true }) as { title: string; desc: string }[]
 
   const steps = [
     { num: '1', title: t('landing.steps.step1Title'), desc: t('landing.steps.step1Desc'), icon: <KeyRound className="size-6" strokeWidth={1.5} /> },
@@ -426,7 +457,7 @@ export default function LandingPage() {
           </div>
 
           {/* Additional features row */}
-          <div className="mt-12 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
+          <div className="mt-12 grid grid-cols-2 gap-8 md:grid-cols-3 md:gap-12">
             {additionalFeatures.map((f, i) => (
               <FadeUp key={f.title} delay={i * 0.1} className="group flex flex-col items-center text-center">
                 <div className="mb-3 flex size-12 items-center justify-center rounded-xl border border-border/50 bg-muted/30 text-muted-foreground transition-colors group-hover:text-foreground">
@@ -437,6 +468,27 @@ export default function LandingPage() {
               </FadeUp>
             ))}
           </div>
+
+          {/* Latest highlights */}
+          <FadeUp className="mt-20">
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-7 md:p-9">
+              <h3 className="mb-6 flex items-center gap-2 text-base font-semibold">
+                <span className="inline-flex size-2 rounded-full bg-primary" />
+                {t('landing.changelog.title')}
+              </h3>
+              <div className="grid gap-x-10 gap-y-5 md:grid-cols-2">
+                {highlights.map((h) => (
+                  <div key={h.title} className="flex gap-3">
+                    <CheckCircle className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2} />
+                    <div>
+                      <div className="text-sm font-medium">{h.title}</div>
+                      <div className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{h.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeUp>
         </div>
       </section>
 
