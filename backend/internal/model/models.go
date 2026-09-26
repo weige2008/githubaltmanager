@@ -142,6 +142,7 @@ type StatusChange struct {
 	FromStatus  string     `gorm:"column:from_status;size:32;not null" json:"from_status"`
 	ToStatus    string     `gorm:"column:to_status;size:32;not null" json:"to_status"`
 	Reason      string     `gorm:"column:reason;type:text" json:"reason"` // 变化时的检测原因
+	Confirmed   bool       `gorm:"column:confirmed;not null;default:false" json:"confirmed"` // 复查确认后才算数
 	CreatedAt   time.Time  `json:"created_at"`
 }
 

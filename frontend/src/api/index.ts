@@ -278,6 +278,7 @@ export interface StatusChange {
   from_status: string
   to_status: string
   reason: string
+  confirmed: boolean
   created_at: string
 }
 

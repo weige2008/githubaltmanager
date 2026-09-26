@@ -262,8 +262,10 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 		acc.GithubCreatedAt = result.GithubCreatedAt
 	}
 
-	// 状态转换记录：跳过本次结果错误与"未变"，且新账户 5 分钟窗口内的检测不计入
-	// （首检/复检用于确定初始状态，不构成"转换"）
+	// 状态转换：跳过本次结果错误与"未变"，且新账户 5 分钟窗口内的检测不计入
+	// （首检/复检用于确定初始状态，不构成"转换"）。
+	// 检测到变化时先写入"待确认"记录并调度 3 分钟后复查，复查仍支持变化才确认生效，
+	// 避免瞬时误判（GitHub 抽风、主页瞬时 404）污染转换记录。
 	isFirstCheck := acc.FirstCheckedAt == nil
 	withinNewWindow := acc.FirstCheckedAt != nil && now.Sub(*acc.FirstCheckedAt) <= 5*time.Minute
 	if !isFirstCheck && !withinNewWindow && result.Status != "error" {
@@ -277,8 +279,11 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 				FromStatus: prev,
 				ToStatus:   result.Status,
 				Reason:     result.Reason,
+				Confirmed:  false,
 				CreatedAt:  now,
 			})
+			log.Printf("[status] 账户 %s(id=%d) 状态变化 %s -> %s，3 分钟后复查确认", acc.GithubLogin, id, prev, result.Status)
+			s.ScheduleConfirmStatusChange(c, id, prev, result.Status, 3*time.Minute)
 		}
 	}
 	if isFirstCheck {
@@ -421,14 +426,45 @@ func (s *AccountService) UnfollowUser(c *Container, id uint, username string) er
 	return nil
 }
 
-// GetStatusHistory 返回账户的状态转换记录（倒序）
+// GetStatusHistory 返回账户的状态转换记录（仅已确认，倒序）
 func (s *AccountService) GetStatusHistory(c *Container, id uint, limit int) ([]model.StatusChange, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 100
 	}
 	var out []model.StatusChange
-	err := s.DB.Where("account_id = ?", id).Order("created_at DESC").Limit(limit).Find(&out).Error
+	err := s.DB.Where("account_id = ? AND confirmed = ?", id, true).Order("created_at DESC").Limit(limit).Find(&out).Error
 	return out, err
+}
+
+// ScheduleConfirmStatusChange 延迟后复查账户状态：
+// 复查结果仍为 toStatus 才把待确认的转换记录置为已确认；否则删除待确认记录（误报）。
+func (s *AccountService) ScheduleConfirmStatusChange(c *Container, id uint, fromStatus, toStatus string, delay time.Duration) {
+	time.AfterFunc(delay, func() {
+		if _, err := s.GetActive(id); err != nil {
+			return // 已删除/回收站，跳过
+		}
+		_, err := s.CheckStatus(c, id)
+		if err != nil {
+			log.Printf("[status] 复查账户 id=%d 失败，保留待确认记录: %v", id, err)
+			return
+		}
+		var rec model.StatusChange
+		if err := s.DB.Where("account_id = ? AND from_status = ? AND to_status = ? AND confirmed = ?",
+			id, fromStatus, toStatus, false).Order("created_at DESC").First(&rec).Error; err != nil {
+			return // 没有待确认记录（可能已被其他路径处理）
+		}
+		var acc model.Account
+		if err := s.DB.First(&acc, id).Error; err != nil {
+			return
+		}
+		if acc.Status == toStatus {
+			s.DB.Model(&rec).Update("confirmed", true)
+			log.Printf("[status] 复查确认 账户 %s(id=%d): %s -> %s", acc.GithubLogin, id, fromStatus, toStatus)
+		} else {
+			s.DB.Delete(&rec)
+			log.Printf("[status] 复查未复现 账户 %s(id=%d) 的 %s -> %s（当前 %s），删除待确认记录", acc.GithubLogin, id, fromStatus, toStatus, acc.Status)
+		}
+	})
 }
 
 // StatusFluxSummary 24 小时状态转换统计

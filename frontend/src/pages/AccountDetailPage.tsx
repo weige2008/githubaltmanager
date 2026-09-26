@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, THead, TH, TBody, TR, TD } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces, ClipboardCopy, Download } from 'lucide-react'
+import { RefreshCw, Eye, EyeOff, Copy, Lock, ExternalLink, Github, Settings, Loader2, Braces, ClipboardCopy, Download, ShieldCheck } from 'lucide-react'
 import { formatAccountsText, downloadText } from '@/lib/export'
 import { copyToClipboard } from '@/lib/clipboard'
 import { toast } from 'sonner'
@@ -48,6 +48,8 @@ export default function AccountDetailPage() {
   }
 
   const [exporting, setExporting] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const queryClient = useQueryClient()
   const handleExport = async (mode: 'clipboard' | 'txt') => {
     if (exporting) return
     setExporting(true)
@@ -97,6 +99,22 @@ export default function AccountDetailPage() {
             <a href={`https://api.github.com/users/${acc.github_login}`} target="_blank" rel="noreferrer" title={`api.github.com/users/${acc.github_login}（公开 JSON 数据）`}>
               <Button variant="outline" className="gap-2"><Braces className="h-4 w-4" />API</Button>
             </a>
+            <Button variant="outline" className="gap-2" disabled={checking} onClick={async () => {
+              setChecking(true)
+              try {
+                const updated = await accountApi.checkStatus(accId)
+                toast.success(`检测完成：${updated.status === 'active' ? '正常' : updated.status === 'banned' ? '封禁' : updated.status === 'restricted' ? '受限' : updated.status === 'token_expired' ? 'Token过期' : updated.status}`)
+                queryClient.invalidateQueries({ queryKey: ['account', accId] })
+                queryClient.invalidateQueries({ queryKey: ['status-history', accId] })
+              } catch (e: any) {
+                toast.error(e?.message || '检测失败')
+              } finally {
+                setChecking(false)
+              }
+            }}>
+              {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              检测状态
+            </Button>
             <Button variant="outline" size="icon" disabled={exporting} onClick={() => handleExport('clipboard')} title="导出全部数据（含明文 token）并复制到剪贴板">
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCopy className="h-4 w-4" />}
             </Button>
@@ -400,6 +418,7 @@ function StatusHistory({ accId }: { accId: number }) {
                 <span className={cn('text-sm font-medium', statusColor(h.from_status))}>{statusLabel(h.from_status)}</span>
                 <span className="text-muted-foreground">→</span>
                 <span className={cn('text-sm font-medium', statusColor(h.to_status))}>{statusLabel(h.to_status)}</span>
+                {!h.confirmed && <Badge variant="warning" className="text-[10px]">待复查</Badge>}
                 <span className="ml-auto text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</span>
                 {h.reason && <span className="hidden max-w-[280px] truncate text-xs text-muted-foreground md:block" title={h.reason}>{h.reason}</span>}
               </div>
