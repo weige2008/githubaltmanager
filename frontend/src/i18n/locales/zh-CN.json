@@ -581,7 +581,10 @@
     "emailVisOn": "公开",
     "emailVisOff": "私密",
     "emailVisNoScope": "当前 token 缺少 user:email 权限，无法读取/修改邮箱可见性（重新导入时使用包含 user:email 权限的 token 即可）。",
-    "statusTokenExpired": "Token过期"
+    "statusTokenExpired": "Token过期",
+    "tabHistory": "状态历史",
+    "historyTitle": "状态转换记录",
+    "historyEmpty": "暂无状态转换记录（账户状态从未发生变化）"
   },
   "repos": {
     "title": "仓库浏览",

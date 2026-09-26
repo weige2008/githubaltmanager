@@ -53,6 +53,7 @@ func autoMigrate(db *gorm.DB) error {
 		&model.ScheduledTask{},
 		&model.AuditLog{},
 		&model.AutoTaskLog{},
+		&model.StatusChange{},
 		&model.APIKey{},
 	)
 }

@@ -5,13 +5,14 @@ import { useTranslation } from 'react-i18next'
 import { statsApi, accountApi } from '@/api'
 import { displayName, sortAccounts } from '@/lib/account'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { PageHeader } from '@/components/page-header'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
-import { Users, CheckCircle, FolderGit2, Zap, ArrowRight, TrendingUp } from 'lucide-react'
+import { Users, CheckCircle, FolderGit2, Zap, ArrowRight, TrendingUp, ArrowLeftRight, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { data: stats, isLoading, isError, refetch } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
+  const { data: flux } = useQuery({ queryKey: ['status-flux'], queryFn: statsApi.statusFlux, refetchInterval: 60000 })
   // 主页账户卡片：只显示正常账户（偏好持久化在 localStorage）
   const [activeOnly, setActiveOnly] = useState(() => localStorage.getItem('gam-dash-active-only') === 'true')
   useEffect(() => { localStorage.setItem('gam-dash-active-only', String(activeOnly)) }, [activeOnly])
@@ -76,6 +78,31 @@ export default function DashboardPage() {
           </motion.div>
         )})}
       </div>
+
+      {/* 近 24 小时状态转换 */}
+      {flux && flux.total > 0 && (
+        <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowLeftRight className="h-4 w-4" /> 近 24 小时状态转换 <Badge variant="secondary" className="text-[10px]">{flux.total}</Badge></CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: '正常 → 受限', value: flux.active_to_restricted, icon: ShieldAlert, cls: 'text-yellow-500 bg-yellow-500/10' },
+                { label: '正常 → 封禁', value: flux.active_to_banned, icon: ShieldX, cls: 'text-red-500 bg-red-500/10' },
+                { label: '受限 → 正常', value: flux.restricted_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
+                { label: '封禁 → 正常', value: flux.banned_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
+              ].map(({ label, value, icon: Icon, cls }) => (
+                <div key={label} className="flex items-center gap-3 rounded-lg border p-3">
+                  <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', cls)}><Icon className="h-4 w-4" /></div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold tabular-nums leading-none">{value}</div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">{label}</div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>

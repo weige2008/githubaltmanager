@@ -581,7 +581,10 @@
     "emailVisOn": "公開",
     "emailVisOff": "非公開",
     "emailVisNoScope": "この token には user:email 権限がなく、公開設定を読み取り/変更できません（user:email 付きの token で再インポートしてください）。",
-    "statusTokenExpired": "Token 期限切れ"
+    "statusTokenExpired": "Token 期限切れ",
+    "tabHistory": "履歴",
+    "historyTitle": "ステータス変更履歴",
+    "historyEmpty": "ステータス変更の記録はまだありません"
   },
   "repos": {
     "title": "リポジトリ",

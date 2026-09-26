@@ -10,6 +10,7 @@ export interface Account {
   status: string
   status_reason: string
   token_scopes: string
+  first_checked_at: string | null
   github_created_at: string | null
   last_checked_at: string | null
   note: string
@@ -64,6 +65,7 @@ export const accountApi = {
   remove: (id: number) => http.delete<unknown, { ok: boolean }>(`/accounts/${id}`),
   restore: (id: number) => http.post<unknown, { ok: boolean }>(`/accounts/${id}/restore`),
   checkStatus: (id: number) => http.post<unknown, Account>(`/accounts/${id}/check`),
+  statusHistory: (id: number, limit?: number) => http.get<unknown, StatusChange[]>(`/accounts/${id}/status-history`, { params: { limit: limit || 100 } }),
   batchCheck: (ids: number[]) => http.post<unknown, { results: any[] }>('/accounts/batch-check', { ids }),
   batchCheckGroup: (group?: string) => http.post<unknown, { results: any[]; total: number }>('/accounts/batch-check-group', { group: group || '' }),
   getSecrets: (id: number) => http.get<unknown, AccountSecrets>(`/accounts/${id}/secrets`),
@@ -270,6 +272,25 @@ export const batchApi = {
     http.post<unknown, { success: any[]; failed: any[] }>('/batch/unfollow', data),
 }
 
+export interface StatusChange {
+  id: number
+  account_id: number
+  from_status: string
+  to_status: string
+  reason: string
+  created_at: string
+}
+
+export interface StatusFlux {
+  active_to_restricted: number
+  active_to_banned: number
+  restricted_to_active: number
+  banned_to_active: number
+  to_restricted: number
+  to_active: number
+  total: number
+}
+
 export interface Stats {
   total: number
   active: number
@@ -286,6 +307,7 @@ export interface Stats {
 
 export const statsApi = {
   overview: () => http.get<unknown, Stats>('/stats/overview'),
+  statusFlux: () => http.get<unknown, StatusFlux>('/stats/status-flux'),
 }
 
 export interface AutoTaskConfig {

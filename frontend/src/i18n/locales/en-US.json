@@ -581,7 +581,10 @@
     "emailVisOn": "Public",
     "emailVisOff": "Private",
     "emailVisNoScope": "The token lacks the user:email scope — email visibility cannot be read or changed (re-import with a token that includes user:email).",
-    "statusTokenExpired": "Token expired"
+    "statusTokenExpired": "Token expired",
+    "tabHistory": "History",
+    "historyTitle": "Status changes",
+    "historyEmpty": "No status changes recorded yet"
   },
   "repos": {
     "title": "Repositories",

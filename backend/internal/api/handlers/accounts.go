@@ -33,6 +33,7 @@ func RegisterAccountRoutes(g *gin.RouterGroup, c *service.Container) {
 		grp.POST("/import", h.Import)
 		grp.GET("/:id", h.Get)
 		grp.GET("/:id/secrets", h.GetSecrets)
+		grp.GET("/:id/status-history", h.GetStatusHistory)
 		grp.GET("/:id/profile", h.GetGitHubProfile)
 		grp.PATCH("/:id/profile", h.UpdateGitHubProfile)
 		grp.GET("/:id/email-visibility", h.GetEmailVisibility)
@@ -263,6 +264,18 @@ func (h *AccountHandler) Export(c *gin.Context) {
 		})
 	}
 	resp.OK(c, gin.H{"items": items, "count": len(items)})
+}
+
+// GetStatusHistory 账户状态转换记录（GET /api/accounts/:id/status-history?limit=100）
+func (h *AccountHandler) GetStatusHistory(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+	out, err := h.s.GetStatusHistory(h.c, uint(id), limit)
+	if err != nil {
+		resp.Internal(c, "查询状态历史失败", err)
+		return
+	}
+	resp.OK(c, out)
 }
 
 // GetGitHubProfile 拉取账户当前 GitHub 公开资料（GET /api/accounts/:id/profile）

@@ -62,6 +62,7 @@ type Account struct {
 	LastCheckedAt *time.Time `gorm:"column:last_checked_at" json:"last_checked_at"`
 	Note          string `gorm:"column:note;type:text" json:"note"`
 	Group         string `gorm:"column:account_group;size:100;index" json:"group"` // 分组名
+	FirstCheckedAt *time.Time `gorm:"column:first_checked_at" json:"first_checked_at"` // 首次完成检测的时间（新账户免计窗口起点）
 	DeletedAt     *time.Time `gorm:"column:deleted_at;index" json:"deleted_at"`     // 软删除时间（回收站）
 }
 
@@ -133,6 +134,18 @@ type AuditLog struct {
 }
 
 func (AuditLog) TableName() string { return "audit_logs" }
+
+// StatusChange 账户状态转换记录
+type StatusChange struct {
+	BaseModel
+	AccountID   uint       `gorm:"column:account_id;not null;index" json:"account_id"`
+	FromStatus  string     `gorm:"column:from_status;size:32;not null" json:"from_status"`
+	ToStatus    string     `gorm:"column:to_status;size:32;not null" json:"to_status"`
+	Reason      string     `gorm:"column:reason;type:text" json:"reason"` // 变化时的检测原因
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+func (StatusChange) TableName() string { return "status_changes" }
 
 // APIKey 外部 API 密钥
 type APIKey struct {

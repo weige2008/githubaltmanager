@@ -16,6 +16,17 @@ func NewStatsHandler(c *service.Container) *StatsHandler { return &StatsHandler{
 func RegisterStatsRoutes(g *gin.RouterGroup, c *service.Container) {
 	h := NewStatsHandler(c)
 	g.GET("/stats/overview", h.Overview)
+	g.GET("/stats/status-flux", h.StatusFlux)
+}
+
+// StatusFlux 近 24 小时账户状态转换统计（GET /api/stats/status-flux）
+func (h *StatsHandler) StatusFlux(c *gin.Context) {
+	sum, err := service.NewAccountService(h.c.DB).GetStatusFlux24h(h.c)
+	if err != nil {
+		resp.Internal(c, "查询失败", err)
+		return
+	}
+	resp.OK(c, sum)
 }
 
 type Overview struct {

@@ -252,9 +252,6 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 	}
 	result := github.CheckBanStatus(token, c.CFG.GitHub.APIBaseURL, acc.GithubLogin, c.CFG.GitHub.RequestTimeout)
 	now := time.Now()
-	acc.Status = result.Status
-	acc.StatusReason = result.Reason
-	acc.LastCheckedAt = &now
 	updates := map[string]any{
 		"status":          result.Status,
 		"status_reason":   result.Reason,
@@ -264,6 +261,34 @@ func (s *AccountService) CheckStatus(c *Container, id uint) (*model.Account, err
 		updates["github_created_at"] = *result.GithubCreatedAt
 		acc.GithubCreatedAt = result.GithubCreatedAt
 	}
+
+	// 状态转换记录：跳过本次结果错误与"未变"，且新账户 5 分钟窗口内的检测不计入
+	// （首检/复检用于确定初始状态，不构成"转换"）
+	isFirstCheck := acc.FirstCheckedAt == nil
+	withinNewWindow := acc.FirstCheckedAt != nil && now.Sub(*acc.FirstCheckedAt) <= 5*time.Minute
+	if !isFirstCheck && !withinNewWindow && result.Status != "error" {
+		prev := acc.Status
+		if prev == "" {
+			prev = "unknown"
+		}
+		if prev != result.Status {
+			s.DB.Create(&model.StatusChange{
+				AccountID:  id,
+				FromStatus: prev,
+				ToStatus:   result.Status,
+				Reason:     result.Reason,
+				CreatedAt:  now,
+			})
+		}
+	}
+	if isFirstCheck {
+		updates["first_checked_at"] = now
+		acc.FirstCheckedAt = &now
+	}
+
+	acc.Status = result.Status
+	acc.StatusReason = result.Reason
+	acc.LastCheckedAt = &now
 	if err := s.DB.Model(&model.Account{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
@@ -394,6 +419,57 @@ func (s *AccountService) UnfollowUser(c *Container, id uint, username string) er
 		return err
 	}
 	return nil
+}
+
+// GetStatusHistory 返回账户的状态转换记录（倒序）
+func (s *AccountService) GetStatusHistory(c *Container, id uint, limit int) ([]model.StatusChange, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	var out []model.StatusChange
+	err := s.DB.Where("account_id = ?", id).Order("created_at DESC").Limit(limit).Find(&out).Error
+	return out, err
+}
+
+// StatusFluxSummary 24 小时状态转换统计
+type StatusFluxSummary struct {
+	ActiveToRestricted  int64 `json:"active_to_restricted"`
+	ActiveToBanned      int64 `json:"active_to_banned"`
+	RestrictedToActive  int64 `json:"restricted_to_active"`
+	BannedToActive      int64 `json:"banned_to_active"`
+	ToRestricted        int64 `json:"to_restricted"`
+	ToActive            int64 `json:"to_active"`
+	Total               int64 `json:"total"`
+}
+
+// GetStatusFlux24h 统计近 24 小时的状态转换数量（排除 5 分钟新账户窗口：
+// 记录生成时已排除，本查询只需按时间聚合）
+func (s *AccountService) GetStatusFlux24h(c *Container) (*StatusFluxSummary, error) {
+	since := time.Now().Add(-24 * time.Hour)
+	var rows []model.StatusChange
+	if err := s.DB.Where("created_at >= ?", since).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	sum := &StatusFluxSummary{}
+	sum.Total = int64(len(rows))
+	for _, r := range rows {
+		if r.FromStatus == "active" && r.ToStatus == "restricted" {
+			sum.ActiveToRestricted++
+		} else if r.FromStatus == "active" && r.ToStatus == "banned" {
+			sum.ActiveToBanned++
+		} else if r.FromStatus == "restricted" && r.ToStatus == "active" {
+			sum.RestrictedToActive++
+		} else if r.FromStatus == "banned" && r.ToStatus == "active" {
+			sum.BannedToActive++
+		}
+		if r.ToStatus == "restricted" {
+			sum.ToRestricted++
+		}
+		if r.ToStatus == "active" {
+			sum.ToActive++
+		}
+	}
+	return sum, nil
 }
 
 // ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。

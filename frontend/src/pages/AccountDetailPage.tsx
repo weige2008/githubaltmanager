@@ -13,6 +13,7 @@ import { formatAccountsText, downloadText } from '@/lib/export'
 import { copyToClipboard } from '@/lib/clipboard'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
+import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -21,6 +22,7 @@ import { BreadcrumbNav } from '@/components/breadcrumb-nav'
 import { Input, Textarea } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 
 export default function AccountDetailPage() {
   const { t } = useTranslation()
@@ -123,6 +125,7 @@ export default function AccountDetailPage() {
         <TabsList>
           <TabsTrigger value="info">{t('accounts.tabInfo')}</TabsTrigger>
           <TabsTrigger value="repos">{t('accounts.tabRepos')} ({repos?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="history">{t('accounts.tabHistory')}</TabsTrigger>
           <TabsTrigger value="settings"><Settings className="mr-1.5 h-3.5 w-3.5" />{t('accounts.tabSettings')}</TabsTrigger>
         </TabsList>
 
@@ -199,6 +202,10 @@ export default function AccountDetailPage() {
               ) : <div className="p-8 text-center text-muted-foreground">{t('repos.emptyOrSync')}</div>}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <StatusHistory accId={accId} />
         </TabsContent>
 
         <TabsContent value="settings">
@@ -354,5 +361,54 @@ function EmailVisibilityRow({ accId }: { accId: number }) {
         <span className="text-xs text-muted-foreground">{visibility === 'public' ? t('accounts.emailVisOn') : t('accounts.emailVisOff')}</span>
       </div>
     </div>
+  )
+}
+
+
+function statusLabel(s: string): string {
+  const map: Record<string, string> = {
+    active: '正常', banned: '封禁', restricted: '受限',
+    token_expired: 'Token过期', error: '错误', unknown: '未知',
+  }
+  return map[s] || s
+}
+
+function statusColor(s: string): string {
+  switch (s) {
+    case 'active': return 'text-success'
+    case 'banned': return 'text-destructive'
+    case 'restricted': return 'text-warning'
+    default: return 'text-muted-foreground'
+  }
+}
+
+function StatusHistory({ accId }: { accId: number }) {
+  const { t } = useTranslation()
+  const { data: history, isLoading } = useQuery({
+    queryKey: ['status-history', accId],
+    queryFn: () => accountApi.statusHistory(accId, 200),
+  })
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">{t('accounts.historyTitle')}</CardTitle></CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? <LoadingState /> : history && history.length > 0 ? (
+          <div className="max-h-[480px] overflow-y-auto">
+            {history.map((h) => (
+              <div key={h.id} className="flex items-center gap-3 border-b px-5 py-3 last:border-0">
+                <span className={cn('text-sm font-medium', statusColor(h.from_status))}>{statusLabel(h.from_status)}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className={cn('text-sm font-medium', statusColor(h.to_status))}>{statusLabel(h.to_status)}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</span>
+                {h.reason && <span className="hidden max-w-[280px] truncate text-xs text-muted-foreground md:block" title={h.reason}>{h.reason}</span>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-sm text-muted-foreground">{t('accounts.historyEmpty')}</div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

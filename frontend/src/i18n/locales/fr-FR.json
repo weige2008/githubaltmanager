@@ -581,7 +581,10 @@
     "emailVisOn": "Public",
     "emailVisOff": "Privé",
     "emailVisNoScope": "Le token n'a pas le scope user:email — la visibilité de l'e-mail ne peut être ni lue ni modifiée (réimportez avec un token incluant user:email).",
-    "statusTokenExpired": "Token expiré"
+    "statusTokenExpired": "Token expiré",
+    "tabHistory": "Historique",
+    "historyTitle": "Historique des changements de statut",
+    "historyEmpty": "Aucun changement de statut enregistré"
   },
   "repos": {
     "title": "Dépôts",

@@ -581,7 +581,10 @@
     "emailVisOn": "Công khai",
     "emailVisOff": "Riêng tư",
     "emailVisNoScope": "Token thiếu quyền user:email — không thể đọc/sửa hiển thị email (nhập lại bằng token có user:email).",
-    "statusTokenExpired": "Token hết hạn"
+    "statusTokenExpired": "Token hết hạn",
+    "tabHistory": "Lịch sử",
+    "historyTitle": "Lịch sử thay đổi trạng thái",
+    "historyEmpty": "Chưa có thay đổi trạng thái nào"
   },
   "repos": {
     "title": "Kho lưu trữ",
