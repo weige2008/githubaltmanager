@@ -79,8 +79,8 @@ export default function DashboardPage() {
         )})}
       </div>
 
-      {/* 近 24 小时状态转换 */}
-      {flux && flux.total > 0 && (
+      {/* 近 24 小时状态转换（即使为 0 也显示，避免误以为功能缺失） */}
+      {flux && (
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowLeftRight className="h-4 w-4" /> 近 24 小时状态转换 <Badge variant="secondary" className="text-[10px]">{flux.total}</Badge></CardTitle></CardHeader>
