@@ -181,7 +181,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
                 <Checkbox checked={activeOnly} onCheckedChange={(v) => setActiveOnly(v === true)} />
-                只显示正常
+                {t('accounts.filterActiveOnly')}
               </label>
               <a href="/accounts" className="text-xs text-muted-foreground hover:text-primary transition-colors">全部 {accounts.length} 个 →</a>
             </div>

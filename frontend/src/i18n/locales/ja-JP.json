@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token 期限切れ",
     "tabHistory": "履歴",
     "historyTitle": "ステータス変更履歴",
-    "historyEmpty": "ステータス変更の記録はまだありません"
+    "historyEmpty": "ステータス変更の記録はまだありません",
+    "filterAll": "すべてのステータス",
+    "filterActiveOnly": "正常のみ表示"
   },
   "repos": {
     "title": "リポジトリ",

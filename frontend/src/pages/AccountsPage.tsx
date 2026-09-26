@@ -447,13 +447,13 @@ export default function AccountsPage() {
           <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
             <SelectTrigger className="h-9 w-[124px] gap-2 text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              <SelectItem value="active">只显示正常</SelectItem>
-              <SelectItem value="restricted">受限</SelectItem>
-              <SelectItem value="banned">封禁</SelectItem>
-              <SelectItem value="token_expired">Token过期</SelectItem>
-              <SelectItem value="error">错误</SelectItem>
-              <SelectItem value="unknown">未知</SelectItem>
+              <SelectItem value="all">{t('accounts.filterAll')}</SelectItem>
+              <SelectItem value="active">{t('accounts.filterActiveOnly')}</SelectItem>
+              <SelectItem value="restricted">{t('accounts.statusRestricted')}</SelectItem>
+              <SelectItem value="banned">{t('accounts.statusBanned')}</SelectItem>
+              <SelectItem value="token_expired">{t('accounts.statusTokenExpired')}</SelectItem>
+              <SelectItem value="error">{t('accounts.statusError')}</SelectItem>
+              <SelectItem value="unknown">{t('accounts.statusUnknown')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>

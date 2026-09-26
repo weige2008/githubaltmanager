@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token истёк",
     "tabHistory": "История",
     "historyTitle": "История изменений статуса",
-    "historyEmpty": "Записей об изменениях статуса пока нет"
+    "historyEmpty": "Записей об изменениях статуса пока нет",
+    "filterAll": "Все статусы",
+    "filterActiveOnly": "Только активные"
   },
   "repos": {
     "title": "Репозитории",

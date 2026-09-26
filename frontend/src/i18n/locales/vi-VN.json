@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token hết hạn",
     "tabHistory": "Lịch sử",
     "historyTitle": "Lịch sử thay đổi trạng thái",
-    "historyEmpty": "Chưa có thay đổi trạng thái nào"
+    "historyEmpty": "Chưa có thay đổi trạng thái nào",
+    "filterAll": "Tất cả trạng thái",
+    "filterActiveOnly": "Chỉ hiển thị hoạt động"
   },
   "repos": {
     "title": "Kho lưu trữ",

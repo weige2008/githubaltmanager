@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token过期",
     "tabHistory": "状态历史",
     "historyTitle": "状态转换记录",
-    "historyEmpty": "暂无状态转换记录（账户状态从未发生变化）"
+    "historyEmpty": "暂无状态转换记录（账户状态从未发生变化）",
+    "filterAll": "全部状态",
+    "filterActiveOnly": "只显示正常"
   },
   "repos": {
     "title": "仓库浏览",

@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token expired",
     "tabHistory": "History",
     "historyTitle": "Status changes",
-    "historyEmpty": "No status changes recorded yet"
+    "historyEmpty": "No status changes recorded yet",
+    "filterAll": "All statuses",
+    "filterActiveOnly": "Active only"
   },
   "repos": {
     "title": "Repositories",

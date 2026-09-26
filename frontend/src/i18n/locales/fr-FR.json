@@ -584,7 +584,9 @@
     "statusTokenExpired": "Token expiré",
     "tabHistory": "Historique",
     "historyTitle": "Historique des changements de statut",
-    "historyEmpty": "Aucun changement de statut enregistré"
+    "historyEmpty": "Aucun changement de statut enregistré",
+    "filterAll": "Tous les statuts",
+    "filterActiveOnly": "Actifs uniquement"
   },
   "repos": {
     "title": "Dépôts",
