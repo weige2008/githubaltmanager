@@ -442,6 +442,12 @@ type StatusFluxSummary struct {
 	Total               int64 `json:"total"`
 }
 
+// StatusChangeDetail 转换明细项（带账户登录名）
+type StatusChangeDetail struct {
+	model.StatusChange
+	Login string `json:"login"`
+}
+
 // GetStatusFlux24h 统计近 24 小时的状态转换数量（排除 5 分钟新账户窗口：
 // 记录生成时已排除，本查询只需按时间聚合）
 func (s *AccountService) GetStatusFlux24h(c *Container) (*StatusFluxSummary, error) {
@@ -470,6 +476,35 @@ func (s *AccountService) GetStatusFlux24h(c *Container) (*StatusFluxSummary, err
 		}
 	}
 	return sum, nil
+}
+
+// GetStatusFluxDetails 返回近 24 小时某类转换的明细（带账户登录名，倒序）
+func (s *AccountService) GetStatusFluxDetails(c *Container, fromStatus, toStatus string) ([]StatusChangeDetail, error) {
+	since := time.Now().Add(-24 * time.Hour)
+	q := s.DB.Where("created_at >= ? AND from_status = ? AND to_status = ?", since, fromStatus, toStatus)
+	var rows []model.StatusChange
+	if err := q.Order("created_at DESC").Limit(500).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	// 批量取登录名
+	ids := make([]uint, 0, len(rows))
+	for _, r := range rows {
+		ids = append(ids, r.AccountID)
+	}
+	loginMap := map[uint]string{}
+	if len(ids) > 0 {
+		var accs []model.Account
+		if err := s.DB.Select("id, github_login").Where("id IN ?", ids).Find(&accs).Error; err == nil {
+			for _, a := range accs {
+				loginMap[a.ID] = a.GithubLogin
+			}
+		}
+	}
+	out := make([]StatusChangeDetail, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, StatusChangeDetail{StatusChange: r, Login: loginMap[r.AccountID]})
+	}
+	return out, nil
 }
 
 // ScheduleRecheck 延迟一段时间后对账户再做一次完整检测。

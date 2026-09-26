@@ -15,6 +15,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { Users, CheckCircle, FolderGit2, Zap, ArrowRight, TrendingUp, ArrowLeftRight, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { accountApi as _accountApi, statsApi as _statsApi, type StatusChangeDetail } from '@/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } } }
 
@@ -24,6 +26,8 @@ export default function DashboardPage() {
   const { data: stats, isLoading, isError, refetch } = useQuery({ queryKey: ['stats'], queryFn: statsApi.overview })
   const { data: accounts } = useQuery({ queryKey: ['accounts'], queryFn: () => accountApi.list() })
   const { data: flux } = useQuery({ queryKey: ['status-flux'], queryFn: statsApi.statusFlux, refetchInterval: 60000 })
+  const [fluxOpen, setFluxOpen] = useState(false)
+  const [fluxDetail, setFluxDetail] = useState<{ from: string; to: string; label: string } | null>(null)
   // 主页账户卡片：只显示正常账户（偏好持久化在 localStorage）
   const [activeOnly, setActiveOnly] = useState(() => localStorage.getItem('gam-dash-active-only') === 'true')
   useEffect(() => { localStorage.setItem('gam-dash-active-only', String(activeOnly)) }, [activeOnly])
@@ -85,24 +89,31 @@ export default function DashboardPage() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ArrowLeftRight className="h-4 w-4" /> 近 24 小时状态转换 <Badge variant="secondary" className="text-[10px]">{flux.total}</Badge></CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { label: '正常 → 受限', value: flux.active_to_restricted, icon: ShieldAlert, cls: 'text-yellow-500 bg-yellow-500/10' },
-                { label: '正常 → 封禁', value: flux.active_to_banned, icon: ShieldX, cls: 'text-red-500 bg-red-500/10' },
-                { label: '受限 → 正常', value: flux.restricted_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
-                { label: '封禁 → 正常', value: flux.banned_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
-              ].map(({ label, value, icon: Icon, cls }) => (
-                <div key={label} className="flex items-center gap-3 rounded-lg border p-3">
+              {([
+                { from: 'active', to: 'restricted', label: '正常 → 受限', value: flux.active_to_restricted, icon: ShieldAlert, cls: 'text-yellow-500 bg-yellow-500/10' },
+                { from: 'active', to: 'banned', label: '正常 → 封禁', value: flux.active_to_banned, icon: ShieldX, cls: 'text-red-500 bg-red-500/10' },
+                { from: 'restricted', to: 'active', label: '受限 → 正常', value: flux.restricted_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
+                { from: 'banned', to: 'active', label: '封禁 → 正常', value: flux.banned_to_active, icon: ShieldCheck, cls: 'text-green-500 bg-green-500/10' },
+              ] as const).map(({ from, to, label, value, icon: Icon, cls }) => (
+                <button
+                  key={label}
+                  className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/40 disabled:cursor-default disabled:opacity-60"
+                  disabled={value === 0}
+                  onClick={() => { setFluxDetail({ from, to, label }); setFluxOpen(true) }}
+                >
                   <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', cls)}><Icon className="h-4 w-4" /></div>
                   <div className="min-w-0">
                     <div className="text-lg font-bold tabular-nums leading-none">{value}</div>
-                    <div className="mt-0.5 truncate text-xs text-muted-foreground">{label}</div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">{label}{value > 0 && ' · 点击查看'}</div>
                   </div>
-                </div>
+                </button>
               ))}
             </CardContent>
           </Card>
         </motion.div>
       )}
+
+      <FluxDetailDialog open={fluxOpen} onOpenChange={setFluxOpen} detail={fluxDetail} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <motion.div initial="hidden" animate="visible" variants={fadeUp}>
@@ -204,5 +215,50 @@ export default function DashboardPage() {
         </motion.div>
       )}
     </div>
+  )
+}
+
+
+function FluxDetailDialog({ open, onOpenChange, detail }: { open: boolean; onOpenChange: (v: boolean) => void; detail: { from: string; to: string; label: string } | null }) {
+  const navigate = useNavigate()
+  const { data, isLoading } = useQuery({
+    queryKey: ['flux-details', detail?.from, detail?.to],
+    queryFn: () => statsApi.statusFluxDetails(detail!.from, detail!.to),
+    enabled: open && !!detail,
+  })
+
+  const statusLabel = (s: string) => ({ active: '正常', banned: '封禁', restricted: '受限', token_expired: 'Token过期', error: '错误', unknown: '未知' }[s] || s)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {detail?.label} · 近 24 小时
+            {data && <span className="ml-2 text-sm font-normal text-muted-foreground">{data.count} 条</span>}
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">加载中…</div>
+        ) : data && data.details.length > 0 ? (
+          <div className="max-h-[420px] space-y-1 overflow-y-auto">
+            {data.details.map((d: StatusChangeDetail) => (
+              <button
+                key={d.id}
+                onClick={() => { onOpenChange(false); navigate(`/accounts/${d.account_id}`) }}
+                className="flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+              >
+                <span className="font-medium">{d.login || `#${d.account_id}`}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{new Date(d.created_at).toLocaleString()}</span>
+                {d.reason && <span className="hidden max-w-[220px] truncate text-xs text-muted-foreground md:block" title={d.reason}>{d.reason}</span>}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-sm text-muted-foreground">暂无记录</div>
+        )}
+        <p className="text-xs text-muted-foreground">点击任意账户行可直接打开其详情页</p>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -281,6 +281,16 @@ export interface StatusChange {
   created_at: string
 }
 
+export interface StatusChangeDetail {
+  id: number
+  account_id: number
+  from_status: string
+  to_status: string
+  reason: string
+  created_at: string
+  login: string
+}
+
 export interface StatusFlux {
   active_to_restricted: number
   active_to_banned: number
@@ -308,6 +318,8 @@ export interface Stats {
 export const statsApi = {
   overview: () => http.get<unknown, Stats>('/stats/overview'),
   statusFlux: () => http.get<unknown, StatusFlux>('/stats/status-flux'),
+  statusFluxDetails: (from: string, to: string) =>
+    http.get<unknown, { details: StatusChangeDetail[]; count: number }>('/stats/status-flux', { params: { from, to } }),
 }
 
 export interface AutoTaskConfig {

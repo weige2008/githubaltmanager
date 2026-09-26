@@ -20,8 +20,21 @@ func RegisterStatsRoutes(g *gin.RouterGroup, c *service.Container) {
 }
 
 // StatusFlux 近 24 小时账户状态转换统计（GET /api/stats/status-flux）
+// 带 from/to 查询参数时返回该类转换的明细列表（含账户登录名）
 func (h *StatsHandler) StatusFlux(c *gin.Context) {
-	sum, err := service.NewAccountService(h.c.DB).GetStatusFlux24h(h.c)
+	accSvc := service.NewAccountService(h.c.DB)
+	from := c.Query("from")
+	to := c.Query("to")
+	if from != "" && to != "" {
+		details, err := accSvc.GetStatusFluxDetails(h.c, from, to)
+		if err != nil {
+			resp.Internal(c, "查询失败", err)
+			return
+		}
+		resp.OK(c, gin.H{"details": details, "count": len(details)})
+		return
+	}
+	sum, err := accSvc.GetStatusFlux24h(h.c)
 	if err != nil {
 		resp.Internal(c, "查询失败", err)
 		return
