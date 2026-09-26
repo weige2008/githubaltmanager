@@ -448,7 +448,7 @@ export default function AccountsPage() {
             <SelectTrigger className="h-9 w-[124px] gap-2 text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('accounts.filterAll')}</SelectItem>
-              <SelectItem value="active">{t('accounts.filterActiveOnly')}</SelectItem>
+              <SelectItem value="active">{t('accounts.statusActive')}</SelectItem>
               <SelectItem value="restricted">{t('accounts.statusRestricted')}</SelectItem>
               <SelectItem value="banned">{t('accounts.statusBanned')}</SelectItem>
               <SelectItem value="token_expired">{t('accounts.statusTokenExpired')}</SelectItem>
