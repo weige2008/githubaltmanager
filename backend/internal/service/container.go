@@ -49,6 +49,8 @@ func (c *Container) RunDueTasks() {
 		return
 	}
 	NewTaskService(c.DB).RunDueTasks(c)
+	// 通用批量定时任务（dispatch/star/follow 等）同样依赖解锁密钥
+	NewBatchTaskService(c.DB).RunDueTasksSafe(c)
 }
 
 // === AutoTaskRunner 接口实现（间隔模式） ===

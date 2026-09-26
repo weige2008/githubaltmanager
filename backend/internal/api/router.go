@@ -80,6 +80,7 @@ func NewRouter(cfg *config.Config, c *service.Container, staticDir string) *gin.
 	handlers.RegisterRepoRoutes(protected, c)
 	handlers.RegisterTaskRoutes(protected, c)
 	handlers.RegisterBatchRoutes(protected, c)
+	handlers.RegisterBatchTaskRoutes(protected, c)
 	handlers.RegisterStatsRoutes(protected, c)
 	handlers.RegisterAutoTaskRoutes(protected, c)
 	handlers.RegisterAPIKeyRoutes(protected, c)

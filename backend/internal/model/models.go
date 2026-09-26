@@ -135,6 +135,23 @@ type AuditLog struct {
 
 func (AuditLog) TableName() string { return "audit_logs" }
 
+// BatchTask 通用批量定时任务（定时批量工作流 / 定时 Star / 定时关注等）
+type BatchTask struct {
+	BaseModel
+	Name           string     `gorm:"column:name;size:200;not null" json:"name"`
+	Type           string     `gorm:"column:type;size:32;not null;index" json:"type"` // dispatch / star / unstar / follow / unfollow
+	CronExpr       string     `gorm:"column:cron_expr;size:100;not null" json:"cron_expr"`
+	PayloadJSON    string     `gorm:"column:payload_json;type:text;not null" json:"payload_json"` // 类型对应的参数
+	Enabled        bool       `gorm:"column:enabled;not null;default:true" json:"enabled"`
+	NextRunAt      *time.Time `gorm:"column:next_run_at;index" json:"next_run_at"`
+	LastRunAt      *time.Time `json:"last_run_at"`
+	LastRunResult  string     `gorm:"column:last_run_result;size:32" json:"last_run_result"` // success / partial / failed / running
+	LastSummary    string     `gorm:"column:last_summary;type:text" json:"last_summary"`
+	LastError      string     `gorm:"column:last_error;type:text" json:"last_error"`
+}
+
+func (BatchTask) TableName() string { return "batch_tasks" }
+
 // StatusChange 账户状态转换记录
 type StatusChange struct {
 	BaseModel

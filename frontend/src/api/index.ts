@@ -235,6 +235,30 @@ export const taskApi = {
   runNow: (id: number) => http.post<unknown, { ok: boolean }>(`/tasks/${id}/run`),
 }
 
+export interface BatchTask {
+  id: number
+  name: string
+  type: 'dispatch' | 'star' | 'unstar' | 'follow' | 'unfollow'
+  cron_expr: string
+  payload_json: string
+  enabled: boolean
+  next_run_at: string | null
+  last_run_at: string | null
+  last_run_result: string
+  last_summary: string
+  last_error: string
+}
+
+export const batchTaskApi = {
+  list: () => http.get<unknown, BatchTask[]>('/batch-tasks'),
+  create: (data: { name: string; type: string; cron_expr: string; payload_json: string }) =>
+    http.post<unknown, BatchTask>('/batch-tasks', data),
+  update: (id: number, data: any) => http.put<unknown, BatchTask>(`/batch-tasks/${id}`, data),
+  remove: (id: number) => http.delete<unknown, { ok: boolean }>(`/batch-tasks/${id}`),
+  toggle: (id: number, enabled: boolean) => http.post<unknown, BatchTask>(`/batch-tasks/${id}/toggle`, { enabled }),
+  runNow: (id: number) => http.post<unknown, { ok: boolean }>(`/batch-tasks/${id}/run`),
+}
+
 export interface TemplateFile {
   path: string
   content: string
