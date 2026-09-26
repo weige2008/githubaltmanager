@@ -6,8 +6,31 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
+
+// webCooldown 网页探测的包级冷却：收到 429 后 60 秒内的后续探测直接跳过
+// （429 是 IP 级限流，单账户等待解决不了，继续撞只会延长限流）
+var (
+	webCooldownMu       sync.Mutex
+	webCooldownUntil    time.Time
+	webCooldownRetries  int // 冷却期内被跳过的探测数（用于日志观测）
+)
+
+const webCooldownDuration = time.Minute
+
+func webProbeBlocked() bool {
+	webCooldownMu.Lock()
+	defer webCooldownMu.Unlock()
+	return time.Now().Before(webCooldownUntil)
+}
+
+func webProbeMarkRateLimited() {
+	webCooldownMu.Lock()
+	defer webCooldownMu.Unlock()
+	webCooldownUntil = time.Now().Add(webCooldownDuration)
+}
 
 // AccountStatus 封禁检测结果
 type AccountStatus struct {
@@ -38,13 +61,17 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStat
 		results <- probe{src: "api", st: s}
 	}()
 
-	// 方案2：网页主页
+	// 方案2：网页主页（IP 冷却期内跳过，避免继续撞 429）
 	wantCount := 1
 	if login != "" {
 		wantCount = 2
-		go func() {
-			results <- probe{src: "web", st: checkViaWebProfile(login, timeoutSec)}
-		}()
+		if webProbeBlocked() {
+			results <- probe{src: "web", st: AccountStatus{Status: "error", Reason: "网页探测冷却中（此前 429），本轮跳过", WebRateLimited: true}}
+		} else {
+			go func() {
+				results <- probe{src: "web", st: checkViaWebProfile(login, timeoutSec)}
+			}()
+		}
 	}
 
 	var apiRes, webRes *AccountStatus
@@ -65,6 +92,15 @@ func CheckBanStatus(token, apiBaseURL, login string, timeoutSec int) AccountStat
 				apiRes = &AccountStatus{Status: "error", Reason: "detection timeout"}
 			}
 		}
+	}
+
+	// 单账户冷却重试：API 正常但网页 429 时，等冷却结束后原地重试一次网页探测，
+	// 拿到真实结论（404=受限/200=正常），避免把限流误判成 unknown
+	if apiRes != nil && apiRes.Status == "active" && webRes != nil && webRes.WebRateLimited {
+		time.Sleep(webCooldownDuration + 2*time.Second)
+		retry := checkViaWebProfile(login, timeoutSec)
+		retry.Methods = append(retry.Methods, "web_retry")
+		webRes = &retry
 	}
 
 	return aggregateStatus(apiRes, webRes)
@@ -231,8 +267,9 @@ func checkViaWebProfile(login string, timeoutSec int) AccountStatus {
 		case resp.StatusCode == 404:
 			return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）", WebNotFound: true}
 		case resp.StatusCode == 429:
-			// IP 级限流信号：不是账户结论，标记后由汇总处理（API 正常时判 unknown 而非 active）
-			return AccountStatus{Status: "error", Reason: "web profile 429（网页探测被限流）", WebRateLimited: true}
+			// IP 级限流信号：标记包级冷却，让后续账户的网页探测暂停 60 秒
+			webProbeMarkRateLimited()
+			return AccountStatus{Status: "error", Reason: "web profile 429（网页探测被限流，探测冷却 1 分钟）", WebRateLimited: true}
 		case resp.StatusCode >= 400:
 			return AccountStatus{Status: "error", Reason: fmt.Sprintf("web profile %d", resp.StatusCode)}
 		}
