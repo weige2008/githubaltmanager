@@ -16,6 +16,7 @@ func TestAggregateStatus(t *testing.T) {
 		{"api过期+网页404 → banned（仅API正常才判受限）", &AccountStatus{Status: "token_expired"}, &AccountStatus{Status: "banned", WebNotFound: true}, "banned"},
 		{"api过期+网页正常 → token_expired", &AccountStatus{Status: "token_expired"}, &AccountStatus{Status: "active"}, "token_expired"},
 		{"api错误+网页正常 → active", &AccountStatus{Status: "error"}, &AccountStatus{Status: "active"}, "active"},
+		{"api正常+网页429限流 → unknown", &AccountStatus{Status: "active"}, &AccountStatus{Status: "error", Reason: "web profile 429", WebRateLimited: true}, "unknown"},
 		{"api错误+网页404 → banned（网页单独信号）", &AccountStatus{Status: "error"}, &AccountStatus{Status: "banned", WebNotFound: true}, "banned"},
 		{"仅api（网页关闭） → active", &AccountStatus{Status: "active"}, nil, "active"},
 		{"双超时 → error", &AccountStatus{Status: "error", Reason: "detection timeout"}, nil, "error"},

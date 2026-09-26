@@ -15,6 +15,7 @@ type AccountStatus struct {
 	Reason      string // 详细原因
 	Methods     []string // 命中的检测方法
 	WebNotFound bool // 仅网页探测：主页 404
+	WebRateLimited bool // 仅网页探测：429 限流（IP 级被 GitHub 网页侧限流）
 	GithubCreatedAt *time.Time // API 探测返回的 GitHub 账号注册时间
 }
 
@@ -126,12 +127,15 @@ func aggregateStatus(apiRes, webRes *AccountStatus) AccountStatus {
 		aggregated.Status = "token_expired"
 		aggregated.Reason = apiRes.Reason
 	case hasActive:
+		// 网页探测失败（错误/429 限流）时不再给出确定的"正常"——
+		// 只有一路探测的结论不足以排除受限，保守判 unknown 并在原因中说明
+		if webRes != nil && webRes.Status == "error" {
+			aggregated.Status = "unknown"
+			aggregated.Reason = activeReason + "；⚠️ 网页探测失败（" + webRes.Reason + "），无法识别受限，判为未知"
+			return aggregated
+		}
 		aggregated.Status = "active"
 		aggregated.Reason = activeReason
-		// 网页探测失败（网络不通等）时在原因中明示，避免用户误信"正常"而未察觉受限
-		if webRes != nil && webRes.Status == "error" {
-			aggregated.Reason += "；⚠️ 网页探测失败（当前网络可能无法访问 github.com 主页，本轮无法识别受限）: " + webRes.Reason
-		}
 	case errReason != "":
 		aggregated.Status = "error"
 		aggregated.Reason = errReason
@@ -226,6 +230,9 @@ func checkViaWebProfile(login string, timeoutSec int) AccountStatus {
 		switch {
 		case resp.StatusCode == 404:
 			return AccountStatus{Status: "banned", Reason: "github.com/" + login + " 返回 404（账户可能被封禁或改名）", WebNotFound: true}
+		case resp.StatusCode == 429:
+			// IP 级限流信号：不是账户结论，标记后由汇总处理（API 正常时判 unknown 而非 active）
+			return AccountStatus{Status: "error", Reason: "web profile 429（网页探测被限流）", WebRateLimited: true}
 		case resp.StatusCode >= 400:
 			return AccountStatus{Status: "error", Reason: fmt.Sprintf("web profile %d", resp.StatusCode)}
 		}

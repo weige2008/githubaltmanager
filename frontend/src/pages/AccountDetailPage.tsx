@@ -413,12 +413,11 @@ function StatusHistory({ accId }: { accId: number }) {
       <CardContent className="p-0">
         {isLoading ? <LoadingState /> : history && history.length > 0 ? (
           <div className="max-h-[480px] overflow-y-auto">
-            {history.map((h) => (
+            {history.filter(h => h.confirmed).map((h) => (
               <div key={h.id} className="flex items-center gap-3 border-b px-5 py-3 last:border-0">
                 <span className={cn('text-sm font-medium', statusColor(h.from_status))}>{statusLabel(h.from_status)}</span>
                 <span className="text-muted-foreground">→</span>
                 <span className={cn('text-sm font-medium', statusColor(h.to_status))}>{statusLabel(h.to_status)}</span>
-                {!h.confirmed && <Badge variant="warning" className="text-[10px]">待复查</Badge>}
                 <span className="ml-auto text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</span>
                 {h.reason && <span className="hidden max-w-[280px] truncate text-xs text-muted-foreground md:block" title={h.reason}>{h.reason}</span>}
               </div>
